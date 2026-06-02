@@ -15,4 +15,9 @@ describe("resolveOrigin", () => {
 		vi.stubGlobal("window", undefined);
 		expect(resolveOrigin()).toBeNull();
 	});
+
+	it("returns null when the origin is empty", () => {
+		vi.stubGlobal("window", { location: { origin: "" } });
+		expect(resolveOrigin()).toBeNull();
+	});
 });
