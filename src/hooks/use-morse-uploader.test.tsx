@@ -129,6 +129,29 @@ describe("useMorseUploader", () => {
 		);
 	});
 
+	it("uses the provider defaultEpochs when no per-call epochs is given", async () => {
+		vi.mocked(uploadFile).mockResolvedValue(blobResult);
+		const valueWithDefault = {
+			...value,
+			defaultEpochs: 30,
+		} as MorseUploaderContextValue;
+		const defaultWrapper = ({ children }: { children: ReactNode }) => (
+			<MorseUploaderProvider value={valueWithDefault}>
+				{children}
+			</MorseUploaderProvider>
+		);
+		const { result } = renderHook(() => useMorseUploader(), {
+			wrapper: defaultWrapper,
+		});
+		await act(async () => {
+			await result.current.upload({ file: makeFile() });
+		});
+		expect(uploadFile).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.objectContaining({ epochs: 30 }),
+		);
+	});
+
 	it("records the error and rejects when the upload fails", async () => {
 		vi.mocked(uploadFile).mockRejectedValue(new Error("boom"));
 		const { result } = renderHook(() => useMorseUploader(), { wrapper });

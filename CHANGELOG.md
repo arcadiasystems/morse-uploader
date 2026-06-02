@@ -7,6 +7,8 @@ All notable changes to `@arcadiasystems/morse-uploader` will be documented in th
 ### Added
 
 - Project scaffold: ESM build (tsup), strict TypeScript, Biome, Vitest with a coverage gate, and CI.
+- `useMorseFiles` + `listUserFiles` / `listCollectionFiles` / `listOwnedFiles`: list a user's files, scoped to a collection or to all publications an address owns. The provider context now accepts an optional `reader` and `address`.
+- Expiry toolkit: `computeExpiry` (pure end-epoch to wall-clock), plus `fetchEpochSchedule` and `fetchBlobEndEpoch` resolvers over a structural Walrus client surface. Byte size and expiry are not on-chain on an entry, so resolve expiry separately.
 - `MorseUploaderProvider` + `useMorseUploaderContext`: dependency-injection context for the injected SDK deps (config, walrus adapter, optional wallet adapter) and upload defaults (epochs, target, share-link options). The host owns wallet connection.
 - `useMorseUploader`: hook to upload a single file with status, progress phase, result, error, and a computed share link; composes `uploadFile` and `buildShareUrl`.
 - `computeShareUrl` and `DEFAULT_EPOCHS` helpers.

@@ -5,11 +5,15 @@
 
 import type {
 	BlobObjectId,
+	BlobRef,
 	MorsePackageConfig,
 	ProgressCallback,
 	ProgressEvent,
 	PublicationId,
+	PublicationReader,
 	PublisherCapId,
+	SealId,
+	SuiAddress,
 	WalletAdapter,
 	WalrusBlobId,
 	WalrusWriteAdapter,
@@ -110,6 +114,10 @@ export interface MorseUploaderDeps {
 	readonly walrus: WalrusWriteAdapter;
 	/** Required for Morse-entry mode; omit for simple blob uploads. */
 	readonly adapter?: WalletAdapter;
+	/** Required to list a user's files (useMorseFiles). */
+	readonly reader?: PublicationReader;
+	/** The connected account address; used to list files across owned publications. */
+	readonly address?: SuiAddress;
 }
 
 /** Defaults and link options carried by the provider. */
@@ -154,4 +162,86 @@ export interface UseMorseUploaderResult {
 	readonly error: unknown;
 	readonly upload: (input: UploadInput) => Promise<CompletedUpload>;
 	readonly reset: () => void;
+}
+
+/**
+ * One of a user's files: the current revision of a Morse entry, flattened for
+ * display. Byte size and expiry are not on-chain on the entry; resolve expiry
+ * separately with {@link computeExpiry} plus the Walrus epoch schedule.
+ */
+export interface MorseFile {
+	readonly publicationId: PublicationId;
+	readonly collectionName: string;
+	readonly entryId: number;
+	readonly name: string;
+	readonly revisionId: number;
+	readonly contentType: string;
+	readonly encrypted: boolean;
+	readonly sealId: SealId | null;
+	readonly blobRef: BlobRef;
+	/** Present only when the revision stores a whole blob (not a quilt patch). */
+	readonly blobObjectId?: BlobObjectId;
+}
+
+/** Options for {@link listUserFiles}. Provide a collection scope or an owner address. */
+export interface ListUserFilesOptions {
+	readonly publicationId?: PublicationId;
+	readonly collectionName?: string;
+	readonly address?: SuiAddress;
+	readonly signal?: AbortSignal;
+}
+
+/** Load status for {@link useMorseFiles}. */
+export type FilesStatus = "idle" | "loading" | "success" | "error";
+
+/** Options for {@link useMorseFiles}; overrides the provider's target/address. */
+export interface UseMorseFilesOptions {
+	readonly publicationId?: PublicationId;
+	readonly collectionName?: string;
+	readonly address?: SuiAddress;
+	/** Load on mount and when the scope changes (default true). */
+	readonly autoLoad?: boolean;
+}
+
+/** Return value of {@link useMorseFiles}. */
+export interface UseMorseFilesResult {
+	readonly status: FilesStatus;
+	readonly files: readonly MorseFile[];
+	readonly error: unknown;
+	readonly refresh: () => Promise<readonly MorseFile[]>;
+}
+
+/**
+ * Walrus epoch schedule needed to convert a storage end-epoch to wall-clock
+ * time. Source it from a Walrus client's staking state (see {@link fetchEpochSchedule}).
+ */
+export interface EpochSchedule {
+	readonly currentEpoch: number;
+	readonly epochDurationMs: number;
+	/** Start of epoch 0 in ms since the Unix epoch, when known; enables absolute dates. */
+	readonly firstEpochStartMs?: number;
+}
+
+/** Computed expiry for a stored blob. */
+export interface FileExpiry {
+	readonly endEpoch: number;
+	readonly expiresAtMs: number;
+	readonly expiresInMs: number;
+	readonly expired: boolean;
+}
+
+/** Minimal Walrus client surface for the epoch schedule (satisfied by `WalrusClient`). */
+export interface WalrusEpochSource {
+	stakingState(): Promise<{
+		readonly epoch: number;
+		readonly epoch_duration: string;
+		readonly first_epoch_start: string;
+	}>;
+}
+
+/** Minimal Walrus client surface for a blob's end epoch (satisfied by `WalrusClient`). */
+export interface WalrusBlobObjectSource {
+	getBlobObject(
+		blobObjectId: string,
+	): Promise<{ readonly storage: { readonly end_epoch: number } }>;
 }
