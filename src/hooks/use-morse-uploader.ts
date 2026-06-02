@@ -51,6 +51,7 @@ export function useMorseUploader(): UseMorseUploaderResult {
 					config: ctx.config,
 					walrus: ctx.walrus,
 					...(ctx.adapter === undefined ? {} : { adapter: ctx.adapter }),
+					...(ctx.seal === undefined ? {} : { seal: ctx.seal }),
 				};
 				const result = await uploadFile(deps, {
 					bytes,
@@ -61,6 +62,7 @@ export function useMorseUploader(): UseMorseUploaderResult {
 						? {}
 						: { deletable: input.deletable }),
 					...(target === undefined ? {} : { target }),
+					...(input.encrypt === undefined ? {} : { encrypt: input.encrypt }),
 					onProgress: (event) => setPhase(event.phase),
 					...(input.signal === undefined ? {} : { signal: input.signal }),
 				});

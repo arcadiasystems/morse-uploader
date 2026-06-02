@@ -1,5 +1,6 @@
 import type {
 	MorsePackageConfig,
+	SealAdapter,
 	WalletAdapter,
 	WalrusWriteAdapter,
 } from "@arcadiasystems/morse-sdk";
@@ -149,6 +150,32 @@ describe("useMorseUploader", () => {
 		expect(uploadFile).toHaveBeenCalledWith(
 			expect.anything(),
 			expect.objectContaining({ epochs: 30 }),
+		);
+	});
+
+	it("forwards encrypt and the seal adapter into uploadFile", async () => {
+		vi.mocked(uploadFile).mockResolvedValue(blobResult);
+		const seal = {
+			encrypt: vi.fn(),
+			decrypt: vi.fn(),
+		} as unknown as SealAdapter;
+		const valueWithSeal = { ...value, seal } as MorseUploaderContextValue;
+		const sealWrapper = ({ children }: { children: ReactNode }) => (
+			<MorseUploaderProvider value={valueWithSeal}>
+				{children}
+			</MorseUploaderProvider>
+		);
+		const { result } = renderHook(() => useMorseUploader(), {
+			wrapper: sealWrapper,
+		});
+
+		await act(async () => {
+			await result.current.upload({ file: makeFile(), encrypt: true });
+		});
+
+		expect(uploadFile).toHaveBeenCalledWith(
+			expect.objectContaining({ seal }),
+			expect.objectContaining({ encrypt: true }),
 		);
 	});
 

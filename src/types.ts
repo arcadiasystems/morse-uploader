@@ -12,6 +12,7 @@ import type {
 	PublicationId,
 	PublicationReader,
 	PublisherCapId,
+	SealAdapter,
 	SealId,
 	SuiAddress,
 	WalletAdapter,
@@ -64,6 +65,8 @@ export interface UploadFileDeps {
 	 * publisher signs server-side.
 	 */
 	readonly adapter?: WalletAdapter;
+	/** Seal adapter. Required only when `encrypt` is set. */
+	readonly seal?: SealAdapter;
 }
 
 /** Arguments for {@link uploadFile}. */
@@ -80,6 +83,8 @@ export interface UploadFileArgs {
 	readonly deletable?: boolean;
 	/** When provided, the file is published as a Morse entry; otherwise a plain Walrus blob. */
 	readonly target?: MorseUploaderTarget;
+	/** Encrypt with Seal before upload. Requires a target and a seal adapter. */
+	readonly encrypt?: boolean;
 	readonly onProgress?: ProgressCallback;
 	readonly signal?: AbortSignal;
 }
@@ -100,6 +105,9 @@ export interface EntryUploadResult {
 	readonly revisionId: number;
 	readonly digest: string;
 	readonly gasUsedMist: bigint;
+	readonly encrypted: boolean;
+	/** The Seal identity bound to the entry when encrypted; null otherwise. */
+	readonly sealId: SealId | null;
 }
 
 /** Discriminated result of {@link uploadFile}; narrow on `mode`. */
@@ -114,6 +122,8 @@ export interface MorseUploaderDeps {
 	readonly walrus: WalrusWriteAdapter;
 	/** Required for Morse-entry mode; omit for simple blob uploads. */
 	readonly adapter?: WalletAdapter;
+	/** Seal adapter, required to upload encrypted files. */
+	readonly seal?: SealAdapter;
 	/** Required to list a user's files (useMorseFiles). */
 	readonly reader?: PublicationReader;
 	/** The connected account address; used to list files across owned publications. */
@@ -145,6 +155,8 @@ export interface UploadInput {
 	readonly deletable?: boolean;
 	/** Overrides the provider default target for this upload. */
 	readonly target?: MorseUploaderTarget;
+	/** Encrypt with Seal before upload. Requires a target and a seal adapter. */
+	readonly encrypt?: boolean;
 	readonly signal?: AbortSignal;
 }
 

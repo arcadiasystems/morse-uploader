@@ -1,7 +1,10 @@
 import {
+	addEncryptedEntry,
+	addEncryptedEntryFromBytes,
 	addEntry,
 	addEntryFromBytes,
 	type MorsePackageConfig,
+	type SealAdapter,
 	type WalletAdapter,
 	type WalrusWriteAdapter,
 } from "@arcadiasystems/morse-sdk";
@@ -15,9 +18,19 @@ import { uploadFile } from "./upload-file.js";
 vi.mock("@arcadiasystems/morse-sdk", () => ({
 	addEntry: vi.fn(),
 	addEntryFromBytes: vi.fn(),
+	addEncryptedEntry: vi.fn(),
+	addEncryptedEntryFromBytes: vi.fn(),
+	buildPublisherSealId: vi.fn(() => "sealId-xyz"),
 	isWalrusFlowCapable: (walrus: { startBlobUpload?: unknown }) =>
 		typeof walrus.startBlobUpload === "function",
 }));
+
+function makeSeal(): SealAdapter {
+	return {
+		encrypt: vi.fn().mockResolvedValue({ ciphertext: new Uint8Array([9, 9]) }),
+		decrypt: vi.fn(),
+	} as unknown as SealAdapter;
+}
 
 const config = {} as unknown as MorsePackageConfig;
 const bytes = new Uint8Array([1, 2, 3]);
@@ -178,6 +191,8 @@ describe("uploadFile (Morse-entry mode, custom publisher two-step)", () => {
 			revisionId: 0,
 			digest: "0xdig2",
 			gasUsedMist: 456n,
+			encrypted: false,
+			sealId: null,
 		});
 		expect(phases).toEqual(["uploading", "submitting", "complete"]);
 	});
@@ -209,10 +224,107 @@ describe("uploadFile (Morse-entry mode, custom publisher two-step)", () => {
 	});
 });
 
+describe("uploadFile (encrypted, direct flow-capable)", () => {
+	it("delegates to addEncryptedEntryFromBytes with a seal id", async () => {
+		vi.mocked(addEncryptedEntryFromBytes).mockResolvedValue({
+			digest: "0xdig",
+			gasUsedMist: 1n,
+			entryId: 4,
+			revisionId: 0,
+			blobObjectId: "0xobj",
+			blobId: "blobE",
+		} as unknown as Awaited<ReturnType<typeof addEncryptedEntryFromBytes>>);
+
+		const onProgress = vi.fn();
+		const { signal } = new AbortController();
+		const result = await uploadFile(
+			{ config, walrus: flowWalrus(), adapter, seal: makeSeal() },
+			{ ...baseArgs, target, encrypt: true, onProgress, signal },
+		);
+
+		expect(addEncryptedEntryFromBytes).toHaveBeenCalledWith(
+			adapter,
+			config,
+			expect.objectContaining({
+				plaintext: bytes,
+				sealId: "sealId-xyz",
+				onProgress,
+				signal,
+			}),
+		);
+		expect(result).toMatchObject({
+			mode: "entry",
+			encrypted: true,
+			sealId: "sealId-xyz",
+			blobId: "blobE",
+		});
+	});
+});
+
+describe("uploadFile (encrypted, custom publisher)", () => {
+	it("encrypts client-side, uploads the ciphertext, then adds the entry", async () => {
+		vi.mocked(addEncryptedEntry).mockResolvedValue({
+			digest: "0xdig",
+			gasUsedMist: 2n,
+			entryId: 5,
+			revisionId: 0,
+		} as unknown as Awaited<ReturnType<typeof addEncryptedEntry>>);
+		const seal = makeSeal();
+		const walrus = publisherWalrus();
+		const phases: string[] = [];
+
+		const result = await uploadFile(
+			{ config, walrus, adapter, seal },
+			{
+				...baseArgs,
+				target,
+				encrypt: true,
+				onProgress: (e) => phases.push(e.phase),
+			},
+		);
+
+		expect(seal.encrypt).toHaveBeenCalledWith(bytes, { sealId: "sealId-xyz" });
+		expect(walrus.uploadBlob).toHaveBeenCalledWith(
+			new Uint8Array([9, 9]),
+			expect.objectContaining({ epochs: 5 }),
+		);
+		expect(addEncryptedEntry).toHaveBeenCalledTimes(1);
+		expect(result).toMatchObject({
+			mode: "entry",
+			encrypted: true,
+			entryId: 5,
+		});
+		expect(phases).toEqual([
+			"encrypting",
+			"uploading",
+			"submitting",
+			"complete",
+		]);
+	});
+});
+
 describe("uploadFile (validation)", () => {
 	it("throws when a target is given without a wallet adapter", async () => {
 		await expect(
 			uploadFile({ config, walrus: flowWalrus() }, { ...baseArgs, target }),
 		).rejects.toThrow(/wallet adapter is required/);
+	});
+
+	it("throws when encrypt is set without a target", async () => {
+		await expect(
+			uploadFile(
+				{ config, walrus: publisherWalrus() },
+				{ ...baseArgs, encrypt: true },
+			),
+		).rejects.toThrow(/encryption requires a target/);
+	});
+
+	it("throws when encrypt is set without a seal adapter", async () => {
+		await expect(
+			uploadFile(
+				{ config, walrus: flowWalrus(), adapter },
+				{ ...baseArgs, target, encrypt: true },
+			),
+		).rejects.toThrow(/requires a seal adapter/);
 	});
 });
