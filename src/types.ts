@@ -133,6 +133,8 @@ export interface MorseUploaderDeps {
 	readonly signer?: Signer;
 	/** Sui client, required to create the Seal SessionKey when decrypting. */
 	readonly client?: SealCompatibleClient;
+	/** Walrus client for read-only queries (cost estimate, and later expiry). */
+	readonly walrusClient?: WalrusQuerySource;
 	/** Required to list a user's files (useMorseFiles). */
 	readonly reader?: PublicationReader;
 	/** The connected account address; used to list files and to create a SessionKey. */
@@ -265,6 +267,81 @@ export interface WalrusBlobObjectSource {
 	getBlobObject(
 		blobObjectId: string,
 	): Promise<{ readonly storage: { readonly end_epoch: number } }>;
+}
+
+/** Minimal Walrus client surface for storage pricing (satisfied by `WalrusClient`). */
+export interface WalrusStorageCostSource {
+	storageCost(
+		size: number,
+		epochs: number,
+	): Promise<{
+		readonly storageCost: bigint;
+		readonly writeCost: bigint;
+		readonly totalCost: bigint;
+	}>;
+}
+
+/**
+ * Combined query surface for the read-only Walrus lookups this package can use
+ * (pricing, epoch schedule, blob objects). A real `WalrusClient` satisfies it.
+ */
+export type WalrusQuerySource = WalrusStorageCostSource &
+	WalrusEpochSource &
+	WalrusBlobObjectSource;
+
+/** WAL storage cost in FROST (WAL's smallest unit). */
+export interface StorageCostEstimate {
+	readonly storageCostFrost: bigint;
+	readonly writeCostFrost: bigint;
+	readonly totalCostFrost: bigint;
+}
+
+/** Arguments for {@link estimateEpochCost}. */
+export interface EpochCostArgs {
+	readonly sizeBytes: number;
+	readonly epochs: number;
+	/** Account for Seal envelope overhead in the size used for pricing. */
+	readonly encrypt?: boolean;
+	/** Bytes added when encrypt is set; defaults to DEFAULT_ENCRYPTION_OVERHEAD_BYTES. */
+	readonly encryptionOverheadBytes?: number;
+	/**
+	 * Optional fixed SUI gas estimate in MIST. The publish PTB cannot be built
+	 * before upload, so gas is supplied by the caller rather than dry-run here.
+	 */
+	readonly suiGasMist?: bigint;
+}
+
+/** Result of {@link estimateEpochCost}. */
+export interface EpochCostEstimate {
+	readonly sizeBytes: number;
+	readonly epochs: number;
+	readonly encrypted: boolean;
+	readonly storage: StorageCostEstimate;
+	/** Total WAL cost in FROST (storage + write). */
+	readonly walFrost: bigint;
+	/** SUI gas in MIST when supplied by the caller, else null. */
+	readonly suiGasMist: bigint | null;
+}
+
+/** Status of a cost estimate tracked by {@link useEpochCostEstimate}. */
+export type CostStatus = "idle" | "loading" | "success" | "error";
+
+/** Inputs to {@link useEpochCostEstimate}; the estimate recomputes when they change. */
+export interface UseEpochCostEstimateOptions {
+	readonly sizeBytes: number;
+	readonly epochs: number;
+	readonly encrypt?: boolean;
+	readonly suiGasMist?: bigint;
+	/** Compute on mount and when inputs change (default true). */
+	readonly enabled?: boolean;
+}
+
+/** Return value of {@link useEpochCostEstimate}. */
+export interface UseEpochCostEstimateResult {
+	readonly status: CostStatus;
+	readonly estimate: EpochCostEstimate | null;
+	readonly error: unknown;
+	readonly refresh: () => Promise<EpochCostEstimate | null>;
 }
 
 /** Dependencies for {@link decryptFile}. */
