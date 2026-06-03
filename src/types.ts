@@ -17,8 +17,11 @@ import type {
 	SuiAddress,
 	WalletAdapter,
 	WalrusBlobId,
+	WalrusReadAdapter,
 	WalrusWriteAdapter,
 } from "@arcadiasystems/morse-sdk";
+import type { SealCompatibleClient, SessionKey } from "@mysten/seal";
+import type { Signer } from "@mysten/sui/cryptography";
 
 /** Options controlling how {@link buildShareUrl} builds a link to an uploaded blob. */
 export interface BuildShareUrlOptions {
@@ -122,11 +125,17 @@ export interface MorseUploaderDeps {
 	readonly walrus: WalrusWriteAdapter;
 	/** Required for Morse-entry mode; omit for simple blob uploads. */
 	readonly adapter?: WalletAdapter;
-	/** Seal adapter, required to upload encrypted files. */
+	/** Seal adapter, required to upload encrypted files and to decrypt. */
 	readonly seal?: SealAdapter;
+	/** Read adapter (aggregator recommended in browsers), required to decrypt. */
+	readonly walrusRead?: WalrusReadAdapter;
+	/** Wallet signer (a Sui Signer, e.g. WalletStandardSigner), required to decrypt. */
+	readonly signer?: Signer;
+	/** Sui client, required to create the Seal SessionKey when decrypting. */
+	readonly client?: SealCompatibleClient;
 	/** Required to list a user's files (useMorseFiles). */
 	readonly reader?: PublicationReader;
-	/** The connected account address; used to list files across owned publications. */
+	/** The connected account address; used to list files and to create a SessionKey. */
 	readonly address?: SuiAddress;
 }
 
@@ -256,4 +265,43 @@ export interface WalrusBlobObjectSource {
 	getBlobObject(
 		blobObjectId: string,
 	): Promise<{ readonly storage: { readonly end_epoch: number } }>;
+}
+
+/** Dependencies for {@link decryptFile}. */
+export interface DecryptFileDeps {
+	readonly seal: SealAdapter;
+	readonly walrusRead: WalrusReadAdapter;
+	/** Creates a fresh Seal SessionKey (one wallet signature). Called again on a session-expired retry. */
+	readonly createSessionKey: () => Promise<SessionKey>;
+}
+
+/** Arguments for {@link decryptFile}. */
+export interface DecryptFileArgs {
+	readonly blobRef: BlobRef;
+	readonly sealId: SealId;
+	readonly publisherCapId: PublisherCapId;
+	readonly signal?: AbortSignal;
+}
+
+/** Status of a decrypt operation tracked by {@link useDecryptedBlob}. */
+export type DecryptStatus = "idle" | "decrypting" | "success" | "error";
+
+/** Input to the {@link useDecryptedBlob} decrypt action. */
+export interface DecryptInput {
+	readonly blobRef: BlobRef;
+	readonly sealId: SealId;
+	/** Defaults to the provider target's publisherCapId. */
+	readonly publisherCapId?: PublisherCapId;
+	/** SessionKey lifetime in minutes; defaults to DEFAULT_SESSION_TTL_MIN. */
+	readonly ttlMin?: number;
+	readonly signal?: AbortSignal;
+}
+
+/** Return value of {@link useDecryptedBlob}. */
+export interface UseDecryptedBlobResult {
+	readonly status: DecryptStatus;
+	readonly data: Uint8Array | null;
+	readonly error: unknown;
+	readonly decrypt: (input: DecryptInput) => Promise<Uint8Array>;
+	readonly reset: () => void;
 }
