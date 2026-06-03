@@ -44,6 +44,11 @@
 			"types": "./dist/index.d.ts",
 			"import": "./dist/index.js"
 		},
+		"./ui": {
+			"types": "./dist/ui.d.ts",
+			"import": "./dist/ui.js"
+		},
+		"./styles.css": "./dist/styles.css",
 		"./wallet-standard": {
 			"types": "./dist/wallet-standard.d.ts",
 			"import": "./dist/wallet-standard.js"
@@ -59,7 +64,7 @@
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"test:coverage": "vitest run --coverage",
-		"check:exports": "publint && attw --pack . --profile esm-only",
+		"check:exports": "publint && attw --pack . --profile esm-only --exclude-entrypoints styles.css",
 		"prepublishOnly": "bun run lint && bun run typecheck && bun run test && bun run build && bun run check:exports"
 	},
 	"engines": {

@@ -7,6 +7,9 @@ All notable changes to `@arcadiasystems/morse-uploader` will be documented in th
 ### Added
 
 - Project scaffold: ESM build (tsup), strict TypeScript, Biome, Vitest with a coverage gate, and CI.
+- Headless `useDropzone` hook + unstyled `Dropzone` primitive: drag-and-drop with a keyboard-operable, ARIA-labelled root button, a hidden file-input fallback, accept/multiple/disabled, and drag state. Prop-getters keep all markup and styling with the consumer (no inline styles).
+- Unstyled primitives: `EpochControl`, `EncryptToggle`, `CostEstimate`, `ProgressIndicator`, `FileList`, `WriteModeSettings` (controlled, presentational, `className` + `data-mu` hooks, injectable labels/formatters, no inline styles), plus `formatTokenAmount`.
+- Optional default skin: `MorseUploader` widget at `@arcadiasystems/morse-uploader/ui` plus a themeable stylesheet at `@arcadiasystems/morse-uploader/styles.css` (CSS variables `--mu-*`, `mu-*` classes). Assembles the hooks and primitives into a working uploader; all logic stays in the hooks.
 - `useMorseFiles` + `listUserFiles` / `listCollectionFiles` / `listOwnedFiles`: list a user's files, scoped to a collection or to all publications an address owns. The provider context now accepts an optional `reader` and `address`.
 - Expiry toolkit: `computeExpiry` (pure end-epoch to wall-clock), plus `fetchEpochSchedule` and `fetchBlobEndEpoch` resolvers over a structural Walrus client surface. Byte size and expiry are not on-chain on an entry, so resolve expiry separately.
 - `MorseUploaderProvider` + `useMorseUploaderContext`: dependency-injection context for the injected SDK deps (config, walrus adapter, optional wallet adapter) and upload defaults (epochs, target, share-link options). The host owns wallet connection.

@@ -22,6 +22,14 @@ import type {
 } from "@arcadiasystems/morse-sdk";
 import type { SealCompatibleClient, SessionKey } from "@mysten/seal";
 import type { Signer } from "@mysten/sui/cryptography";
+import type {
+	ChangeEvent,
+	DragEvent,
+	KeyboardEvent,
+	MouseEvent,
+	ReactNode,
+	RefObject,
+} from "react";
 
 /** Options controlling how {@link buildShareUrl} builds a link to an uploaded blob. */
 export interface BuildShareUrlOptions {
@@ -342,6 +350,168 @@ export interface UseEpochCostEstimateResult {
 	readonly estimate: EpochCostEstimate | null;
 	readonly error: unknown;
 	readonly refresh: () => Promise<EpochCostEstimate | null>;
+}
+
+/** Options for {@link useDropzone}. */
+export interface UseDropzoneOptions {
+	/** Called with the chosen files from a drop or the file dialog. */
+	readonly onFiles: (files: File[]) => void;
+	/** The file input `accept` attribute (e.g. "image/*"). */
+	readonly accept?: string;
+	/** Allow selecting multiple files (default true). */
+	readonly multiple?: boolean;
+	readonly disabled?: boolean;
+	/** Accessible label applied to the root button via `aria-label`. */
+	readonly ariaLabel?: string;
+}
+
+/** Props to spread on the dropzone root element. */
+export interface DropzoneRootProps {
+	readonly role: "button";
+	readonly tabIndex: number;
+	readonly "aria-disabled": boolean;
+	readonly "aria-label"?: string;
+	readonly "data-dragging": "true" | undefined;
+	readonly onClick: (event: MouseEvent<HTMLElement>) => void;
+	readonly onKeyDown: (event: KeyboardEvent<HTMLElement>) => void;
+	readonly onDragEnter: (event: DragEvent<HTMLElement>) => void;
+	readonly onDragOver: (event: DragEvent<HTMLElement>) => void;
+	readonly onDragLeave: (event: DragEvent<HTMLElement>) => void;
+	readonly onDrop: (event: DragEvent<HTMLElement>) => void;
+}
+
+/** Props to spread on the hidden file input element. */
+export interface DropzoneInputProps {
+	readonly ref: RefObject<HTMLInputElement>;
+	readonly type: "file";
+	readonly multiple: boolean;
+	readonly tabIndex: number;
+	readonly accept?: string;
+	readonly disabled: boolean;
+	readonly onChange: (event: ChangeEvent<HTMLInputElement>) => void;
+	/** Stops the programmatic click from bubbling to the root and re-opening. */
+	readonly onClick: (event: MouseEvent<HTMLInputElement>) => void;
+}
+
+/** State passed to a {@link Dropzone} render-prop child. */
+export interface DropzoneRenderState {
+	readonly isDragging: boolean;
+	readonly open: () => void;
+}
+
+/** Return value of {@link useDropzone}. */
+export interface UseDropzoneResult {
+	readonly isDragging: boolean;
+	/** Open the file dialog programmatically. */
+	readonly open: () => void;
+	readonly getRootProps: () => DropzoneRootProps;
+	readonly getInputProps: () => DropzoneInputProps;
+	readonly inputRef: RefObject<HTMLInputElement>;
+}
+
+/** Props for the {@link Dropzone} primitive. */
+export interface DropzoneProps {
+	readonly onFiles: (files: File[]) => void;
+	readonly accept?: string;
+	readonly multiple?: boolean;
+	readonly disabled?: boolean;
+	readonly className?: string;
+	/** Accessible label for the dropzone button. */
+	readonly label?: string;
+	readonly children?: ReactNode | ((state: DropzoneRenderState) => ReactNode);
+}
+
+/** Props for the {@link EpochControl} primitive (controlled). */
+export interface EpochControlProps {
+	readonly value: number;
+	readonly onChange: (value: number) => void;
+	readonly min?: number;
+	readonly max?: number;
+	readonly step?: number;
+	readonly presets?: readonly number[];
+	readonly disabled?: boolean;
+	readonly className?: string;
+	readonly label?: string;
+	readonly decrementLabel?: string;
+	readonly incrementLabel?: string;
+}
+
+/** Props for the {@link EncryptToggle} primitive (controlled). */
+export interface EncryptToggleProps {
+	readonly checked: boolean;
+	readonly onChange: (checked: boolean) => void;
+	readonly disabled?: boolean;
+	readonly label?: string;
+	readonly className?: string;
+}
+
+/** Labels for the {@link CostEstimate} primitive. */
+export interface CostEstimateLabels {
+	readonly loading?: string;
+	readonly error?: string;
+	readonly wal?: string;
+	readonly sui?: string;
+}
+
+/** Props for the {@link CostEstimate} primitive. */
+export interface CostEstimateProps {
+	readonly estimate: EpochCostEstimate | null;
+	readonly status: CostStatus;
+	readonly formatWal?: (frost: bigint) => string;
+	readonly formatSui?: (mist: bigint) => string;
+	readonly className?: string;
+	readonly labels?: CostEstimateLabels;
+}
+
+/** Props for the {@link ProgressIndicator} primitive. */
+export interface ProgressIndicatorProps {
+	readonly phase: ProgressPhase | null;
+	readonly status: UploadStatus;
+	readonly labels?: Partial<Record<ProgressPhase, string>>;
+	readonly className?: string;
+}
+
+/** Props for the {@link FileList} primitive. */
+export interface FileListProps {
+	readonly files: readonly MorseFile[];
+	readonly renderFile?: (file: MorseFile) => ReactNode;
+	readonly emptyLabel?: string;
+	readonly className?: string;
+}
+
+/** Walrus write mode chosen in {@link WriteModeSettings}. */
+export type WriteMode = "direct" | "publisher";
+
+/** Labels for the {@link WriteModeSettings} primitive. */
+export interface WriteModeLabels {
+	readonly direct?: string;
+	readonly publisher?: string;
+	readonly publisherUrl?: string;
+}
+
+/** Props for the {@link WriteModeSettings} primitive (controlled). */
+export interface WriteModeSettingsProps {
+	readonly mode: WriteMode;
+	readonly onModeChange: (mode: WriteMode) => void;
+	readonly publisherUrl: string;
+	readonly onPublisherUrlChange: (url: string) => void;
+	readonly disabled?: boolean;
+	readonly className?: string;
+	readonly labels?: WriteModeLabels;
+}
+
+/** Props for the default-skin {@link MorseUploader} widget. */
+export interface MorseUploaderProps {
+	readonly className?: string;
+	/** Initial epoch value; defaults to the provider's defaultEpochs or DEFAULT_EPOCHS. */
+	readonly defaultEpochs?: number;
+	readonly minEpochs?: number;
+	readonly maxEpochs?: number;
+	readonly epochPresets?: readonly number[];
+	/** Show the encrypt toggle (default true). */
+	readonly allowEncrypt?: boolean;
+	readonly formatWal?: (frost: bigint) => string;
+	readonly formatSui?: (mist: bigint) => string;
 }
 
 /** Dependencies for {@link decryptFile}. */

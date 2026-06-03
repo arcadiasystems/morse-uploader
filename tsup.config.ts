@@ -1,10 +1,11 @@
 import { defineConfig } from "tsup";
 
-// ESM-only library build. A second `ui` entry (the default skin + its CSS) is
-// added in Phase 5; the core, hooks, and headless primitives ship from `index`.
+// ESM-only library build. Three entries: the core/hooks/primitives (`index`),
+// the optional default skin (`ui`), and the optional wallet helper.
 export default defineConfig({
 	entry: {
 		index: "src/index.ts",
+		ui: "src/ui/index.ts",
 		"wallet-standard": "src/wallet-standard/index.ts",
 	},
 	format: ["esm"],
@@ -12,11 +13,15 @@ export default defineConfig({
 	sourcemap: true,
 	clean: true,
 	treeshake: true,
-	splitting: false,
+	// Splitting shares the context/hooks across entries as one chunk, so `.` and
+	// `./ui` reference the SAME MorseUploaderContext instance (no provider mismatch).
+	splitting: true,
 	target: "es2022",
 	outDir: "dist",
 	// Use React's automatic JSX runtime so .tsx files need no React import.
 	esbuildOptions(options) {
 		options.jsx = "automatic";
 	},
+	// The skin stylesheet ships as a separate asset for consumers to import.
+	onSuccess: "cp src/ui/styles.css dist/styles.css",
 });

@@ -6,12 +6,20 @@ export default defineConfig({
 	test: {
 		environment: "jsdom",
 		globals: false,
+		setupFiles: ["./vitest.setup.ts"],
 		include: ["src/**/*.test.{ts,tsx}"],
 		coverage: {
 			provider: "v8",
 			reporter: ["text", "lcov"],
 			include: ["src/**/*.{ts,tsx}"],
-			exclude: ["src/**/*.test.{ts,tsx}", "src/**/index.ts", "src/**/types.ts"],
+			exclude: [
+				"src/**/*.test.{ts,tsx}",
+				"src/**/index.ts",
+				"src/**/types.ts",
+				// The opinionated skin is the styled assembly of already-tested
+				// hooks and primitives; it is smoke-tested, not coverage-gated.
+				"src/ui/**",
+			],
 			thresholds: {
 				lines: 90,
 				functions: 90,

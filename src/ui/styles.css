@@ -1,0 +1,123 @@
+/*
+ * Default skin for @arcadiasystems/morse-uploader. Import this file once in
+ * your app. Override the --mu-* variables (or the .mu-* rules) to theme it.
+ */
+
+.mu-uploader {
+	--mu-gap: 0.75rem;
+	--mu-radius: 0.5rem;
+	--mu-border: 1px solid var(--mu-border-color, #d4d4d8);
+	--mu-fg: var(--mu-fg-color, #18181b);
+	--mu-muted: var(--mu-muted-color, #71717a);
+	--mu-accent: var(--mu-accent-color, #4f46e5);
+	--mu-accent-fg: var(--mu-accent-fg-color, #ffffff);
+	--mu-surface: var(--mu-surface-color, #ffffff);
+	--mu-drag: var(--mu-drag-color, #eef2ff);
+
+	display: flex;
+	flex-direction: column;
+	gap: var(--mu-gap);
+	color: var(--mu-fg);
+	font-family: var(--mu-font, system-ui, sans-serif);
+}
+
+.mu-dropzone {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 1.5rem;
+	border: 2px dashed var(--mu-border-color, #d4d4d8);
+	border-radius: var(--mu-radius);
+	background: var(--mu-surface);
+	color: var(--mu-muted);
+	cursor: pointer;
+	outline-offset: 2px;
+}
+
+.mu-dropzone[data-dragging="true"] {
+	border-color: var(--mu-accent);
+	background: var(--mu-drag);
+}
+
+.mu-dropzone[aria-disabled="true"] {
+	cursor: not-allowed;
+	opacity: 0.6;
+}
+
+.mu-selected,
+.mu-file-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.mu-selected-row,
+.mu-file-row {
+	display: flex;
+	align-items: center;
+	gap: var(--mu-gap);
+	padding: 0.5rem;
+	border: var(--mu-border);
+	border-radius: var(--mu-radius);
+	background: var(--mu-surface);
+}
+
+.mu-selected-size,
+.mu-selected-type {
+	color: var(--mu-muted);
+	font-size: 0.875rem;
+}
+
+.mu-remove {
+	margin-left: auto;
+}
+
+.mu-epochs,
+.mu-write-mode {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.mu-epochs [data-mu="epoch-input"] {
+	width: 5rem;
+}
+
+.mu-cost {
+	display: flex;
+	gap: var(--mu-gap);
+	color: var(--mu-muted);
+	font-size: 0.875rem;
+}
+
+.mu-upload {
+	padding: 0.625rem 1rem;
+	border: none;
+	border-radius: var(--mu-radius);
+	background: var(--mu-accent);
+	color: var(--mu-accent-fg);
+	cursor: pointer;
+}
+
+.mu-upload:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.mu-progress {
+	color: var(--mu-muted);
+	font-size: 0.875rem;
+}
+
+.mu-result {
+	display: flex;
+	align-items: center;
+	gap: var(--mu-gap);
+	padding: 0.5rem;
+	border: var(--mu-border);
+	border-radius: var(--mu-radius);
+	word-break: break-all;
+}
