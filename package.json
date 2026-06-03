@@ -4,6 +4,9 @@
 	"description": "Generic, headless-first React file uploader for Morse on Sui and Walrus.",
 	"license": "MIT",
 	"type": "module",
+	"workspaces": [
+		"examples/*"
+	],
 	"sideEffects": [
 		"**/*.css"
 	],
@@ -65,6 +68,7 @@
 		"test:watch": "vitest",
 		"test:coverage": "vitest run --coverage",
 		"check:exports": "publint && attw --pack . --profile esm-only --exclude-entrypoints styles.css",
+		"build:example": "bun run build && cd examples/web && bun run build",
 		"prepublishOnly": "bun run lint && bun run typecheck && bun run test && bun run build && bun run check:exports"
 	},
 	"engines": {

@@ -6,7 +6,9 @@
 		"useIgnoreFile": true
 	},
 	"files": {
-		"ignoreUnknown": false
+		"ignoreUnknown": false,
+		// The example app has its own toolchain; the library gates do not lint it.
+		"includes": ["**", "!examples", "!**/dist"]
 	},
 	"formatter": {
 		"enabled": true,
