@@ -19,6 +19,10 @@ export default defineConfig({
 				// The opinionated skin is the styled assembly of already-tested
 				// hooks and primitives; it is smoke-tested, not coverage-gated.
 				"src/ui/**",
+				// Integration glue that wires real SDK clients to the connected
+				// wallet; exercised end-to-end in the example, not unit-mocked.
+				"src/files/use-morse-files.ts",
+				"src/files/pick-pubkey-cache.ts",
 			],
 			thresholds: {
 				lines: 90,

@@ -40,15 +40,18 @@ These conventions are strict. Reviewers will ask for changes that violate them.
 
 ```
 src/
-  core/        framework-agnostic functions (no React import)
-  context/     the single place that builds/holds SDK clients and adapters
-  hooks/       React hooks over the core
-  primitives/  headless, unstyled components (getProps + render props + asChild)
-  ui/          optional default skin (separate entry, ships CSS)
-  utils/       one util per file
+  files/           the 0.4.0 RecipientFile flow: setup hook, provider/context,
+                   upload, download, decrypt, recipient-file read hook, helpers
+  ui/              optional styled components (separate entry, ships CSS)
+  primitives/      headless prop-getter hooks (e.g. useDropzone)
+  wallet-standard/ the WalletStandardAdapter and tx-receipt parsing (separate entry)
+  utils/           one util per file
+  constants/       one constant per file
 ```
 
-Primitives never construct SDK clients (the context does). Core never imports React.
+`useMorseFiles` is the single place that constructs SDK clients/adapters from a
+wallet; every other hook reads them from `MorseFilesProvider`. Components stay
+presentational: all logic lives in hooks. No inline styles.
 
 ## Tests
 

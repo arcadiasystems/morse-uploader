@@ -1,4 +1,5 @@
 import {
+	type ObjectReader,
 	type SimulationReturnValues,
 	type SuiAddress,
 	type TransactionExecutor,
@@ -10,6 +11,7 @@ import {
 import type { Transaction } from "@mysten/sui/transactions";
 import { failedTransactionMessage } from "./failed-transaction-message.js";
 import { parseTxReceipt } from "./parse-tx-receipt.js";
+import { resolveObjectTypes } from "./resolve-object-types.js";
 import type { WalletSignAndExecute } from "./types.js";
 
 /**
@@ -24,7 +26,7 @@ export class WalletStandardAdapter implements WalletAdapter {
 	constructor(
 		address: string,
 		private readonly signAndExecute: WalletSignAndExecute,
-		private readonly client: TransactionExecutor,
+		private readonly client: TransactionExecutor & ObjectReader,
 	) {
 		this.address = toSuiAddress(address);
 	}
@@ -54,7 +56,28 @@ export class WalletStandardAdapter implements WalletAdapter {
 				failedTransactionMessage(final.FailedTransaction),
 			);
 		}
-		return parseTxReceipt(final.Transaction);
+		const executed = final.Transaction;
+
+		// When the wallet executes on a different endpoint than this client reads
+		// from, waitForTransaction may omit created-object types. Backfill the
+		// missing ones via getObject so the SDK can find the created objects.
+		const objectTypes: Record<string, string> = {
+			...(executed.objectTypes ?? {}),
+		};
+		const missing = (executed.effects?.changedObjects ?? [])
+			.filter(
+				(change) =>
+					change.idOperation === "Created" &&
+					objectTypes[change.objectId] === undefined,
+			)
+			.map((change) => change.objectId);
+		if (missing.length > 0) {
+			Object.assign(
+				objectTypes,
+				await resolveObjectTypes(this.client, missing, signal),
+			);
+		}
+		return parseTxReceipt(executed, objectTypes);
 	}
 
 	async simulateTransaction(

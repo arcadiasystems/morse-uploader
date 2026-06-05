@@ -3,16 +3,25 @@
  * your app. Override the --mu-* variables (or the .mu-* rules) to theme it.
  */
 
-.mu-uploader {
-	--mu-gap: 0.75rem;
-	--mu-radius: 0.5rem;
-	--mu-border: 1px solid var(--mu-border-color, #d4d4d8);
+.mu-uploader,
+.mu-view,
+.mu-members {
+	--mu-gap: 0.85rem;
+	--mu-radius: 14px;
+	--mu-radius-sm: 9px;
+	--mu-border-color-r: var(--mu-border-color, #e4e4e7);
+	--mu-border: 1px solid var(--mu-border-color-r);
 	--mu-fg: var(--mu-fg-color, #18181b);
 	--mu-muted: var(--mu-muted-color, #71717a);
 	--mu-accent: var(--mu-accent-color, #4f46e5);
 	--mu-accent-fg: var(--mu-accent-fg-color, #ffffff);
 	--mu-surface: var(--mu-surface-color, #ffffff);
+	--mu-surface-2: var(--mu-surface-2-color, #f4f4f5);
 	--mu-drag: var(--mu-drag-color, #eef2ff);
+	--mu-error: var(--mu-error-color, #dc2626);
+	--mu-success: var(--mu-success-color, #16a34a);
+	--mu-warning: var(--mu-warning-color, #eab308);
+	--mu-ring: color-mix(in srgb, var(--mu-accent) 35%, transparent);
 
 	display: flex;
 	flex-direction: column;
@@ -21,22 +30,40 @@
 	font-family: var(--mu-font, system-ui, sans-serif);
 }
 
+/* ----- Dropzone ----- */
 .mu-dropzone {
 	display: flex;
+	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	padding: 1.5rem;
-	border: 2px dashed var(--mu-border-color, #d4d4d8);
+	gap: 0.35rem;
+	padding: 2rem 1.5rem;
+	border: 1.5px dashed var(--mu-border-color-r);
 	border-radius: var(--mu-radius);
 	background: var(--mu-surface);
 	color: var(--mu-muted);
 	cursor: pointer;
-	outline-offset: 2px;
+	outline: none;
+	text-align: center;
+	transition:
+		border-color 0.18s ease,
+		background 0.18s ease,
+		transform 0.18s ease;
+}
+
+.mu-dropzone:hover {
+	border-color: var(--mu-accent);
+}
+
+.mu-dropzone:focus-visible {
+	border-color: var(--mu-accent);
+	box-shadow: 0 0 0 4px var(--mu-ring);
 }
 
 .mu-dropzone[data-dragging="true"] {
 	border-color: var(--mu-accent);
 	background: var(--mu-drag);
+	transform: scale(1.01);
 }
 
 .mu-dropzone[aria-disabled="true"] {
@@ -44,62 +71,141 @@
 	opacity: 0.6;
 }
 
-.mu-selected,
-.mu-file-list {
-	list-style: none;
-	margin: 0;
-	padding: 0;
+.mu-dropzone-icon {
+	width: 2.25rem;
+	height: 2.25rem;
+	background-color: var(--mu-accent);
+	mask: var(--mu-upload-icon) center / contain no-repeat;
+	-webkit-mask: var(--mu-upload-icon) center / contain no-repeat;
+	--mu-upload-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 16V4M7 9l5-5 5 5'/%3E%3Cpath d='M5 16v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3'/%3E%3C/svg%3E");
+}
+
+.mu-dropzone-hint {
+	color: var(--mu-fg);
+	font-weight: 550;
+}
+
+.mu-dropzone-sub {
+	font-size: 0.8125rem;
+}
+
+/* ----- Inputs / fields ----- */
+.mu-input,
+.mu-epochs-input {
+	padding: 0.6rem 0.7rem;
+	border: var(--mu-border);
+	border-radius: var(--mu-radius-sm);
+	background: var(--mu-surface);
+	color: var(--mu-fg);
+	font: inherit;
+	transition:
+		border-color 0.18s ease,
+		box-shadow 0.18s ease;
+}
+
+.mu-input:focus,
+.mu-epochs-input:focus {
+	outline: none;
+	border-color: var(--mu-accent);
+	box-shadow: 0 0 0 4px var(--mu-ring);
+}
+
+.mu-field {
 	display: flex;
 	flex-direction: column;
-	gap: 0.25rem;
+	gap: 0.3rem;
 }
 
-.mu-selected-row,
-.mu-file-row {
-	display: flex;
-	align-items: center;
-	gap: var(--mu-gap);
-	padding: 0.5rem;
-	border: var(--mu-border);
-	border-radius: var(--mu-radius);
-	background: var(--mu-surface);
-}
-
-.mu-selected-size,
-.mu-selected-type {
+.mu-field-label {
 	color: var(--mu-muted);
-	font-size: 0.875rem;
+	font-size: 0.8125rem;
+	font-weight: 550;
 }
 
-.mu-remove {
-	margin-left: auto;
+.mu-field-help {
+	color: var(--mu-muted);
+	font-size: 0.8125rem;
+	cursor: help;
+	width: fit-content;
 }
 
-.mu-epochs,
-.mu-write-mode {
+.mu-encrypt {
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
+	padding: 0.6rem 0.7rem;
+	border: var(--mu-border);
+	border-radius: var(--mu-radius-sm);
+	background: var(--mu-surface-2);
+	cursor: pointer;
+	font-size: 0.9rem;
 }
 
-.mu-epochs [data-mu="epoch-input"] {
-	width: 5rem;
+.mu-encrypt input {
+	accent-color: var(--mu-accent);
+	width: 1rem;
+	height: 1rem;
 }
 
+/* ----- Cost ----- */
 .mu-cost {
 	display: flex;
+	align-items: center;
 	gap: var(--mu-gap);
-	color: var(--mu-muted);
+	padding: 0.6rem 0.8rem;
+	border-radius: var(--mu-radius-sm);
+	background: var(--mu-surface-2);
 	font-size: 0.875rem;
 }
 
+.mu-cost-label {
+	color: var(--mu-muted);
+}
+
+.mu-cost-value {
+	margin-left: auto;
+	font-weight: 650;
+	font-variant-numeric: tabular-nums;
+}
+
+/* ----- Buttons ----- */
+.mu-upload,
+.mu-ghost,
+.mu-remove {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.4rem;
+	border-radius: var(--mu-radius-sm);
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+	transition:
+		filter 0.16s ease,
+		transform 0.06s ease,
+		box-shadow 0.16s ease,
+		background 0.16s ease;
+}
+
 .mu-upload {
-	padding: 0.625rem 1rem;
+	padding: 0.7rem 1rem;
 	border: none;
-	border-radius: var(--mu-radius);
 	background: var(--mu-accent);
 	color: var(--mu-accent-fg);
-	cursor: pointer;
+	text-decoration: none;
+}
+
+.mu-upload:hover {
+	filter: brightness(1.07);
+}
+
+.mu-upload:active {
+	transform: translateY(1px);
+}
+
+.mu-upload:focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 4px var(--mu-ring);
 }
 
 .mu-upload:disabled {
@@ -107,17 +213,260 @@
 	cursor: not-allowed;
 }
 
-.mu-progress {
+.mu-ghost {
+	padding: 0.7rem 1rem;
+	border: var(--mu-border);
+	background: transparent;
+	color: var(--mu-fg);
+}
+
+.mu-ghost:hover {
+	background: var(--mu-surface-2);
+}
+
+.mu-remove {
+	margin-left: auto;
+	padding: 0.35rem 0.7rem;
+	border: var(--mu-border);
+	background: transparent;
+	color: var(--mu-muted);
+	font-weight: 500;
+	font-size: 0.8125rem;
+}
+
+.mu-remove:hover:not(:disabled) {
+	color: var(--mu-error);
+	border-color: var(--mu-error);
+}
+
+.mu-remove:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+/* ----- Progress stepper ----- */
+.mu-stepper {
+	list-style: none;
+	margin: 0;
+	padding: 0.25rem 0;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1.25rem;
+}
+
+.mu-step {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.35rem;
+	color: var(--mu-muted);
+	font-size: 0.75rem;
+}
+
+.mu-step-dot {
+	display: grid;
+	place-items: center;
+	width: 1.75rem;
+	height: 1.75rem;
+	border-radius: 50%;
+	border: 2px solid var(--mu-border-color-r);
+	background: var(--mu-surface);
+	font-size: 0.8125rem;
+	font-weight: 650;
+	transition:
+		border-color 0.2s ease,
+		background 0.2s ease,
+		color 0.2s ease;
+}
+
+/* Current step: amber and pulsing. */
+.mu-step[data-state="active"] {
+	color: var(--mu-warning);
+	font-weight: 600;
+}
+
+.mu-step[data-state="active"] .mu-step-dot {
+	border-color: var(--mu-warning);
+	color: var(--mu-warning);
+	animation: mu-pulse 1.4s ease-out infinite;
+}
+
+/* Completed step: solid green. */
+.mu-step[data-state="done"] {
+	color: var(--mu-success);
+}
+
+.mu-step[data-state="done"] .mu-step-dot {
+	border-color: var(--mu-success);
+	background: var(--mu-success);
+	color: #fff;
+}
+
+@keyframes mu-pulse {
+	0% {
+		box-shadow: 0 0 0 0 color-mix(in srgb, var(--mu-warning) 55%, transparent);
+	}
+	70% {
+		box-shadow: 0 0 0 8px transparent;
+	}
+	100% {
+		box-shadow: 0 0 0 0 transparent;
+	}
+}
+
+/* ----- Error ----- */
+.mu-error {
+	display: flex;
+	flex-direction: column;
+	gap: 0.125rem;
+	padding: 0.65rem 0.85rem;
+	border-radius: var(--mu-radius-sm);
+	background: color-mix(in srgb, var(--mu-error) 12%, transparent);
+	color: var(--mu-error);
+	font-size: 0.875rem;
+}
+
+/* ----- Upload result ----- */
+.mu-result {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+	padding: 0.85rem 1rem;
+	border-radius: var(--mu-radius);
+	border: 1px solid color-mix(in srgb, var(--mu-success) 35%, transparent);
+	background: color-mix(in srgb, var(--mu-success) 9%, transparent);
+	animation: mu-fade-in 0.25s ease;
+}
+
+.mu-result-head {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.mu-result-badge {
+	display: grid;
+	place-items: center;
+	width: 1.4rem;
+	height: 1.4rem;
+	border-radius: 50%;
+	background: var(--mu-success);
+	color: #fff;
+	font-size: 0.85rem;
+	font-weight: 700;
+}
+
+.mu-result-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.mu-result-id {
+	color: var(--mu-muted);
+	font-size: 0.75rem;
+	word-break: break-all;
+}
+
+.mu-result-note {
+	color: var(--mu-muted);
+	font-size: 0.8125rem;
+}
+
+/* ----- Downloader view ----- */
+.mu-view {
+	gap: 1rem;
+	padding: 1.1rem;
+	border: var(--mu-border);
+	border-radius: var(--mu-radius);
+	background: var(--mu-surface);
+}
+
+.mu-view-head {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+}
+
+.mu-view-name {
+	word-break: break-all;
+	font-size: 1.05rem;
+}
+
+.mu-view-body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--mu-gap);
+}
+
+.mu-view-img {
+	max-width: 100%;
+	border-radius: var(--mu-radius-sm);
+	border: var(--mu-border);
+}
+
+.mu-view-state {
+	color: var(--mu-muted);
+}
+
+/* ----- Allowlist members ----- */
+.mu-members-add {
+	display: flex;
+	gap: 0.5rem;
+}
+
+.mu-members-add .mu-input {
+	flex: 1;
+}
+
+.mu-members-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+}
+
+.mu-members-row {
+	display: flex;
+	align-items: center;
+	gap: var(--mu-gap);
+	padding: 0.55rem 0.7rem;
+	border: var(--mu-border);
+	border-radius: var(--mu-radius-sm);
+	background: var(--mu-surface);
+}
+
+.mu-members-addr {
+	word-break: break-all;
+	font-size: 0.8125rem;
+}
+
+.mu-muted {
 	color: var(--mu-muted);
 	font-size: 0.875rem;
 }
 
-.mu-result {
-	display: flex;
-	align-items: center;
-	gap: var(--mu-gap);
-	padding: 0.5rem;
-	border: var(--mu-border);
-	border-radius: var(--mu-radius);
-	word-break: break-all;
+@keyframes mu-fade-in {
+	from {
+		opacity: 0;
+		transform: translateY(4px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.mu-dropzone,
+	.mu-upload,
+	.mu-ghost,
+	.mu-remove,
+	.mu-step-dot,
+	.mu-result {
+		transition: none;
+		animation: none;
+	}
 }

@@ -2,25 +2,22 @@
 
 All notable changes to `@arcadiasystems/morse-uploader` will be documented in this file. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.0] - 2026-06-05
+
+Built on `@arcadiasystems/morse-sdk` `>=0.4.2 <0.5.0` (0.4.0 failed every upload via a type-origin lookup bug; 0.4.1 broke `getRecipientFile` over the gRPC client via an `Option<ID>` parse bug; 0.4.2 is the floor): encrypted file sharing where each file (a `RecipientFile`) carries its own recipient set. `useMorseFiles` passes the full `morseConfig` output (including `recipientFileEventOriginPackageId`) to the upload helpers, which they need to match created objects by their type-origin package after a contract upgrade. An encrypted upload to N recipients is 2 wallet popups and the connected wallet is always a recipient (owner can always decrypt). The 0.4.0 SDK also ships pure event-reconciliation helpers for file listing; a listing UI is intentionally deferred here pending a production indexer (see README "Limitations and roadmap").
 
 ### Added
 
 - Project scaffold: ESM build (tsup), strict TypeScript, Biome, Vitest with a coverage gate, and CI.
-- Headless `useDropzone` hook + unstyled `Dropzone` primitive: drag-and-drop with a keyboard-operable, ARIA-labelled root button, a hidden file-input fallback, accept/multiple/disabled, and drag state. Prop-getters keep all markup and styling with the consumer (no inline styles).
-- Unstyled primitives: `EpochControl`, `EncryptToggle`, `CostEstimate`, `ProgressIndicator`, `FileList`, `WriteModeSettings` (controlled, presentational, `className` + `data-mu` hooks, injectable labels/formatters, no inline styles), plus `formatTokenAmount`.
-- Optional default skin: `MorseUploader` widget at `@arcadiasystems/morse-uploader/ui` plus a themeable stylesheet at `@arcadiasystems/morse-uploader/styles.css` (CSS variables `--mu-*`, `mu-*` classes). Assembles the hooks and primitives into a working uploader; all logic stays in the hooks.
-- `useMorseFiles` + `listUserFiles` / `listCollectionFiles` / `listOwnedFiles`: list a user's files, scoped to a collection or to all publications an address owns. The provider context now accepts an optional `reader` and `address`.
-- Expiry toolkit: `computeExpiry` (pure end-epoch to wall-clock), plus `fetchEpochSchedule` and `fetchBlobEndEpoch` resolvers over a structural Walrus client surface. Byte size and expiry are not on-chain on an entry, so resolve expiry separately.
-- `MorseUploaderProvider` + `useMorseUploaderContext`: dependency-injection context for the injected SDK deps (config, walrus adapter, optional wallet adapter) and upload defaults (epochs, target, share-link options). The host owns wallet connection.
-- `useMorseUploader`: hook to upload a single file with status, progress phase, result, error, and a computed share link; composes `uploadFile` and `buildShareUrl`.
-- `computeShareUrl` and `DEFAULT_EPOCHS` helpers.
-- Optional `WalletStandardAdapter` helper (separate entry `@arcadiasystems/morse-uploader/wallet-standard`): a browser `WalletAdapter` backed by a wallet sign-and-execute callback, so consumers do not hand-copy it. Depends only on morse-sdk and @mysten/sui (no dapp-kit); wallet-connection wiring stays in the host app.
-- Decryption (Seal): `useDecryptedBlob` hook + core `decryptFile`. Reads the ciphertext, creates a SessionKey from the injected signer/client/address, and decrypts; re-signs once and retries on a `session-expired` SealError. The provider context accepts optional `walrusRead`, `signer`, and `client`. Adds the `DEFAULT_SESSION_TTL_MIN` constant.
-- Per-epoch cost estimate: `useEpochCostEstimate` hook + core `estimateEpochCost` / `estimateStorageCost`. WAL cost comes from `WalrusClient.storageCost` (recomputes live as epochs or the encrypt toggle change); SUI gas is an optional caller-supplied figure, since the publish PTB cannot be built before upload. The provider context accepts an optional `walrusClient`. Adds `DEFAULT_ENCRYPTION_OVERHEAD_BYTES`.
-- Encryption on upload (Seal): set `encrypt: true` (with a target and a seal adapter) to publish an encrypted entry. Uses `addEncryptedEntryFromBytes` on flow-capable adapters, or client-side `seal.encrypt` then `uploadBlob` then `addEncryptedEntry` on a custom publisher. `EntryUploadResult` now reports `encrypted` and the bound `sealId`. The provider context accepts an optional `seal`.
-- `uploadFile`: core upload orchestrator. Simple blob mode (no target), plus Morse-entry mode in both the direct flow-capable path (`addEntryFromBytes`) and the custom-publisher two-step path (`uploadBlob` + `addEntry`), with forwarded or synthesized progress phases.
-- `buildShareUrl`: build a shareable link for an uploaded blob from an app URL (with an aggregator fallback).
-- `formatBytes`: human-readable byte formatting.
-- `resolveOrigin`: SSR-safe browser origin lookup.
+- `useMorseFiles`: setup hook that builds the SDK handles (Sui client, `WalletStandardAdapter`, `WalletStandardSigner`, Walrus read/write adapters, Seal adapter, `RpcRecipientFilesReader`) from a connected wallet, plus `MorseFilesProvider` / `useMorseFilesContext` to inject them. Accepts an optional `suiClient` (a `SuiGrpcClient`, e.g. on a dedicated RPC) for reads/builds; the `WalletStandardAdapter` also backfills created-object types via `getObject` when the receipt omits them.
+- `useFileUpload`: upload one file, public or encrypted for a recipient set. Reports the upload phase stepper and returns `{ fileId, blobId, encrypted, sealIdPrefix, sealNonce, shareLink }`.
+- `useFileDownload` + `useFileDecrypt`: load a file's metadata, then read (public) or decrypt (recipient, one reusable Seal SessionKey) the bytes with the correct filename and MIME type.
+- `useRecipientFile`: load a `RecipientFile`'s on-chain metadata (name, contentType, size, members, blobId).
+- `useStorageCostEstimate` + `estimateStorageUsd`: USD storage-cost estimate using Walrus predictable pricing ($0.023/GB/month) and the network's nominal epoch length.
+- Share links: `buildShareLink` / `parseShareLink` carry the file id and Seal material (prefix + nonce) in the URL fragment (not a secret; decryption is gated by the file's recipient set).
+- Optional styled components at `@arcadiasystems/morse-uploader/ui`: `MorseFileUploader` (driven by `encrypt` + `recipients` props), `MorseFileDownloader`, plus a themeable stylesheet at `@arcadiasystems/morse-uploader/styles.css` (`--mu-*` variables, `mu-*` classes). Components are presentational; all logic lives in the hooks.
+- Headless `useDropzone` hook: drag-and-drop file selection via prop-getters (keyboard-operable, ARIA-labelled, drag state), no inline styles.
+- Headless `useClipboard` hook: copy text and expose a `copied` flag that resets after a delay, powering the uploader's "Copy link" button.
+- Optional `WalletStandardAdapter` helper (separate entry `@arcadiasystems/morse-uploader/wallet-standard`): a browser `WalletAdapter` backed by a wallet sign-and-execute callback. Depends only on morse-sdk and @mysten/sui.
+- Utilities: `bytesToHex`, `hexToBytes`, `formatBytes`, `formatUsd`, `isPreviewableImage`, `triggerDownload`, `resolveOrigin`, `epochDurationMs`, `uploadPhases`, `uploadPhaseLabel`, and the `DEFAULT_ENCRYPTION_OVERHEAD_BYTES` constant.
 - Contribution, security, and code-of-conduct docs for public collaboration.

@@ -1,7 +1,11 @@
 import {
+	type ObjectReader,
 	type TransactionExecutor,
 	TransportError,
 } from "@arcadiasystems/morse-sdk";
+
+type AdapterClient = TransactionExecutor & ObjectReader;
+
 import type { Transaction } from "@mysten/sui/transactions";
 import { describe, expect, it, vi } from "vitest";
 import { WalletStandardAdapter } from "./wallet-standard-adapter.js";
@@ -31,12 +35,13 @@ const failed = {
 	FailedTransaction: { effects: { status: { error: { message: "boom" } } } },
 };
 
-function makeClient(over: Partial<TransactionExecutor>): TransactionExecutor {
+function makeClient(over: Partial<AdapterClient>): AdapterClient {
 	return {
 		waitForTransaction: vi.fn(),
 		simulateTransaction: vi.fn(),
+		getObject: vi.fn(),
 		...over,
-	} as unknown as TransactionExecutor;
+	} as unknown as AdapterClient;
 }
 
 describe("WalletStandardAdapter.signAndExecuteTransaction", () => {
@@ -51,6 +56,44 @@ describe("WalletStandardAdapter.signAndExecuteTransaction", () => {
 		expect(receipt.digest).toBe("0xdigest");
 		expect(receipt.gasUsedMist).toBe(12n);
 		expect(receipt.createdObjects).toHaveLength(1);
+	});
+
+	it("backfills a created-object type missing from the receipt via getObject", async () => {
+		const finalizedNoTypes = {
+			$kind: "Transaction",
+			Transaction: {
+				digest: "0xdigest",
+				effects: {
+					gasUsed: {
+						computationCost: "10",
+						storageCost: "5",
+						storageRebate: "3",
+					},
+					changedObjects: [{ idOperation: "Created", objectId: objId }],
+				},
+				objectTypes: {},
+			},
+		};
+		const getObject = vi
+			.fn()
+			.mockResolvedValue({ object: { objectId: objId, type: "0xpkg::m::T" } });
+		const client = makeClient({
+			waitForTransaction: vi.fn().mockResolvedValue(finalizedNoTypes),
+			getObject,
+		});
+		const adapter = new WalletStandardAdapter(
+			address,
+			vi.fn().mockResolvedValue({ digest: "0xdigest" }),
+			client,
+		);
+
+		const receipt = await adapter.signAndExecuteTransaction(makeTx());
+		expect(getObject).toHaveBeenCalledWith(
+			expect.objectContaining({ objectId: objId }),
+		);
+		expect(receipt.createdObjects).toEqual([
+			{ objectId: objId, objectType: "0xpkg::m::T" },
+		]);
 	});
 
 	it("wraps a wallet signing error as TransportError", async () => {

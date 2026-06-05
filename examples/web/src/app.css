@@ -9,6 +9,7 @@
 	--accent-fg: #ffffff;
 	--accent-weak: #eef2ff;
 	--ok: #16a34a;
+	--warn: #ca8a04;
 	--danger: #dc2626;
 	--radius: 14px;
 	--shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
@@ -26,6 +27,7 @@
 	--accent-fg: #0b0b0f;
 	--accent-weak: #1e1b3a;
 	--ok: #4ade80;
+	--warn: #facc15;
 	--danger: #f87171;
 	--shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 30px rgba(0, 0, 0, 0.5);
 	color-scheme: dark;
@@ -154,137 +156,6 @@ body {
 	text-align: center;
 	padding: 2.5rem 1.25rem;
 }
-
-.dz {
-	display: grid;
-	place-items: center;
-	padding: 2rem 1rem;
-	border: 1.5px dashed var(--border);
-	border-radius: var(--radius);
-	background: var(--surface-2);
-	cursor: pointer;
-	outline: none;
-	transition: border-color 0.15s ease, background 0.15s ease;
-}
-
-.dz:hover,
-.dz:focus-visible {
-	border-color: var(--accent);
-}
-
-.dz[data-dragging="true"] {
-	border-color: var(--accent);
-	background: var(--accent-weak);
-}
-
-.dz-inner {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 0.35rem;
-	text-align: center;
-}
-
-.dz-icon {
-	color: var(--accent);
-}
-
-.dz-title {
-	margin: 0;
-	font-weight: 600;
-}
-
-.dz-sub {
-	margin: 0;
-	font-size: 0.85rem;
-}
-
-.files {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-}
-
-.file {
-	display: flex;
-	align-items: center;
-	gap: 0.6rem;
-	padding: 0.6rem 0.75rem;
-	border: 1px solid var(--border);
-	border-radius: 10px;
-	background: var(--surface-2);
-}
-
-.file-name {
-	font-weight: 500;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-.file-meta {
-	font-size: 0.85rem;
-}
-
-.file .icon-btn {
-	margin-left: auto;
-}
-
-.field {
-	display: flex;
-	flex-direction: column;
-	gap: 0.6rem;
-}
-
-.field-head {
-	display: flex;
-	align-items: baseline;
-	justify-content: space-between;
-	gap: 0.75rem;
-	font-size: 0.9rem;
-}
-
-.field-head label {
-	font-weight: 600;
-}
-
-.field-head .muted {
-	font-size: 0.8rem;
-}
-
-.date-row {
-	display: flex;
-	align-items: center;
-	gap: 0.6rem;
-	padding: 0.55rem 0.75rem;
-	border: 1px solid var(--border);
-	border-radius: 10px;
-	background: var(--surface-2);
-}
-
-.date {
-	flex: 1;
-	border: none;
-	background: transparent;
-	color: var(--text);
-	font: inherit;
-	accent-color: var(--accent);
-	outline: none;
-}
-
-.date::-webkit-calendar-picker-indicator {
-	cursor: pointer;
-	opacity: 0.7;
-}
-
-.presets {
-	display: flex;
-	gap: 0.4rem;
-}
-
 .chip {
 	padding: 0.25rem 0.7rem;
 	border: 1px solid var(--border);
@@ -301,42 +172,6 @@ body {
 	color: var(--accent);
 	font-weight: 600;
 }
-
-.cost {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-	font-size: 0.9rem;
-	padding: 0.6rem 0.75rem;
-	border-radius: 10px;
-	background: var(--surface-2);
-}
-
-.primary {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: 0.5rem;
-	padding: 0.75rem 1rem;
-	border: none;
-	border-radius: 10px;
-	background: var(--accent);
-	color: var(--accent-fg);
-	font-weight: 600;
-	font-size: 0.95rem;
-	cursor: pointer;
-	transition: filter 0.15s ease;
-}
-
-.primary:hover:not(:disabled) {
-	filter: brightness(1.05);
-}
-
-.primary:disabled {
-	opacity: 0.5;
-	cursor: not-allowed;
-}
-
 .icon-btn {
 	display: inline-grid;
 	place-items: center;
@@ -354,63 +189,10 @@ body {
 .icon-btn:hover {
 	background: var(--surface-2);
 }
-
-.result {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-	padding: 0.6rem 0.75rem;
-	border: 1px solid var(--border);
-	border-radius: 10px;
-	background: var(--surface-2);
-}
-
-.cid {
-	flex: 1;
-	font-size: 0.8rem;
-	word-break: break-all;
-	color: var(--muted);
-}
-
-.ok {
-	color: var(--ok);
-}
-
-.error {
-	color: var(--danger);
-	font-size: 0.9rem;
-	margin: 0;
-}
-
 .note {
 	margin: 0;
 	font-size: 0.8rem;
 }
-
-.view {
-	align-items: stretch;
-	text-align: center;
-}
-
-.view-cid {
-	text-align: center;
-}
-
-.view-state {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 0.6rem;
-	padding: 1rem 0;
-}
-
-.view-img {
-	max-width: 100%;
-	max-height: 22rem;
-	border-radius: var(--radius);
-	border: 1px solid var(--border);
-}
-
 .foot {
 	max-width: 40rem;
 	margin: 0 auto;
@@ -435,5 +217,499 @@ body {
 @keyframes mu-spin {
 	to {
 		transform: rotate(360deg);
+	}
+}
+
+/* ----- Files-flow studio (0.2.0 example) ----- */
+
+/* Map the package component variables onto this app's theme so the
+ * MorseFileUploader / MorseFileDownloader / AllowlistMembers components inherit
+ * light/dark automatically. */
+.page {
+	--mu-border-color: var(--border);
+	--mu-fg-color: var(--text);
+	--mu-muted-color: var(--muted);
+	--mu-accent-color: var(--accent);
+	--mu-accent-fg-color: var(--accent-fg);
+	--mu-surface-color: var(--surface);
+	--mu-surface-2-color: var(--surface-2);
+	--mu-drag-color: var(--accent-weak);
+	--mu-error-color: var(--danger);
+	--mu-success-color: var(--ok);
+	--mu-warning-color: var(--warn);
+}
+
+.studio {
+	display: flex;
+	flex-direction: column;
+	gap: 1.25rem;
+}
+
+.card-title {
+	margin: 0;
+	font-size: 1rem;
+	font-weight: 650;
+}
+
+.chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.create-row {
+	display: flex;
+	gap: 0.5rem;
+}
+
+.text-input {
+	flex: 1;
+	padding: 0.55rem 0.7rem;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--surface);
+	color: var(--text);
+	font: inherit;
+}
+
+.btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.55rem 0.9rem;
+	border: none;
+	border-radius: var(--radius);
+	background: var(--accent);
+	color: var(--accent-fg);
+	cursor: pointer;
+	font: inherit;
+}
+
+.btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.btn-ghost {
+	align-self: flex-start;
+	background: transparent;
+	border: 1px solid var(--border);
+	color: var(--text);
+}
+
+/* ----- Showcase polish (0.2.0 example) ----- */
+
+.hero-wrap {
+	margin-bottom: 1.75rem;
+	animation: ex-fade-in 0.3s ease;
+}
+
+.hero {
+	font-size: clamp(1.9rem, 4vw, 2.6rem);
+	line-height: 1.1;
+	letter-spacing: -0.025em;
+	margin: 0 0 0.6rem;
+	font-weight: 720;
+}
+
+.hero-accent {
+	background: linear-gradient(90deg, var(--accent), #a855f7);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+
+.pills {
+	list-style: none;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin: 1rem 0 0;
+	padding: 0;
+}
+
+.pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.35rem 0.7rem;
+	border: 1px solid var(--border);
+	border-radius: 999px;
+	background: var(--surface);
+	color: var(--muted);
+	font-size: 0.8rem;
+}
+
+.pill svg {
+	color: var(--accent);
+}
+
+.connect-card {
+	flex-direction: row;
+	align-items: center;
+	gap: 1rem;
+}
+
+.connect-icon {
+	display: grid;
+	place-items: center;
+	width: 2.75rem;
+	height: 2.75rem;
+	flex-shrink: 0;
+	border-radius: 12px;
+	background: var(--accent-weak);
+	color: var(--accent);
+}
+
+.connect-card p {
+	margin: 0.15rem 0 0;
+}
+
+/* Cards get a touch more presence and a hover lift. */
+.card {
+	padding: 1.4rem;
+	transition: border-color 0.18s ease, transform 0.18s ease,
+		box-shadow 0.18s ease;
+}
+
+.studio .card:hover {
+	border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+}
+
+.step-head {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+}
+
+.step-badge {
+	display: grid;
+	place-items: center;
+	width: 1.65rem;
+	height: 1.65rem;
+	flex-shrink: 0;
+	border-radius: 50%;
+	background: var(--accent);
+	color: var(--accent-fg);
+	font-size: 0.85rem;
+	font-weight: 700;
+}
+
+.card-title {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+}
+
+.card-title svg {
+	color: var(--accent);
+}
+
+/* Chips with icons + selected state. */
+.chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	transition: border-color 0.15s ease, background 0.15s ease,
+		color 0.15s ease;
+}
+
+.chip:hover {
+	border-color: var(--accent);
+	color: var(--text);
+}
+
+@keyframes ex-fade-in {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.hero-wrap,
+	.card,
+	.chip {
+		animation: none;
+		transition: none;
+	}
+}
+
+/* ----- Encrypt toggle bar + reveal ----- */
+.toggle-bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 1rem 1.25rem;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--surface);
+	box-shadow: var(--shadow);
+}
+
+.toggle-copy strong {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+}
+
+.toggle-copy strong svg {
+	color: var(--accent);
+}
+
+.toggle-copy p {
+	margin: 0.2rem 0 0;
+	font-size: 0.85rem;
+}
+
+.switch {
+	position: relative;
+	flex-shrink: 0;
+	width: 46px;
+	height: 26px;
+	border: none;
+	border-radius: 999px;
+	background: var(--surface-2);
+	box-shadow: inset 0 0 0 1px var(--border);
+	cursor: pointer;
+	transition: background 0.2s ease;
+}
+
+.switch-on {
+	background: var(--accent);
+	box-shadow: none;
+}
+
+.switch-knob {
+	position: absolute;
+	top: 3px;
+	left: 3px;
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	background: #fff;
+	transition: transform 0.2s ease;
+}
+
+.switch-on .switch-knob {
+	transform: translateX(20px);
+}
+
+.reveal {
+	animation: ex-reveal 0.28s ease;
+}
+
+@keyframes ex-reveal {
+	from {
+		opacity: 0;
+		transform: translateY(-6px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.switch,
+	.switch-knob,
+	.reveal {
+		transition: none;
+		animation: none;
+	}
+}
+
+/* ----- Link button + How-it-works dialog ----- */
+.link-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3rem;
+	padding: 0;
+	border: none;
+	background: none;
+	color: var(--accent);
+	font: inherit;
+	font-size: 0.85rem;
+	cursor: pointer;
+}
+
+.link-btn:hover {
+	text-decoration: underline;
+}
+
+.modal-backdrop {
+	position: fixed;
+	inset: 0;
+	z-index: 50;
+	display: grid;
+	place-items: center;
+	padding: 1.25rem;
+	background: rgba(0, 0, 0, 0.55);
+	backdrop-filter: blur(2px);
+	animation: ex-fade-in 0.18s ease;
+}
+
+.modal {
+	width: 100%;
+	max-width: 34rem;
+	max-height: 85vh;
+	overflow-y: auto;
+	padding: 1.5rem;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--surface);
+	box-shadow: var(--shadow);
+	animation: ex-reveal 0.2s ease;
+}
+
+.modal-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-bottom: 0.5rem;
+}
+
+.modal-title {
+	margin: 0;
+	font-size: 1.2rem;
+}
+
+.modal-lede {
+	margin: 0 0 1.1rem;
+	font-size: 0.9rem;
+}
+
+.how-steps {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.how-step {
+	display: flex;
+	gap: 0.8rem;
+}
+
+.how-step-icon {
+	display: grid;
+	place-items: center;
+	width: 2.1rem;
+	height: 2.1rem;
+	flex-shrink: 0;
+	border-radius: 10px;
+	background: var(--accent-weak);
+	color: var(--accent);
+}
+
+.how-step-body {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+}
+
+.how-step-body p {
+	margin: 0;
+	font-size: 0.875rem;
+}
+
+.how-step-head {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	flex-wrap: wrap;
+}
+
+.how-step-sign {
+	padding: 0.1rem 0.5rem;
+	border-radius: 999px;
+	background: var(--surface-2);
+	color: var(--muted);
+	font-size: 0.7rem;
+	font-weight: 600;
+}
+
+.modal .note {
+	margin: 1.1rem 0 0;
+	padding-top: 0.9rem;
+	border-top: 1px solid var(--border);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.modal-backdrop,
+	.modal {
+		animation: none;
+	}
+}
+
+.chip-x {
+	display: inline-flex;
+	align-items: center;
+	margin-left: 0.35rem;
+	padding: 0;
+	border: none;
+	background: none;
+	color: inherit;
+	cursor: pointer;
+	opacity: 0.7;
+}
+
+.chip-x:hover {
+	opacity: 1;
+}
+
+/* ----- Mobile responsiveness ----- */
+@media (max-width: 640px) {
+	.topbar {
+		flex-wrap: wrap;
+		gap: 0.6rem;
+		padding: 0.75rem 1rem;
+	}
+
+	.actions {
+		flex-wrap: wrap;
+		gap: 0.4rem;
+	}
+
+	.content {
+		padding: 1.5rem 1rem;
+	}
+
+	.card {
+		padding: 1.1rem;
+	}
+
+	.toggle-bar {
+		padding: 0.9rem 1rem;
+	}
+
+	.create-row {
+		flex-wrap: wrap;
+	}
+
+	.create-row .text-input {
+		flex: 1 1 100%;
+	}
+
+	.modal {
+		padding: 1.15rem;
+	}
+
+	.foot {
+		padding: 1.25rem 1rem;
+	}
+}
+
+@media (max-width: 380px) {
+	.brand strong {
+		display: none;
 	}
 }

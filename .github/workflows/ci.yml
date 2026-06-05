@@ -27,3 +27,5 @@ jobs:
         run: bun run build
       - name: Check published exports
         run: bun run check:exports
+      - name: Build example (ensures the demo stays buildable)
+        run: bun run build:example

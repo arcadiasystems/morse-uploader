@@ -2,10 +2,20 @@ export type MorseNetwork = "testnet" | "mainnet";
 
 export const DEFAULT_NETWORK: MorseNetwork = "testnet";
 
-// morse-sdk 0.1.x is testnet only; morseConfig({ network: "mainnet" }) throws.
+// morse-sdk 0.4.0 is testnet only; morseConfig({ network: "mainnet" }) throws.
 // Flip this once the SDK ships mainnet (and add a mainnet relay below + mainnet
 // to the dapp-kit providers).
 export const MAINNET_ENABLED = false;
+
+// Optional dedicated RPC. The wallet (dapp-kit, JSON-RPC) and the SDK (gRPC)
+// should resolve the same node, or object versions can skew and the certify
+// step fails on the public load-balanced endpoint. Set both to one node (a
+// dedicated provider or a local fullnode) for reliable uploads. Leave unset to
+// use the public testnet RPC. See the example README.
+export const SUI_JSONRPC_URL: string | undefined =
+	import.meta.env.VITE_SUI_JSONRPC_URL || undefined;
+export const SUI_GRPC_URL: string | undefined =
+	import.meta.env.VITE_SUI_GRPC_URL || undefined;
 
 // Direct write mode: the user's wallet pays for and signs the upload (no
 // publisher). In a browser the write goes through Walrus's upload relay, which

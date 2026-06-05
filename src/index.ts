@@ -1,99 +1,71 @@
 /**
  * Public entry point for @arcadiasystems/morse-uploader.
  *
- * Phase 0 helpers plus the Phase 1 upload core, context/provider, and the
- * `useMorseUploader` hook. The headless primitives and the optional default
- * skin (`./ui`) land in later phases. See the README.
+ * Headless React hooks for the morse-sdk 0.4.0 RecipientFile flow: setup
+ * (`useMorseFiles`), upload/download, Seal decrypt, plus the share-link and
+ * USD-cost helpers. The optional styled components live in the `./ui` entry.
+ * See the README.
  */
 
 export { DEFAULT_ENCRYPTION_OVERHEAD_BYTES } from "./constants/default-encryption-overhead-bytes.js";
-export { DEFAULT_EPOCHS } from "./constants/default-epochs.js";
-export { DEFAULT_SESSION_TTL_MIN } from "./constants/default-session-ttl-min.js";
-export { MorseUploaderContext } from "./context/morse-uploader-context.js";
+export { buildShareLink } from "./files/build-share-link.js";
+export { epochDurationMs } from "./files/epoch-duration-ms.js";
+export { estimateStorageUsd } from "./files/estimate-storage-usd.js";
 export {
-	MorseUploaderProvider,
-	type MorseUploaderProviderProps,
-} from "./context/morse-uploader-provider.js";
-export { useMorseUploaderContext } from "./context/use-morse-uploader-context.js";
-export { buildShareUrl } from "./core/build-share-url.js";
-export { computeExpiry } from "./core/compute-expiry.js";
-export { decryptFile } from "./core/decrypt-file.js";
-export { estimateEpochCost } from "./core/estimate-epoch-cost.js";
-export { estimateStorageCost } from "./core/estimate-storage-cost.js";
-export { fetchBlobEndEpoch } from "./core/fetch-blob-end-epoch.js";
-export { fetchEpochSchedule } from "./core/fetch-epoch-schedule.js";
-export { listCollectionFiles } from "./core/list-collection-files.js";
-export { listOwnedFiles } from "./core/list-owned-files.js";
-export { listUserFiles } from "./core/list-user-files.js";
-export { uploadFile } from "./core/upload-file.js";
-export { useDecryptedBlob } from "./hooks/use-decrypted-blob.js";
-export { useEpochCostEstimate } from "./hooks/use-epoch-cost-estimate.js";
-export { useMorseFiles } from "./hooks/use-morse-files.js";
-export { useMorseUploader } from "./hooks/use-morse-uploader.js";
-export { CostEstimate } from "./primitives/cost-estimate.js";
-export { Dropzone } from "./primitives/dropzone.js";
-export { EncryptToggle } from "./primitives/encrypt-toggle.js";
-export { EpochControl } from "./primitives/epoch-control.js";
-export { FileList } from "./primitives/file-list.js";
-export { ProgressIndicator } from "./primitives/progress-indicator.js";
-export { useDropzone } from "./primitives/use-dropzone.js";
-export { WriteModeSettings } from "./primitives/write-mode-settings.js";
+	MorseFilesProvider,
+	type MorseFilesProviderProps,
+} from "./files/morse-files-provider.js";
+export { parseShareLink } from "./files/parse-share-link.js";
 export type {
-	BlobUploadResult,
-	BuildShareUrlOptions,
-	CompletedUpload,
-	CostEstimateLabels,
-	CostEstimateProps,
-	CostStatus,
-	DecryptFileArgs,
-	DecryptFileDeps,
-	DecryptInput,
-	DecryptStatus,
-	DropzoneInputProps,
-	DropzoneProps,
-	DropzoneRenderState,
-	DropzoneRootProps,
-	EncryptToggleProps,
-	EntryUploadResult,
-	EpochControlProps,
-	EpochCostArgs,
-	EpochCostEstimate,
-	EpochSchedule,
-	FileExpiry,
-	FileListProps,
-	FilesStatus,
-	ListUserFilesOptions,
-	MorseFile,
-	MorseUploaderContextValue,
-	MorseUploaderDeps,
-	MorseUploaderOptions,
-	MorseUploaderTarget,
-	ProgressIndicatorProps,
-	ProgressPhase,
-	StorageCostEstimate,
-	UploadFileArgs,
-	UploadFileDeps,
-	UploadFileResult,
-	UploadInput,
-	UploadStatus,
-	UseDecryptedBlobResult,
-	UseDropzoneOptions,
-	UseDropzoneResult,
-	UseEpochCostEstimateOptions,
-	UseEpochCostEstimateResult,
+	BuildShareLinkArgs,
+	CompletedFileUpload,
+	FileDecryptInput,
+	FileDecryptStatus,
+	FileDownloadStatus,
+	FilePhase,
+	FileUploadInput,
+	FileUploadStatus,
+	LoadStatus,
+	MorseFileDownloaderProps,
+	MorseFilesHandles,
+	MorseFilesWalletCallbacks,
+	MorseFileUploaderProps,
+	ParsedShareLink,
+	SealMaterial,
+	SetupStatus,
+	UsdCostArgs,
+	UsdCostEstimate,
+	UseFileDecryptResult,
+	UseFileDownloadResult,
+	UseFileUploadResult,
 	UseMorseFilesOptions,
 	UseMorseFilesResult,
-	UseMorseUploaderResult,
-	WalrusBlobObjectSource,
-	WalrusEpochSource,
-	WalrusQuerySource,
-	WalrusStorageCostSource,
-	WriteMode,
-	WriteModeLabels,
-	WriteModeSettingsProps,
+	UseRecipientFileResult,
+	UseStorageCostEstimateOptions,
+	UseStorageCostEstimateResult,
+} from "./files/types.js";
+export { uploadPhaseLabel } from "./files/upload-phase-label.js";
+export { uploadPhases } from "./files/upload-phases.js";
+export { useFileDecrypt } from "./files/use-file-decrypt.js";
+export { useFileDownload } from "./files/use-file-download.js";
+export { useFileUpload } from "./files/use-file-upload.js";
+export { useMorseFiles } from "./files/use-morse-files.js";
+export { useMorseFilesContext } from "./files/use-morse-files-context.js";
+export { useRecipientFile } from "./files/use-recipient-file.js";
+export { useStorageCostEstimate } from "./files/use-storage-cost-estimate.js";
+export { useClipboard } from "./primitives/use-clipboard.js";
+export { useDropzone } from "./primitives/use-dropzone.js";
+export type {
+	DropzoneInputProps,
+	DropzoneRootProps,
+	UseClipboardResult,
+	UseDropzoneOptions,
+	UseDropzoneResult,
 } from "./types.js";
-export { computeShareUrl } from "./utils/compute-share-url.js";
-export { entryToFile } from "./utils/entry-to-file.js";
+export { bytesToHex } from "./utils/bytes-to-hex.js";
 export { formatBytes } from "./utils/format-bytes.js";
-export { formatTokenAmount } from "./utils/format-token-amount.js";
+export { formatUsd } from "./utils/format-usd.js";
+export { hexToBytes } from "./utils/hex-to-bytes.js";
+export { isPreviewableImage } from "./utils/is-previewable-image.js";
 export { resolveOrigin } from "./utils/resolve-origin.js";
+export { triggerDownload } from "./utils/trigger-download.js";
