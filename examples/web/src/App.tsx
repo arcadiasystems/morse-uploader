@@ -1,6 +1,10 @@
-import { ConnectButton, useCurrentAccount } from "@mysten/dapp-kit";
+import {
+	ConnectButton,
+	useCurrentAccount,
+	useSuiClientContext,
+} from "@mysten/dapp-kit";
 import { HelpCircle, KeyRound, ShieldCheck, Wallet } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Toaster } from "sonner";
 import { ConnectedApp } from "./components/ConnectedApp";
 import { HowItWorks } from "./components/HowItWorks";
@@ -17,11 +21,30 @@ import "./app.css";
 import "@arcadiasystems/morse-uploader/styles.css";
 
 export function App() {
-	const [network, setNetwork] = useState<MorseNetwork>(DEFAULT_NETWORK);
+	const route = useHashRoute();
+	// A share link names its network, and the file id resolves on that one only.
+	// Follow the link rather than whatever the switcher was last left on.
+	const [network, setNetwork] = useState<MorseNetwork>(
+		route?.network ?? DEFAULT_NETWORK,
+	);
+	const linkNetwork = route?.network ?? null;
+	useEffect(() => {
+		if (linkNetwork !== null) {
+			setNetwork(linkNetwork);
+		}
+	}, [linkNetwork]);
 	const [showHelp, setShowHelp] = useState(false);
 	const account = useCurrentAccount();
+	// dapp-kit keeps its own selected network, and it is the client that
+	// resolves coins and serializes the transaction for the wallet. Leaving it
+	// behind the switcher builds a mainnet transaction against the testnet node,
+	// where the mainnet WAL type has no coins ("Insufficient balance ...
+	// Available: 0" even with a funded wallet).
+	const { selectNetwork } = useSuiClientContext();
+	useEffect(() => {
+		selectNetwork(network);
+	}, [network, selectNetwork]);
 	const { theme, toggle } = useTheme();
-	const route = useHashRoute();
 
 	return (
 		<div className="page">

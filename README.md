@@ -118,6 +118,10 @@ All hooks must be used inside `MorseFilesProvider`.
 | `useDropzone(options)` | Generic headless drag-and-drop file selection (prop-getters). |
 | `useClipboard(resetMs?)` | Copy text and flag `copied` for a short window (for "Copy link" buttons). |
 
+### Rendering an upload error
+
+`uploadErrorMessage(error, network)` returns the SDK's `{ title, description, cause }` for any failure, with one rewrite: an insufficient-balance failure arrives as raw `@mysten/sui` text (a coin type, an address, two unscaled integers) that the SDK can only classify as a network problem. This restates it as "Not enough WAL", with the amounts in whole coins and the network's way of topping up. `MorseFileUploader` already uses it; call it directly if you render your own errors.
+
 ## How encryption works
 
 Each file is a **RecipientFile** that carries its own recipient set on chain (there is no separate allowlist object). You pass the recipients at upload time; the connected wallet is **auto-added**, so the owner can always decrypt. The upload helper encrypts under a random Seal identity and binds it to the file in a single transaction, so an encrypted upload to any number of recipients is just **2 wallet popups**. At decrypt time, Seal's key servers dry-run the file's recipient check on-chain; non-recipients cannot get the key.
@@ -126,12 +130,12 @@ Building the recipient list is entirely client-side (no signature per recipient)
 
 ## Share links
 
-`buildShareLink({ fileId, sealIdPrefix, sealNonce })` produces a `#/f/<fileId>?p=<hex>&n=<hex>` link. The fileId and Seal material live in the URL **fragment**, so they never reach a server log. The Seal material is not a secret: decryption is still gated by the file's recipient set. Parse it back on your download route:
+`buildShareLink({ fileId, network, sealIdPrefix, sealNonce })` produces a `#/f/<fileId>?net=<network>&p=<hex>&n=<hex>` link. Pass `network`: a file id resolves on one network only, so a link without it opens against whatever network the receiving app happens to be on and reports the file as missing. The fileId and Seal material live in the URL **fragment**, so they never reach a server log. The Seal material is not a secret: decryption is still gated by the file's recipient set. Parse it back on your download route:
 
 ```tsx
 import { parseShareLink } from "@arcadiasystems/morse-uploader";
 const parsed = parseShareLink(window.location.href);
-// { fileId, sealIdPrefix, sealNonce } | null  (prefix/nonce null for public files)
+// { fileId, network, sealIdPrefix, sealNonce } | null  (prefix/nonce null for public files)
 ```
 
 `null` means the link is not one of ours or is damaged. A link carrying only one of `p` / `n`, or either one in unparseable hex, is `null` too rather than a public file: reporting it as public would make the download path skip decrypt and hand the user raw ciphertext.
@@ -184,7 +188,8 @@ credential is not meant to be public.
 
 - **Listing a wallet's files needs an indexer (deferred).** A `RecipientFile` is a shared Sui object with no owner-indexable field, so there is no direct "list my files" query. morse-sdk ships pure reconciliation helpers (`reconcileRecipientFilesOwnedBy`, `reconcileRecipientFilesAccessibleBy`) that turn a raw event stream into the current file set, but it deliberately does not fetch events. A production listing requires a Sui event source (a dedicated indexer; `suix_queryEvents` has since been retired by public fullnodes, so an event source now means Sui GraphQL or a dedicated indexer). This package does not ship a listing UI yet for that reason; it is planned once an indexer is in place.
 - **Seal material is not on-chain.** The Seal identity needed to decrypt (prefix + nonce) is persisted out-of-band (in the share link, here). It is not recoverable from the chain or from an event listing, so a future indexer-backed list can surface encrypted files' metadata but cannot, by itself, decrypt them; decryption still requires the share-link material. Persist `sealIdPrefix`/`sealNonce` in your own store if you need list-and-open UX.
-- **RPC consistency (use a dedicated RPC).** The SDK builds/reads over a gRPC client while the wallet (dapp-kit) executes over its own JSON-RPC client. On the public, load-balanced `fullnode.testnet.sui.io`, those two requests can hit different backend nodes at different checkpoints, so the certify step occasionally fails with an object-version conflict ("needs to be rebuilt"). For reliable uploads, point both at a **dedicated RPC**: set dapp-kit's `SuiClientProvider` URL and pass a `SuiGrpcClient` on the matching endpoint via `useMorseFiles({ suiClient })`. This is an RPC-infrastructure property, not a bug in the package logic.
+- **dapp-kit needs a JSON-RPC endpoint that still exists.** This package talks gRPC, which the public fullnodes still serve. dapp-kit 1.0.6 talks JSON-RPC only, and Mysten's public fullnodes have retired it: the preflight answers without an `access-control-allow-origin` header, so a browser call fails with `TypeError: Failed to fetch` from `@mysten/sui/jsonRpc` while dapp-kit serializes the transaction, before the wallet opens. Point `SuiClientProvider` at an endpoint that still serves JSON-RPC (your own node, a provider, or a public one such as `https://sui-rpc.publicnode.com`). Nothing in this package changes; the failure is in the wallet layer.
+- **RPC consistency (use a dedicated RPC).** The SDK builds/reads over a gRPC client while the wallet (dapp-kit) executes over its own JSON-RPC client. When those are different nodes, they can sit at different checkpoints, so the certify step occasionally fails with an object-version conflict ("needs to be rebuilt"). For reliable uploads, point both at one **dedicated RPC**: set dapp-kit's `SuiClientProvider` URL and pass a `SuiGrpcClient` on the matching endpoint via `useMorseFiles({ suiClient })`. This is an RPC-infrastructure property, not a bug in the package logic.
 - **Mainnet works, but encrypted files there need your own Seal key servers.** Testnet pins an open allowlist, so `network: "testnet"` needs no setup. Mainnet pins none, because every mainnet Seal operator is commercial. Without `sealKeyServers`, `handles.seal` is `null`: unencrypted upload and download still work, and the encrypted hooks reject with a message saying so. See [Seal on mainnet](#seal-on-mainnet).
 - **Storage is a lease.** Walrus storage is capped at 53 epochs ahead and expires; this is not permanent storage.
 

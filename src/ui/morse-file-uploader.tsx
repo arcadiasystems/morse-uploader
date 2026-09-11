@@ -1,9 +1,10 @@
-import { formatUserMessage } from "@arcadiasystems/morse-sdk";
 import { type ReactElement, useState } from "react";
 import type { MorseFileUploaderProps } from "../files/types.js";
+import { uploadErrorMessage } from "../files/upload-error-message.js";
 import { uploadPhaseLabel } from "../files/upload-phase-label.js";
 import { uploadPhases } from "../files/upload-phases.js";
 import { useFileUpload } from "../files/use-file-upload.js";
+import { useMorseFilesContext } from "../files/use-morse-files-context.js";
 import { useStorageCostEstimate } from "../files/use-storage-cost-estimate.js";
 import { useClipboard } from "../primitives/use-clipboard.js";
 import { useDropzone } from "../primitives/use-dropzone.js";
@@ -37,6 +38,7 @@ export function MorseFileUploader(props: MorseFileUploaderProps): ReactElement {
 	const [epochs, setEpochs] = useState(defaultEpochs ?? DEFAULT_EPOCHS);
 	const upload = useFileUpload();
 	const clipboard = useClipboard();
+	const { network } = useMorseFilesContext();
 
 	const { estimate } = useStorageCostEstimate({
 		sizeBytes: file?.size ?? 0,
@@ -71,7 +73,7 @@ export function MorseFileUploader(props: MorseFileUploaderProps): ReactElement {
 	const phases = uploadPhases(encrypt);
 	const activeIndex = upload.phase === null ? -1 : phases.indexOf(upload.phase);
 	const errorMessage =
-		upload.error === null ? null : formatUserMessage(upload.error);
+		upload.error === null ? null : uploadErrorMessage(upload.error, network);
 
 	return (
 		<div className={`mu-uploader ${className ?? ""}`} data-mu="uploader">

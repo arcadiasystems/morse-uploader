@@ -49,9 +49,40 @@ describe("buildShareLink / parseShareLink", () => {
 		const parsed = parseShareLink("https://x.io/#/f/0xpublic");
 		expect(parsed).toEqual({
 			fileId: "0xpublic",
+			network: null,
 			sealIdPrefix: null,
 			sealNonce: null,
 		});
+	});
+
+	it("carries the network and round-trips it", () => {
+		const link = buildShareLink({
+			fileId: "0xabc",
+			network: "mainnet",
+			baseUrl: "https://x.io",
+		});
+		expect(link).toBe("https://x.io/#/f/0xabc?net=mainnet");
+		expect(parseShareLink(link)?.network).toBe("mainnet");
+	});
+
+	it("puts the network before the seal material", () => {
+		const link = buildShareLink({
+			fileId: "0xabc",
+			network: "testnet",
+			sealIdPrefix: new Uint8Array([1]),
+			sealNonce: new Uint8Array([2]),
+			baseUrl: "https://x.io",
+		});
+		expect(link).toBe("https://x.io/#/f/0xabc?net=testnet&p=01&n=02");
+		const parsed = parseShareLink(link);
+		expect(parsed?.network).toBe("testnet");
+		expect(parsed?.sealIdPrefix).toEqual(new Uint8Array([1]));
+	});
+
+	it("reads an unknown network as null rather than rejecting the link", () => {
+		const parsed = parseShareLink("https://x.io/#/f/0xabc?net=devnet");
+		expect(parsed?.fileId).toBe("0xabc");
+		expect(parsed?.network).toBeNull();
 	});
 
 	it("returns null for an unrelated fragment", () => {

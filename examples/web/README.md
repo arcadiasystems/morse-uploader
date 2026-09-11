@@ -41,6 +41,14 @@ cd examples/web && bun run dev
 For an active library-editing loop, run `bun run dev` (tsup watch) at the root
 in one terminal and the command above in another.
 
+If the page is blank and the console says the morse-sdk module "does not
+provide an export named ...", Vite is serving a stale prebundle of the SDK from
+before the upgrade. Clear it and restart:
+
+```sh
+rm -rf node_modules/.vite && bun run dev
+```
+
 ## Build
 
 ```sh
@@ -49,11 +57,20 @@ bun run build:example          # builds the library, then the app -> examples/we
 
 ## RPC (recommended for reliable uploads)
 
-The wallet (dapp-kit) talks **JSON-RPC** and morse-sdk talks **gRPC**. On the
-public load-balanced `fullnode.testnet.sui.io`, those two requests can hit
-different backend nodes at different checkpoints, so the on-chain certify step
-occasionally fails with an object-version conflict. Point both at **one node**
-(a dedicated RPC provider or a local fullnode) to make uploads reliable.
+The wallet (dapp-kit) talks **JSON-RPC** and morse-sdk talks **gRPC**.
+
+Mysten's public fullnodes have **retired JSON-RPC**, and their preflight now
+answers without an `access-control-allow-origin` header, so from a browser a
+dapp-kit call fails with `TypeError: Failed to fetch` while it serializes the
+transaction, before the wallet ever opens. The app therefore defaults to a
+third-party endpoint that still serves JSON-RPC with CORS
+(`sui-rpc.publicnode.com`, and its testnet sibling). gRPC on the public
+fullnodes is unaffected, so morse-sdk still uses it.
+
+That split means the two requests resolve on different nodes at different
+checkpoints, so the on-chain certify step can fail with an object-version
+conflict. Point both at **one node** (a dedicated RPC provider or a local
+fullnode) to make uploads reliable.
 
 Copy `.env.example` to `.env` and set both to the same node:
 
@@ -65,7 +82,7 @@ VITE_SUI_GRPC_URL=https://your-node/grpc
 VITE_SEAL_API_KEY=your-seal-credential
 ```
 
-Leave them unset to use the public RPC (fine for a quick try; may intermittently
+Leave them unset to use the defaults (fine for a quick try; may intermittently
 hit the version conflict).
 
 ## Deploy to Vercel

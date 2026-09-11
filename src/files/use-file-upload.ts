@@ -27,7 +27,8 @@ const FALLBACK_CONTENT_TYPE = "application/octet-stream";
  * material (encrypted only), and a share link.
  */
 export function useFileUpload(): UseFileUploadResult {
-	const { adapter, config, walrusWrite, seal } = useMorseFilesContext();
+	const { adapter, config, walrusWrite, seal, network } =
+		useMorseFilesContext();
 	const [status, setStatus] = useState<FileUploadStatus>("idle");
 	const [phase, setPhase] = useState<FilePhase | null>(null);
 	const [data, setData] = useState<CompletedFileUpload | null>(null);
@@ -84,6 +85,7 @@ export function useFileUpload(): UseFileUploadResult {
 						sealNonce: result.sealNonce,
 						shareLink: buildShareLink({
 							fileId: result.fileId,
+							network,
 							sealIdPrefix: result.sealIdPrefix,
 							sealNonce: result.sealNonce,
 						}),
@@ -104,7 +106,7 @@ export function useFileUpload(): UseFileUploadResult {
 						encrypted: false,
 						sealIdPrefix: null,
 						sealNonce: null,
-						shareLink: buildShareLink({ fileId: result.fileId }),
+						shareLink: buildShareLink({ fileId: result.fileId, network }),
 					};
 				}
 				setData(completed);
@@ -116,7 +118,7 @@ export function useFileUpload(): UseFileUploadResult {
 				throw err;
 			}
 		},
-		[adapter, config, walrusWrite, seal],
+		[adapter, config, walrusWrite, seal, network],
 	);
 
 	return { status, phase, data, error, upload, reset };

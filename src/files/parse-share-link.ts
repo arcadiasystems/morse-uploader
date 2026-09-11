@@ -5,10 +5,11 @@ import type { ParsedShareLink } from "./types.js";
 const FRAGMENT_RE = /^\/?f\/([^?]+)(?:\?(.*))?$/;
 
 /**
- * Parse a share link produced by {@link buildShareLink}. Reads the fileId and
- * optional Seal material (prefix + nonce) from the URL fragment. Returns null
- * when the fragment does not match the expected shape; `sealIdPrefix`/`sealNonce`
- * are null for a public file (no seal material in the link).
+ * Parse a share link produced by {@link buildShareLink}. Reads the fileId, the
+ * network, and the optional Seal material (prefix + nonce) from the URL
+ * fragment. Returns null when the fragment does not match the expected shape;
+ * `sealIdPrefix`/`sealNonce` are null for a public file (no seal material in
+ * the link), and `network` is null for a link that omits it.
  *
  * A damaged link is null, never a public file. The seal params are a pair, so a
  * link carrying only one of them, or either one in unparseable hex, is rejected
@@ -25,10 +26,11 @@ export function parseShareLink(href: string): ParsedShareLink | null {
 	}
 	const fileId = decodeURIComponent(rawFileId);
 	const params = new URLSearchParams(match?.[2] ?? "");
+	const network = parseNetwork(params.get("net"));
 	const prefix = params.get("p");
 	const nonce = params.get("n");
 	if (prefix === null && nonce === null) {
-		return { fileId, sealIdPrefix: null, sealNonce: null };
+		return { fileId, network, sealIdPrefix: null, sealNonce: null };
 	}
 	if (prefix === null || nonce === null) {
 		return null;
@@ -36,10 +38,20 @@ export function parseShareLink(href: string): ParsedShareLink | null {
 	try {
 		return {
 			fileId,
+			network,
 			sealIdPrefix: hexToBytes(prefix),
 			sealNonce: hexToBytes(nonce),
 		};
 	} catch {
 		return null;
 	}
+}
+
+// An unknown value is null, not a rejected link: a future network name should
+// leave the caller on its own default rather than break the whole link.
+function parseNetwork(value: string | null): "testnet" | "mainnet" | null {
+	if (value === "testnet" || value === "mainnet") {
+		return value;
+	}
+	return null;
 }

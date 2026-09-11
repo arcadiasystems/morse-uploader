@@ -45,6 +45,7 @@ export type {
 	UseStorageCostEstimateOptions,
 	UseStorageCostEstimateResult,
 } from "./files/types.js";
+export { uploadErrorMessage } from "./files/upload-error-message.js";
 export { uploadPhaseLabel } from "./files/upload-phase-label.js";
 export { uploadPhases } from "./files/upload-phases.js";
 export { useFileDecrypt } from "./files/use-file-decrypt.js";

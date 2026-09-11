@@ -10,12 +10,28 @@ export const MAINNET_ENABLED = true;
 // Optional dedicated RPC. The wallet (dapp-kit, JSON-RPC) and the SDK (gRPC)
 // should resolve the same node, or object versions can skew and the certify
 // step fails on the public load-balanced endpoint. Set both to one node (a
-// dedicated provider or a local fullnode) for reliable uploads. Leave unset to
-// use the public testnet RPC. See the example README.
+// dedicated provider or a local fullnode) for reliable uploads. See the
+// example README.
 export const SUI_JSONRPC_URL: string | undefined =
 	import.meta.env.VITE_SUI_JSONRPC_URL || undefined;
 export const SUI_GRPC_URL: string | undefined =
 	import.meta.env.VITE_SUI_GRPC_URL || undefined;
+
+// dapp-kit 1.0.6 speaks JSON-RPC only, and Mysten's public fullnodes have
+// retired it: their preflight answers without an access-control-allow-origin
+// header, so the browser blocks the request and dapp-kit fails with "Failed to
+// fetch" while serializing the transaction, before the wallet ever opens.
+// These third-party endpoints still serve JSON-RPC with CORS, which is enough
+// for a demo. Anything real should set VITE_SUI_JSONRPC_URL to its own node.
+const JSONRPC_FALLBACK: Record<MorseNetwork, string> = {
+	testnet: "https://sui-testnet-rpc.publicnode.com",
+	mainnet: "https://sui-rpc.publicnode.com",
+};
+
+/** JSON-RPC URL for dapp-kit: the configured override, else the fallback. */
+export function jsonRpcUrl(network: MorseNetwork): string {
+	return SUI_JSONRPC_URL ?? JSONRPC_FALLBACK[network];
+}
 
 // Direct write mode: the user's wallet pays for and signs the upload (no
 // publisher). In a browser the write goes through Walrus's upload relay, which

@@ -297,6 +297,11 @@ export interface BuildShareLinkArgs {
 	readonly baseUrl?: string;
 	/** Fragment path pattern containing `:fileId`; defaults to `/#/f/:fileId`. */
 	readonly pattern?: string;
+	/**
+	 * Network the file lives on, carried in the link as `net`. A file id means
+	 * nothing without it: the same id on the other network is simply not found.
+	 */
+	readonly network?: "testnet" | "mainnet";
 }
 
 /** Result of {@link parseShareLink}. */
@@ -305,4 +310,10 @@ export interface ParsedShareLink {
 	/** Seal material if present in the link, else null (public file). */
 	readonly sealIdPrefix: Uint8Array | null;
 	readonly sealNonce: Uint8Array | null;
+	/**
+	 * Network from the link's `net`, or null when the link omits it or names
+	 * one this version does not know. Read it before looking the file up; the
+	 * id resolves on one network only.
+	 */
+	readonly network: "testnet" | "mainnet" | null;
 }
