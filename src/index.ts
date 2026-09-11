@@ -1,7 +1,7 @@
 /**
  * Public entry point for @arcadiasystems/morse-uploader.
  *
- * Headless React hooks for the morse-sdk 0.4.0 RecipientFile flow: setup
+ * Headless React hooks for the morse-sdk RecipientFile flow: setup
  * (`useMorseFiles`), upload/download, Seal decrypt, plus the share-link and
  * USD-cost helpers. The optional styled components live in the `./ui` entry.
  * See the README.
@@ -16,6 +16,7 @@ export {
 	type MorseFilesProviderProps,
 } from "./files/morse-files-provider.js";
 export { parseShareLink } from "./files/parse-share-link.js";
+export { resolveSealServers } from "./files/resolve-seal-servers.js";
 export type {
 	BuildShareLinkArgs,
 	CompletedFileUpload,

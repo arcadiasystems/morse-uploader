@@ -14,10 +14,12 @@ import { SuiGrpcClient } from "@mysten/sui/grpc";
 // path that Vite serves as index.html, so WebAssembly.instantiate fails.
 import walrusWasmUrl from "@mysten/walrus-wasm/web/walrus_wasm_bg.wasm?url";
 import { useMemo } from "react";
+import { MAINNET_SEAL_COMMITTEE } from "@arcadiasystems/morse-sdk";
 import {
 	type MorseNetwork,
+	SEAL_API_KEY,
 	SUI_GRPC_URL,
-	UPLOAD_RELAY_HOST,
+	uploadRelayHost,
 	UPLOAD_RELAY_TIP_MAX_MIST,
 } from "./morse-config";
 
@@ -57,15 +59,30 @@ export function useFilesSetup(
 		[signTransaction, signPersonalMessage, signAndExecuteTransaction],
 	);
 
+	// Mainnet pins no Seal key servers, so encrypted files there need a
+	// credential. Without one the hook still builds and the unencrypted paths
+	// work; only the encrypted ones report that they are unavailable.
+	const sealKeyServers = useMemo(() => {
+		if (network !== "mainnet" || SEAL_API_KEY === undefined) {
+			return undefined;
+		}
+		return MAINNET_SEAL_COMMITTEE.map((server) => ({
+			...server,
+			apiKeyName: "X-API-Key",
+			apiKey: SEAL_API_KEY,
+		}));
+	}, [network]);
+
 	return useMorseFiles({
 		network,
 		account,
 		callbacks,
 		...(suiClient === undefined ? {} : { suiClient }),
+		...(sealKeyServers === undefined ? {} : { sealKeyServers }),
 		walrusWriteConfig: {
 			wasmUrl: walrusWasmUrl,
 			uploadRelay: {
-				host: UPLOAD_RELAY_HOST,
+				host: uploadRelayHost(network),
 				sendTip: { max: UPLOAD_RELAY_TIP_MAX_MIST },
 			},
 		},

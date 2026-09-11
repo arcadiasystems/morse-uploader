@@ -21,7 +21,6 @@ export default defineConfig({
 				"src/ui/**",
 				// Integration glue that wires real SDK clients to the connected
 				// wallet; exercised end-to-end in the example, not unit-mocked.
-				"src/files/use-morse-files.ts",
 				"src/files/pick-pubkey-cache.ts",
 			],
 			thresholds: {

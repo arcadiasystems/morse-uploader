@@ -1,6 +1,6 @@
 # @arcadiasystems/morse-uploader
 
-Headless-first React components and hooks for encrypted file sharing on Sui and Walrus, built on [`@arcadiasystems/morse-sdk`](https://github.com/arcadiasystems/morse-dcms) 0.4.0. Upload a file to Walrus, optionally encrypt it for a set of recipient wallets so only they can decrypt, and share a link. The connected wallet pays for and signs everything.
+Headless-first React components and hooks for encrypted file sharing on Sui and Walrus, built on [`@arcadiasystems/morse-sdk`](https://github.com/arcadiasystems/morse-dcms) 0.8. Upload a file to Walrus, optionally encrypt it for a set of recipient wallets so only they can decrypt, and share a link. The connected wallet pays for and signs everything.
 
 - **Headless-first**: composable hooks for every step (`useMorseFiles`, `useFileUpload`, `useFileDownload`, `useFileDecrypt`, `useRecipientFile`), plus an optional styled component set.
 - **Recipient-scoped encryption**: each file carries its own recipient set; an encrypted upload to N recipients is **2 wallet popups**, regardless of N. The connected wallet is always a recipient, so the owner can always decrypt. Public (unencrypted) uploads need no recipients.
@@ -55,10 +55,13 @@ function FilesApp({ account }) {
     // Defaults to a gRPC client on the network's public RPC.
     // suiClient: new SuiGrpcClient({ network: "testnet", baseUrl: DEDICATED_RPC_URL }),
     // Browser direct writes go through the Walrus upload relay and need the wasm URL.
+    // The relay host is per-network: swap testnet for mainnet when you do.
     walrusWriteConfig: {
       wasmUrl: walrusWasmUrl,
       uploadRelay: { host: "https://upload-relay.testnet.walrus.space" },
     },
+    // On mainnet, encrypted files also need your own Seal key servers.
+    // See "Seal on mainnet" below. Omit on testnet.
   });
 
   if (setup.status !== "ready" || setup.handles === null) {
@@ -131,6 +134,8 @@ const parsed = parseShareLink(window.location.href);
 // { fileId, sealIdPrefix, sealNonce } | null  (prefix/nonce null for public files)
 ```
 
+`null` means the link is not one of ours or is damaged. A link carrying only one of `p` / `n`, or either one in unparseable hex, is `null` too rather than a public file: reporting it as public would make the download path skip decrypt and hand the user raw ciphertext.
+
 ## Wallet popups
 
 - **Public or encrypted upload**: two popups (Walrus `register_blob`, then a combined certify + create-RecipientFile PTB). Adding recipients is free (client-side).
@@ -142,12 +147,45 @@ const parsed = parseShareLink(window.location.href);
 - Blobs are raw bytes with no filename or MIME type; this package stores the name and content type in the on-chain file record so downloads come back correctly named and typed.
 - Mainnet is not yet supported by the SDK; pass `network: "testnet"`.
 
+## Seal on mainnet
+
+Encrypted files need Seal key servers. Testnet pins an open set, so nothing is
+required there. Mainnet pins none: every mainnet Seal operator is commercial,
+so you bring your own credential.
+
+```tsx
+import { MAINNET_SEAL_COMMITTEE } from "@arcadiasystems/morse-sdk";
+
+const handles = useMorseFiles({
+  network: "mainnet",
+  account,
+  callbacks,
+  sealKeyServers: MAINNET_SEAL_COMMITTEE.map((s) => ({
+    ...s,
+    apiKeyName: "X-API-Key",
+    apiKey: import.meta.env.VITE_SEAL_API_KEY,
+  })),
+});
+```
+
+Pass a prebuilt `seal` adapter instead if you want full control; it overrides
+`sealKeyServers`.
+
+Without either, `handles.seal` is `null` rather than the hook failing. That is
+deliberate: building the adapter eagerly would fail setup on mainnet and take
+the unencrypted flows down with it. Check for `null` before offering encryption
+in your UI.
+
+**Do not ship the key in client-side code you do not control.** A browser bundle
+exposes it to anyone who opens devtools. Proxy through your own backend if the
+credential is not meant to be public.
+
 ## Limitations and roadmap
 
-- **Listing a wallet's files needs an indexer (deferred).** A `RecipientFile` is a shared Sui object with no owner-indexable field, so there is no direct "list my files" query. morse-sdk 0.4.0 ships pure reconciliation helpers (`reconcileRecipientFilesOwnedBy`, `reconcileRecipientFilesAccessibleBy`) that turn a raw event stream into the current file set, but it deliberately does not fetch events. A production listing requires a Sui event source (a dedicated indexer; the legacy `suix_queryEvents` path works today but is on Mysten's deprecation track). This package does not ship a listing UI yet for that reason; it is planned once an indexer is in place.
+- **Listing a wallet's files needs an indexer (deferred).** A `RecipientFile` is a shared Sui object with no owner-indexable field, so there is no direct "list my files" query. morse-sdk ships pure reconciliation helpers (`reconcileRecipientFilesOwnedBy`, `reconcileRecipientFilesAccessibleBy`) that turn a raw event stream into the current file set, but it deliberately does not fetch events. A production listing requires a Sui event source (a dedicated indexer; `suix_queryEvents` has since been retired by public fullnodes, so an event source now means Sui GraphQL or a dedicated indexer). This package does not ship a listing UI yet for that reason; it is planned once an indexer is in place.
 - **Seal material is not on-chain.** The Seal identity needed to decrypt (prefix + nonce) is persisted out-of-band (in the share link, here). It is not recoverable from the chain or from an event listing, so a future indexer-backed list can surface encrypted files' metadata but cannot, by itself, decrypt them; decryption still requires the share-link material. Persist `sealIdPrefix`/`sealNonce` in your own store if you need list-and-open UX.
 - **RPC consistency (use a dedicated RPC).** The SDK builds/reads over a gRPC client while the wallet (dapp-kit) executes over its own JSON-RPC client. On the public, load-balanced `fullnode.testnet.sui.io`, those two requests can hit different backend nodes at different checkpoints, so the certify step occasionally fails with an object-version conflict ("needs to be rebuilt"). For reliable uploads, point both at a **dedicated RPC**: set dapp-kit's `SuiClientProvider` URL and pass a `SuiGrpcClient` on the matching endpoint via `useMorseFiles({ suiClient })`. This is an RPC-infrastructure property, not a bug in the package logic.
-- **Testnet only.** `network: "mainnet"` will work the moment the SDK ships mainnet addresses; until then pass `"testnet"`.
+- **Mainnet works, but encrypted files there need your own Seal key servers.** Testnet pins an open allowlist, so `network: "testnet"` needs no setup. Mainnet pins none, because every mainnet Seal operator is commercial. Without `sealKeyServers`, `handles.seal` is `null`: unencrypted upload and download still work, and the encrypted hooks reject with a message saying so. See [Seal on mainnet](#seal-on-mainnet).
 - **Storage is a lease.** Walrus storage is capped at 53 epochs ahead and expires; this is not permanent storage.
 
 ## Example

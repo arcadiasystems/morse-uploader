@@ -1,3 +1,4 @@
+import { SessionKey } from "@mysten/seal";
 import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -67,5 +68,59 @@ describe("useFileDecrypt", () => {
 			await expect(result.current.decrypt(input)).rejects.toThrow("nope");
 		});
 		expect(result.current.status).toBe("error");
+	});
+});
+
+describe("useFileDecrypt without Seal key servers", () => {
+	it("rejects with an actionable message instead of throwing on null", async () => {
+		// handles.seal is null on a network that pins no key servers, which is
+		// mainnet unless the consumer supplies a credential. The hook must say
+		// so rather than blow up on a null dereference.
+		const handles = {
+			...makeHandles(vi.fn()),
+			seal: null,
+		} as unknown as MorseFilesHandles;
+		const { result } = renderHook(() => useFileDecrypt(), {
+			wrapper: wrap(handles),
+		});
+		await act(async () => {
+			await expect(result.current.decrypt(input)).rejects.toThrow(
+				/sealKeyServers/,
+			);
+		});
+		expect(result.current.status).toBe("error");
+		expect((result.current.error as Error).message).toMatch(
+			/No Seal key servers/,
+		);
+	});
+});
+
+describe("useFileDecrypt session cache", () => {
+	it("reuses one session across files but re-signs after a wallet switch", async () => {
+		const create = vi.mocked(SessionKey.create);
+		const decrypt = vi.fn().mockResolvedValue(plaintext);
+		let handles = makeHandles(decrypt);
+		const wrapper = ({ children }: { children: ReactNode }) => (
+			<MorseFilesProvider value={handles}>{children}</MorseFilesProvider>
+		);
+		const { result, rerender } = renderHook(() => useFileDecrypt(), {
+			wrapper,
+		});
+
+		await act(async () => {
+			await result.current.decrypt(input);
+			await result.current.decrypt(input);
+		});
+		expect(create).toHaveBeenCalledTimes(1);
+
+		handles = { ...handles, address: "0xother" } as MorseFilesHandles;
+		rerender();
+		await act(async () => {
+			await result.current.decrypt(input);
+		});
+		expect(create).toHaveBeenCalledTimes(2);
+		expect(create).toHaveBeenLastCalledWith(
+			expect.objectContaining({ address: "0xother" }),
+		);
 	});
 });

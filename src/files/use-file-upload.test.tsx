@@ -105,3 +105,44 @@ describe("useFileUpload", () => {
 		expect(result.current.status).toBe("error");
 	});
 });
+
+describe("useFileUpload without Seal key servers", () => {
+	const noSeal = {
+		adapter: {},
+		config: {},
+		walrusWrite: {},
+		seal: null,
+	} as unknown as MorseFilesHandles;
+	const noSealWrapper = ({ children }: { children: ReactNode }) => (
+		<MorseFilesProvider value={noSeal}>{children}</MorseFilesProvider>
+	);
+
+	it("refuses an encrypted upload with an actionable message", async () => {
+		const { result } = renderHook(() => useFileUpload(), {
+			wrapper: noSealWrapper,
+		});
+		await act(async () => {
+			await expect(
+				result.current.upload({ file: makeFile(), epochs: 1, encrypt: true }),
+			).rejects.toThrow(/sealKeyServers/);
+		});
+		expect(uploadEncryptedRecipientFileFromBytes).not.toHaveBeenCalled();
+	});
+
+	it("still allows an unencrypted upload", async () => {
+		// The whole point of nullable seal rather than failing setup: public
+		// flows keep working on a network with no key servers.
+		vi.mocked(uploadRecipientFileFromBytes).mockResolvedValue({
+			fileId: "0xfile",
+			blobId: "blob",
+			digest: "d",
+		} as never);
+		const { result } = renderHook(() => useFileUpload(), {
+			wrapper: noSealWrapper,
+		});
+		await act(async () => {
+			await result.current.upload({ file: makeFile(), epochs: 1 });
+		});
+		expect(uploadRecipientFileFromBytes).toHaveBeenCalledTimes(1);
+	});
+});

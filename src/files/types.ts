@@ -21,7 +21,7 @@ import type {
 	WalrusReadAdapter,
 	WalrusWriteAdapter,
 } from "@arcadiasystems/morse-sdk";
-import type { SealCompatibleClient } from "@mysten/seal";
+import type { KeyServerConfig, SealCompatibleClient } from "@mysten/seal";
 import type { Signer } from "@mysten/sui/cryptography";
 import type { SuiGrpcClient } from "@mysten/sui/grpc";
 import type { Transaction } from "@mysten/sui/transactions";
@@ -60,6 +60,17 @@ export interface UseMorseFilesOptions {
 	};
 	/** Prebuilt Walrus read adapter; defaults to the aggregator. */
 	readonly walrusRead?: WalrusReadAdapter;
+	/** Prebuilt Seal adapter; overrides the default and `sealKeyServers`. */
+	readonly seal?: SealAdapter;
+	/**
+	 * Seal key servers for the default adapter. Testnet pins an open set, so
+	 * this is only needed on mainnet, where every operator is commercial and
+	 * `morseConfig` therefore pins none. Start from the SDK's
+	 * `MAINNET_SEAL_COMMITTEE` and add the `apiKeyName` / `apiKey` your
+	 * operator issues. Without it, `handles.seal` is `null` and only the
+	 * unencrypted paths work.
+	 */
+	readonly sealKeyServers?: readonly KeyServerConfig[];
 	/** Pubkey cache for fromAccountAsync; defaults to BrowserStoragePubkeyCache. */
 	readonly pubkeyCache?: PubkeyCache;
 }
@@ -84,7 +95,16 @@ export interface MorseFilesHandles {
 	/** Flow-capable write adapter (required for the single-PTB file ops). */
 	readonly walrusWrite: WalrusWriteAdapter & WalrusFlowCapable;
 	readonly walrusRead: WalrusReadAdapter;
-	readonly seal: SealAdapter;
+	/**
+	 * `null` when no Seal key servers are available, which on mainnet means no
+	 * credential was supplied. Unencrypted upload and download still work; the
+	 * encrypted paths reject with a message naming `sealKeyServers`.
+	 *
+	 * Nullable rather than absent so the setup hook still succeeds: building it
+	 * eagerly would fail the whole hook on mainnet and take the public flows
+	 * down with it.
+	 */
+	readonly seal: SealAdapter | null;
 	readonly reader: RecipientFilesReader;
 }
 
@@ -218,7 +238,7 @@ export interface UseFileDownloadResult {
 export interface UsdCostArgs {
 	readonly sizeBytes: number;
 	readonly epochs: number;
-	/** Epoch length in ms (testnet ~1 day, mainnet ~2 weeks); read from chain. */
+	/** Epoch length in ms; see {@link epochDurationMs} for the nominal values. */
 	readonly epochDurationMs: number;
 	/** Bytes the Seal envelope adds when encrypting; folded into the priced size. */
 	readonly encryptionOverheadBytes?: number;

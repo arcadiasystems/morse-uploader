@@ -76,7 +76,7 @@ export function MorseFileUploader(props: MorseFileUploaderProps): ReactElement {
 	return (
 		<div className={`mu-uploader ${className ?? ""}`} data-mu="uploader">
 			<div className="mu-dropzone" {...getRootProps()}>
-				<input className="mu-input" {...getInputProps()} />
+				<input className="mu-file-input" {...getInputProps()} />
 				<span className="mu-dropzone-icon" aria-hidden="true" />
 				{file === null ? (
 					<>

@@ -7,11 +7,11 @@ import {
 	WalletStandardSigner,
 	type WalrusAdapterConfig,
 } from "@arcadiasystems/morse-sdk";
-import type { SealCompatibleClient } from "@mysten/seal";
 import { SuiGrpcClient } from "@mysten/sui/grpc";
 import { useEffect, useRef, useState } from "react";
 import { WalletStandardAdapter } from "../wallet-standard/wallet-standard-adapter.js";
 import { pickPubkeyCache } from "./pick-pubkey-cache.js";
+import { resolveSealServers } from "./resolve-seal-servers.js";
 import type { UseMorseFilesOptions, UseMorseFilesResult } from "./types.js";
 
 /**
@@ -85,7 +85,23 @@ export function useMorseFiles(
 				const walrusRead =
 					current.walrusRead ??
 					HttpAggregatorReadAdapter.fromMorseConfig(config, client);
-				const seal = DefaultSealAdapter.fromMorseConfig(config, {}, client);
+				// Built only when key servers exist. Testnet pins an open set;
+				// mainnet pins none, because every operator there is commercial.
+				// Failing setup outright would take the unencrypted flows down
+				// too, so this is null and the encrypted hooks reject instead.
+				const sealServers = resolveSealServers(
+					current.sealKeyServers,
+					config.sealKeyServers,
+				);
+				const seal =
+					current.seal ??
+					(sealServers === undefined
+						? null
+						: DefaultSealAdapter.fromMorseConfig(
+								config,
+								{ serverConfigs: sealServers },
+								client,
+							));
 				const reader = RpcRecipientFilesReader.fromConfig(client, {
 					packageId: config.packageId,
 				});
@@ -94,7 +110,7 @@ export function useMorseFiles(
 					handles: {
 						network,
 						config,
-						client: client as unknown as SealCompatibleClient,
+						client,
 						address: adapter.address,
 						adapter,
 						signer,

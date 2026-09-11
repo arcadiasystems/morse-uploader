@@ -13,6 +13,10 @@ import type {
 } from "./types.js";
 import { useMorseFilesContext } from "./use-morse-files-context.js";
 
+/** Shared message for the encrypted paths when no key servers exist. */
+const SEAL_UNAVAILABLE =
+	"No Seal key servers are configured, so encrypted files are unavailable. Testnet pins an open set; mainnet pins none, because every operator there is commercial. Pass `sealKeyServers` to MorseFilesProvider, starting from the SDK's MAINNET_SEAL_COMMITTEE with the apiKeyName and apiKey your operator issues.";
+
 const FALLBACK_CONTENT_TYPE = "application/octet-stream";
 
 /**
@@ -55,6 +59,9 @@ export function useFileUpload(): UseFileUploadResult {
 
 				let completed: CompletedFileUpload;
 				if (input.encrypt === true) {
+					if (seal === null) {
+						throw new Error(SEAL_UNAVAILABLE);
+					}
 					const result = await uploadEncryptedRecipientFileFromBytes(
 						adapter,
 						config,

@@ -40,7 +40,7 @@ These conventions are strict. Reviewers will ask for changes that violate them.
 
 ```
 src/
-  files/           the 0.4.0 RecipientFile flow: setup hook, provider/context,
+  files/           the RecipientFile flow: setup hook, provider/context,
                    upload, download, decrypt, recipient-file read hook, helpers
   ui/              optional styled components (separate entry, ships CSS)
   primitives/      headless prop-getter hooks (e.g. useDropzone)

@@ -89,6 +89,24 @@
 	font-size: 0.8125rem;
 }
 
+/*
+ * The native file input the dropzone wraps. Hidden visually, not removed: the
+ * root's onClick calls input.click(), and the input stays in the accessibility
+ * tree for assistive tech. Do not fold this into .mu-input, which styles the
+ * visible text fields.
+ */
+.mu-file-input {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	border: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
 /* ----- Inputs / fields ----- */
 .mu-input,
 .mu-epochs-input {

@@ -58,3 +58,21 @@ describe("buildShareLink / parseShareLink", () => {
 		expect(parseShareLink("https://x.io/#/about")).toBeNull();
 	});
 });
+
+describe("parseShareLink rejects damaged seal material", () => {
+	it("returns null when only the prefix is present", () => {
+		expect(parseShareLink("https://x.io/#/f/0xabc?p=0102")).toBeNull();
+	});
+
+	it("returns null when only the nonce is present", () => {
+		expect(parseShareLink("https://x.io/#/f/0xabc?n=0304")).toBeNull();
+	});
+
+	it("returns null when the seal hex is not hex", () => {
+		expect(parseShareLink("https://x.io/#/f/0xabc?p=zzzz&n=0304")).toBeNull();
+	});
+
+	it("returns null when the seal hex has an odd digit count", () => {
+		expect(parseShareLink("https://x.io/#/f/0xabc?p=abc&n=0304")).toBeNull();
+	});
+});

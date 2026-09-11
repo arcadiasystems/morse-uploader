@@ -16,3 +16,13 @@ describe("bytesToHex / hexToBytes", () => {
 		expect(hexToBytes("0x00ff")).toEqual(new Uint8Array([0, 255]));
 	});
 });
+
+describe("hexToBytes input validation", () => {
+	it("throws on non-hex digits", () => {
+		expect(() => hexToBytes("zzzz")).toThrow(/only the digits/);
+	});
+
+	it("throws on an odd number of digits", () => {
+		expect(() => hexToBytes("abc")).toThrow(/even number/);
+	});
+});

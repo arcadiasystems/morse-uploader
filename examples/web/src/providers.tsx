@@ -14,6 +14,12 @@ const { networkConfig } = createNetworkConfig({
 		url: SUI_JSONRPC_URL ?? getJsonRpcFullnodeUrl("testnet"),
 		network: "testnet",
 	},
+	mainnet: {
+		// A dedicated RPC, when set, is assumed to be for the network you are
+		// actually using; point it at the right one before switching.
+		url: SUI_JSONRPC_URL ?? getJsonRpcFullnodeUrl("mainnet"),
+		network: "mainnet",
+	},
 });
 
 const queryClient = new QueryClient();
