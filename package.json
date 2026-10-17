@@ -1,6 +1,6 @@
 {
 	"name": "@arcadiasystems/morse-uploader",
-	"version": "0.2.1",
+	"version": "0.3.0",
 	"description": "Headless-first React components and hooks for encrypted file sharing on Sui and Walrus, built on morse-sdk.",
 	"license": "MIT",
 	"author": "Arcadia Systems",

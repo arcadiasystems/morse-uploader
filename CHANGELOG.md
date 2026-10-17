@@ -2,6 +2,17 @@
 
 All notable changes to `@arcadiasystems/morse-uploader` will be documented in this file. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-10-18
+
+Moves to `@arcadiasystems/morse-sdk` 0.9 and the Mysten lines it requires. The public API is unchanged. This is a minor bump because the new peer ranges exclude every version 0.2.x accepted, so upgrading means upgrading the SDK and all three Mysten packages with it.
+
+### Changed
+
+- **Peer dependencies.** `@arcadiasystems/morse-sdk` `>=0.9.0 <0.10.0` (was `>=0.8.1 <0.9.0`), `@mysten/sui` `>=2.36.0 <2.37.0` (was `>=2.16.2 <2.17.0`), `@mysten/walrus` `>=1.2.35 <1.3.0` (was `>=1.1.6 <1.2.0`), `@mysten/seal` `>=1.5.0 <1.6.0` (was `>=1.1.3 <1.2.0`). These are the SDK's own peer ranges, so an app resolves one copy of each. The README peer install is now `npm install react react-dom @arcadiasystems/morse-sdk@~0.9.0 @mysten/sui@~2.36.0 @mysten/walrus@~1.2.35 @mysten/seal@~1.5.0`.
+- **`useFileDecrypt` now checks that the signer belongs to the session address itself.** `@mysten/seal` 1.5 removed that check from `SessionKey.create` to support address aliases. `useFileDecrypt` caches the session per address, so handles whose `signer` and `address` disagree would have cost a wallet popup, failed at the key servers, and stayed cached, failing every later decrypt for that address the same way. The hook now rejects before creating the session, with the same `UserError` class and leading message Seal used to throw, and without prompting the wallet or caching anything. Behaviour therefore matches 0.2.x. Handles from `useMorseFiles` always agree, because the SDK's `WalletStandardSigner` requires the account key to derive to its address, so only hand-built handles can reach the check. A signer whose key is an alias of the address stays unsupported, as it was before.
+- **Everything else upstream changed needs nothing from consumers.** Seal 1.3 turned `verifyKeyServers` off by default, but the uploader always builds Seal through the SDK's `DefaultSealAdapter`, which now sets it to `true`, so key servers are still verified on first use. The `@mysten/sui` 2.26 `ObjectError` change is absorbed by the SDK's reader. The insufficient-balance text `uploadErrorMessage` rewrites is unchanged in sui 2.36, and walrus 1.2.35 still types the relay's `sendTip` as `{ max: number }`, so the README's `sendTip: { max: 10_000_000 }` stands.
+- **The example** pins the same versions, plus `@mysten/dapp-kit` 1.1.17 and `@mysten/walrus-wasm` 0.3.1, the line walrus 1.2.35 uses. dapp-kit 1.1.17 is the last release of that package: Mysten has deprecated it because it supports JSON-RPC only, so the README's note on pointing it at a JSON-RPC endpoint still applies.
+
 ## [0.2.1] - 2026-10-17
 
 README fixes only. The README ships in the package, so these needed a release; no code changed.
