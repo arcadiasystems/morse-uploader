@@ -187,10 +187,10 @@ svg {
 .chip.net i {
 	background: var(--ultra);
 }
-.chip.net.main b {
+.chip.net.mainnet b {
 	color: var(--ok);
 }
-.chip.net.main i {
+.chip.net.mainnet i {
 	background: var(--ok);
 }
 .chip.soon {
