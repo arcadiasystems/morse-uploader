@@ -1,0 +1,240 @@
+/* Morse Uploader. Bone and Ultramarine, app density. Ported from design/uploader.css. */
+:root {
+	--bone: #f2efe8;
+	--paper: #ffffff;
+	--ink: #121418;
+	--ink-2: #1b1d24;
+	--ink-line: #2a2c33;
+	--ultra: #2b3be0;
+	--ultra-lift: #7d8bff;
+	--ultra-tint: #eef0ff;
+	--ultra-tint-2: #dce0ff;
+	--stone: #5f6168;
+	--body: #45474e;
+	--line: #dad6cc;
+	--line-2: #bdb8ac;
+	--warn: #8a5a00;
+	--warn-bg: #fff6e0;
+	--warn-line: #f0d48a;
+	--ok: #0f7a5c;
+	--ok-bg: #eaf6f0;
+	--ok-line: #a9dcc5;
+	/* The font families come from next/font in the root layout. */
+	--disp: var(--font-display), system-ui, sans-serif;
+	--sans: var(--font-sans), system-ui, sans-serif;
+	--mono: var(--font-mono), ui-monospace, SFMono-Regular, monospace;
+	--side: 232px;
+	--queue: 220px;
+	--bar: 52px;
+	--ease: cubic-bezier(0.2, 0, 0, 1);
+}
+* {
+	box-sizing: border-box;
+}
+html,
+body {
+	height: 100%;
+}
+body {
+	margin: 0;
+	background: var(--bone);
+	color: var(--ink);
+	font-family: var(--sans);
+	font-size: 14px;
+	line-height: 1.45;
+	-webkit-font-smoothing: antialiased;
+}
+a {
+	color: inherit;
+	text-decoration: none;
+}
+h1,
+h2,
+h3,
+h4,
+p,
+ul,
+ol,
+dl,
+dd {
+	margin: 0;
+}
+button,
+input,
+select {
+	font: inherit;
+	color: inherit;
+}
+code,
+kbd {
+	font-family: var(--mono);
+}
+svg {
+	display: block;
+}
+.mono {
+	font-family: var(--mono);
+	font-variant-numeric: tabular-nums;
+}
+.muted {
+	color: var(--stone);
+}
+
+/* Keyboard focus is always visible; pointer clicks do not draw the ring. */
+:focus-visible {
+	outline: 2px solid var(--ultra);
+	outline-offset: 2px;
+}
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	border-radius: 999px;
+	font-weight: 600;
+	font-size: 13.5px;
+	min-height: 36px;
+	padding: 0 14px;
+	border: 0;
+	cursor: pointer;
+	font-family: var(--sans);
+	white-space: nowrap;
+}
+.btn-ultra {
+	background: var(--ultra);
+	color: #fff;
+}
+.btn-ink {
+	background: var(--ink);
+	color: var(--bone);
+}
+.btn-soft {
+	background: var(--paper);
+	border: 1px solid var(--line);
+	color: var(--ink);
+}
+.btn-ghost {
+	background: transparent;
+	border: 1px solid var(--line-2);
+	color: var(--ink);
+}
+.btn-text {
+	background: transparent;
+	color: var(--ink);
+	padding: 0 8px;
+}
+.btn.lg {
+	min-height: 48px;
+	font-size: 15px;
+	padding: 0 22px;
+}
+.btn.xs {
+	min-height: 28px;
+	font-size: 12.5px;
+	padding: 0 10px;
+}
+.btn[disabled] {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+.btn-soft:not([disabled]):hover,
+.btn-ghost:not([disabled]):hover {
+	border-color: var(--ink);
+}
+.btn-ultra:not([disabled]):hover {
+	background: #2230c4;
+}
+
+.chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-family: var(--mono);
+	font-size: 10.5px;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	border-radius: 999px;
+	padding: 4px 8px;
+	white-space: nowrap;
+}
+.chip i {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: currentColor;
+}
+.chip.net {
+	border: 1px solid var(--line-2);
+	background: var(--paper);
+	color: var(--body);
+}
+.chip.net b {
+	color: var(--ultra);
+	font-weight: 500;
+}
+.chip.net i {
+	background: var(--ultra);
+}
+.chip.net.main b {
+	color: var(--ok);
+}
+.chip.net.main i {
+	background: var(--ok);
+}
+.chip.soon {
+	border: 1px dashed var(--line-2);
+	color: var(--stone);
+}
+kbd {
+	font-size: 11px;
+	border: 1px solid var(--line-2);
+	border-radius: 5px;
+	padding: 1px 5px;
+	background: var(--paper);
+	color: var(--stone);
+}
+
+/* Motion is opt-in: only viewers who have not asked for reduced motion get transitions. */
+@media (prefers-reduced-motion: no-preference) {
+	.btn {
+		transition:
+			background-color 120ms var(--ease),
+			border-color 120ms var(--ease);
+	}
+}
+
+.brand {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-family: var(--disp);
+	font-weight: 800;
+	border-radius: 8px;
+}
+.brand svg {
+	width: 26px;
+	height: 26px;
+}
+.brand .wm {
+	display: flex;
+	flex-direction: column;
+	line-height: 0.92;
+	letter-spacing: -0.035em;
+	font-size: 13.5px;
+}
+.brand .wm em {
+	font-style: normal;
+	color: var(--ultra);
+}

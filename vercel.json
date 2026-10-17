@@ -1,6 +1,9 @@
 {
 	"$schema": "https://openapi.vercel.sh/vercel.json",
-	"installCommand": "bun install",
-	"buildCommand": "bun run build:example",
-	"outputDirectory": "examples/web/dist"
+	"framework": null,
+	"installCommand": "cd apps/uploader && bun install --frozen-lockfile",
+	"buildCommand": "cd apps/uploader && bun run build",
+	"outputDirectory": "apps/uploader/out",
+	"cleanUrls": true,
+	"trailingSlash": false
 }
