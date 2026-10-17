@@ -2,6 +2,16 @@
 
 All notable changes to `@arcadiasystems/morse-uploader` will be documented in this file. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-10-17
+
+README fixes only. The README ships in the package, so these needed a release; no code changed.
+
+### Fixed
+
+- **"Notes on Walrus" still said mainnet was unsupported** and told readers to pass `network: "testnet"`. Morse has run on Walrus Mainnet since 2026-09-09, and "Limitations and roadmap" in the same README already said so. The stale line is gone.
+- **The peer install named no versions**, so it pulled the latest majors of `@arcadiasystems/morse-sdk` and `@mysten/*`, outside `peerDependencies`. It now pins each to the tilde range equivalent to its peer range: `@arcadiasystems/morse-sdk@~0.8.1 @mysten/sui@~2.16.2 @mysten/walrus@~1.1.6 @mysten/seal@~1.1.3`.
+- **The upload relay example would have been refused on Walrus Mainnet.** It had no `sendTip`, and `@mysten/walrus` sends no tip without one, while the Walrus Mainnet relay requires a tip. The example now passes `sendTip: { max: 10_000_000 }` (0.01 SUI), the cap `examples/web` uses.
+
 ## [0.2.0] - 2026-09-10
 
 Mainnet support, via `@arcadiasystems/morse-sdk` 0.8.1.

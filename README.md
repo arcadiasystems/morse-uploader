@@ -16,8 +16,8 @@ npm install @arcadiasystems/morse-uploader
 Peer dependencies (install in your app, pinned to the same ranges as `@arcadiasystems/morse-sdk` so you do not end up with duplicate Sui/Walrus/Seal instances):
 
 ```sh
-npm install react react-dom @arcadiasystems/morse-sdk \
-  @mysten/sui @mysten/walrus @mysten/seal
+npm install react react-dom @arcadiasystems/morse-sdk@~0.8.1 \
+  @mysten/sui@~2.16.2 @mysten/walrus@~1.1.6 @mysten/seal@~1.1.3
 ```
 
 ## Quick start
@@ -58,7 +58,11 @@ function FilesApp({ account }) {
     // The relay host is per-network: swap testnet for mainnet when you do.
     walrusWriteConfig: {
       wasmUrl: walrusWasmUrl,
-      uploadRelay: { host: "https://upload-relay.testnet.walrus.space" },
+      uploadRelay: {
+        host: "https://upload-relay.testnet.walrus.space",
+        // Caps the per-upload tip the Walrus Mainnet relay charges, in MIST (0.01 SUI).
+        sendTip: { max: 10_000_000 },
+      },
     },
     // On mainnet, encrypted files also need your own Seal key servers.
     // See "Seal on mainnet" below. Omit on testnet.
@@ -149,7 +153,6 @@ const parsed = parseShareLink(window.location.href);
 
 - Storage is a **lease**, capped at 53 epochs ahead on both networks. An epoch is ~1 day on testnet and ~2 weeks on mainnet.
 - Blobs are raw bytes with no filename or MIME type; this package stores the name and content type in the on-chain file record so downloads come back correctly named and typed.
-- Mainnet is not yet supported by the SDK; pass `network: "testnet"`.
 
 ## Seal on mainnet
 
