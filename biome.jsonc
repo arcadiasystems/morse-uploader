@@ -8,7 +8,8 @@
 	"files": {
 		"ignoreUnknown": false,
 		// The example app has its own toolchain; the library gates do not lint it.
-		"includes": ["**", "!examples", "!**/dist"]
+		// design/ is the reference design package (static HTML, CSS and renders), not source.
+		"includes": ["**", "!examples", "!design", "!**/dist"]
 	},
 	"formatter": {
 		"enabled": true,
