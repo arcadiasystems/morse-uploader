@@ -1,0 +1,12 @@
+import type { Metadata } from "next";
+import { UploaderApp } from "@/shell/uploader-app";
+import "@/styles/shell.css";
+import "@/styles/menus.css";
+
+export const metadata: Metadata = {
+	title: "Walrus",
+};
+
+export default function AppPage() {
+	return <UploaderApp />;
+}
