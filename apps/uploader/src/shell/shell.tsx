@@ -1,6 +1,7 @@
 import { useCurrentNetwork } from "@mysten/dapp-kit-react";
 import { normalizeSuiAddress } from "@mysten/sui/utils";
 import { useCallback, useMemo, useState } from "react";
+import { useActivity } from "@/activity/use-activity";
 import { filterRows } from "@/blobs/filter-rows";
 import { type ListedBlobs, listBlobs } from "@/blobs/list-blobs";
 import { DEFAULT_SORT, nextSort, type RowSort } from "@/blobs/sort-rows";
@@ -11,6 +12,7 @@ import { shortenAddress } from "@/lib/shorten-address";
 import type { PickedFile } from "@/local/local-library";
 import { usePickedFiles } from "@/local/use-picked-files";
 import { useAutoExtend } from "@/manage/use-auto-extend";
+import { useMorseReads } from "@/morse/use-morse-reads";
 import { NETWORKS } from "@/network/networks";
 import { summarizeTransfers } from "@/transfers/summarize-transfers";
 import type { TransferBatch } from "@/transfers/transfer-job";
@@ -22,6 +24,7 @@ import { BLOB_VIEWS, type BlobView } from "./blob-views";
 import type { DrawerContext } from "./drawer/blob-drawer";
 import { type ExtendAllScope, ExtendAllSheet } from "./drawer/extend-all-sheet";
 import { useFilePickers } from "./file-pickers";
+import { Overview } from "./overview/overview";
 import { WalrusPane } from "./panes/walrus-pane";
 import { Rail } from "./rail/rail";
 import { Topbar } from "./topbar";
@@ -49,7 +52,9 @@ export function Shell() {
 	const address = session?.account.address ?? null;
 	const funds = useFunds(network, address);
 	const blobs = useBlobListing(network, address);
-	const [route] = useAppRoute();
+	const activity = useActivity(network, address);
+	const morse = useMorseReads(network, address);
+	const [route, navigate] = useAppRoute();
 	const profileMenu = usePopover();
 	const balanceMenu = usePopover();
 	const transfersPanel = usePopover();
@@ -68,10 +73,15 @@ export function Shell() {
 
 	const refreshBlobs = blobs.refresh;
 	const refreshFunds = funds.refresh;
+	const refreshActivity = activity.refresh;
+	const refreshMorse = morse.refresh;
+	// After the app changes something on chain, everything shown reads again.
 	const refreshChain = useCallback(() => {
 		refreshBlobs();
 		refreshFunds();
-	}, [refreshBlobs, refreshFunds]);
+		refreshActivity();
+		refreshMorse();
+	}, [refreshBlobs, refreshFunds, refreshActivity, refreshMorse]);
 	const transfers = useTransferQueue(network.id, address, refreshChain);
 	const transfersSummary = summarizeTransfers(transfers.state);
 	const actions = useWalletActions(network.id);
@@ -112,8 +122,15 @@ export function Shell() {
 		autoExtend,
 		onChanged: refreshChain,
 	};
-	const view = PANE_VIEWS[route.filter];
+	const view = PANE_VIEWS[route.view === "files" ? route.filter : "all"];
 	const viewFilter = BLOB_VIEWS[view].filter;
+
+	function search(next: string) {
+		setQuery(next);
+		// Results list in Files; searching from the Overview goes there.
+		if (route.view === "overview" && next.trim() !== "")
+			navigate({ view: "files", filter: "all" });
+	}
 
 	return (
 		<>
@@ -128,37 +145,61 @@ export function Shell() {
 				/>
 				<div className="main">
 					<Topbar
-						title="Files"
+						title={route.view === "overview" ? "Overview" : "Files"}
 						context={contextLine(address, listed)}
 						network={network}
 						address={address}
 						funds={funds}
 						balanceMenu={balanceMenu}
 						query={query}
-						onQueryChange={setQuery}
+						onQueryChange={search}
 						searchDisabled={address === null}
 						transfers={transfersSummary}
 						transfersPanel={transfersPanel}
 						onUpload={pickers.openFiles}
 					/>
 					<div className="content">
-						<WalrusPane
-							key={`${network.id}:${address ?? ""}`}
-							network={network}
-							address={address}
-							view={view}
-							query={query}
-							onClearQuery={() => setQuery("")}
-							sort={sort}
-							onSort={(key) => setSort((current) => nextSort(current, key))}
-							listing={listing}
-							listed={listed}
-							onRefresh={blobs.refresh}
-							prices={funds.prices}
-							onConnect={profileMenu.open}
-							drawer={drawer}
-							onExtendExpiring={() => setExtendAll("expiring")}
-						/>
+						{route.view === "overview" ? (
+							<Overview
+								network={network}
+								address={address}
+								listing={listing}
+								listed={listed}
+								prices={funds.prices}
+								activity={activity.read}
+								morse={morse}
+								onExtendExpiring={
+									actions ? () => setExtendAll("expiring") : null
+								}
+								onTopUp={address === null ? null : balanceMenu.open}
+								onConnect={profileMenu.open}
+								onRetryBlobs={blobs.refresh}
+								onRetryActivity={activity.refresh}
+								onShowPublished={() =>
+									navigate({ view: "files", filter: "published" })
+								}
+								pickers={pickers}
+								onPicked={upload}
+							/>
+						) : (
+							<WalrusPane
+								key={`${network.id}:${address ?? ""}`}
+								network={network}
+								address={address}
+								view={view}
+								query={query}
+								onClearQuery={() => setQuery("")}
+								sort={sort}
+								onSort={(key) => setSort((current) => nextSort(current, key))}
+								listing={listing}
+								listed={listed}
+								onRefresh={blobs.refresh}
+								prices={funds.prices}
+								onConnect={profileMenu.open}
+								drawer={drawer}
+								onExtendExpiring={() => setExtendAll("expiring")}
+							/>
+						)}
 					</div>
 				</div>
 			</div>

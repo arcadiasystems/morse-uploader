@@ -2,13 +2,14 @@ import type { Metadata } from "next";
 import { UploaderApp } from "@/shell/uploader-app";
 import "@/styles/shell.css";
 import "@/styles/menus.css";
+import "@/styles/overview.css";
 import "@/styles/blobs.css";
 import "@/styles/upload.css";
 import "@/styles/transfers.css";
 import "@/styles/drawer.css";
 
 export const metadata: Metadata = {
-	title: "Walrus",
+	title: "Overview and files",
 };
 
 export default function AppPage() {

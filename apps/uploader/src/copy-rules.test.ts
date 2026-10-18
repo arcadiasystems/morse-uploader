@@ -83,6 +83,12 @@ describe("copy rules", () => {
 	it("uses the notes' wording for limits, cost and signatures", () => {
 		const text = (suffix: string) =>
 			files.find((file) => file.path.endsWith(suffix))?.text ?? "";
+		// Item 1: the Overview's drop zone. JSX wraps long copy over lines.
+		const drop = text("overview/drop-card.tsx").replace(/\s+/g, " ");
+		expect(drop).toContain(
+			"Folders keep their structure and upload as one quilt of up to 666 files.",
+		);
+		expect(drop).toContain("Up to 1 GiB per upload.");
 		const sheet = text("upload-sheet/upload-sheet.tsx");
 		// Items 2, 7, 8 and 14.
 		expect(sheet).toContain("Each blob carries 64 MB of fixed metadata.");

@@ -1,8 +1,9 @@
 import { useCallback, useSyncExternalStore } from "react";
 
 /**
- * Where the app is: the Files filter, kept in the URL hash (`#files/expiring`)
- * so a reload, a bookmark or the back button returns to the same place.
+ * Where the app is: the Overview, or Files with a filter. It lives in the
+ * URL hash (`#overview`, `#files/expiring`) so a reload, a bookmark or the
+ * back button returns to the same place.
  */
 export const FILE_FILTERS = [
 	"all",
@@ -15,24 +16,25 @@ export const FILE_FILTERS = [
 
 export type FileFilter = (typeof FILE_FILTERS)[number];
 
-export interface AppRoute {
-	filter: FileFilter;
-}
+export type AppRoute =
+	| { view: "overview" }
+	| { view: "files"; filter: FileFilter };
 
-const DEFAULT_ROUTE: AppRoute = { filter: "all" };
+const OVERVIEW: AppRoute = { view: "overview" };
 
 function isFileFilter(value: string): value is FileFilter {
 	return (FILE_FILTERS as readonly string[]).includes(value);
 }
 
-/** The route a hash names; anything unknown falls back to all files. */
+/** The route a hash names; anything unknown is the Overview, the home. */
 export function parseRoute(hash: string): AppRoute {
 	const [view, filter = "all"] = hash.replace(/^#/, "").split("/");
-	if (view !== "files" || !isFileFilter(filter)) return DEFAULT_ROUTE;
-	return { filter };
+	if (view !== "files" || !isFileFilter(filter)) return OVERVIEW;
+	return { view: "files", filter };
 }
 
 export function routeHash(route: AppRoute): string {
+	if (route.view === "overview") return "#overview";
 	return route.filter === "all" ? "#files" : `#files/${route.filter}`;
 }
 

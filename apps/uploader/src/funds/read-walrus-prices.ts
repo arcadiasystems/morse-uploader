@@ -15,6 +15,7 @@ export async function readWalrusPrices(
 	]);
 	return {
 		storagePerUnit: BigInt(state.storage_price_per_unit_size),
+		writePerUnit: BigInt(state.write_price_per_unit_size),
 		smallestUpload: smallest.totalCost,
 	};
 }

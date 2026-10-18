@@ -17,6 +17,27 @@ export function formatShortDate(ms: number, nowMs: number): string {
 	return (sameYear ? DAY_MONTH : DAY_MONTH_YEAR).format(ms);
 }
 
+const TIME = new Intl.DateTimeFormat("en-GB", {
+	hour: "2-digit",
+	minute: "2-digit",
+});
+
+/**
+ * When something happened, as the design's activity list writes it: the
+ * time for today (`14:12`), `Yesterday`, then a short date. Days are the
+ * viewer's calendar days.
+ */
+export function formatWhen(ms: number, nowMs: number): string {
+	const day = (value: number) => {
+		const date = new Date(value);
+		return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+	};
+	const daysAgo = Math.round((day(nowMs) - day(ms)) / 86_400_000);
+	if (daysAgo === 0) return TIME.format(ms);
+	if (daysAgo === 1) return "Yesterday";
+	return formatShortDate(ms, nowMs);
+}
+
 /** Whole days as a short duration: `< 1 day`, `1 day`, `23 days`. */
 export function formatDays(days: number): string {
 	if (days < 1) return "< 1 day";

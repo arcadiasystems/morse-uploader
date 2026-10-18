@@ -13,22 +13,51 @@ interface RailProps {
 	profileMenu: Popover;
 }
 
-/** Files filters the rail jumps to, and the filters each item lights up for. */
-const DESTINATIONS: readonly {
+interface Destination {
 	label: string;
 	icon: IconName;
-	filter: FileFilter;
-	on: readonly FileFilter[];
-}[] = [
+	route: AppRoute;
+	/** Whether the item stands for where the app is. */
+	isCurrent: (route: AppRoute) => boolean;
+}
+
+const filesWith =
+	(...filters: readonly FileFilter[]) =>
+	(route: AppRoute) =>
+		route.view === "files" && filters.includes(route.filter);
+
+/** The views the rail goes to: the Overview, and Files with a filter. */
+const DESTINATIONS: readonly Destination[] = [
+	{
+		label: "Overview",
+		icon: "home",
+		route: { view: "overview" },
+		isCurrent: (route) => route.view === "overview",
+	},
 	{
 		label: "Files",
 		icon: "folder",
-		filter: "all",
-		on: ["all", "quilts", "encrypted"],
+		route: { view: "files", filter: "all" },
+		isCurrent: filesWith("all", "quilts", "encrypted"),
 	},
-	{ label: "Expiry", icon: "clock", filter: "expiring", on: ["expiring"] },
-	{ label: "Shared", icon: "share", filter: "shared", on: ["shared"] },
-	{ label: "Morse", icon: "morse", filter: "published", on: ["published"] },
+	{
+		label: "Expiry",
+		icon: "clock",
+		route: { view: "files", filter: "expiring" },
+		isCurrent: filesWith("expiring"),
+	},
+	{
+		label: "Shared",
+		icon: "share",
+		route: { view: "files", filter: "shared" },
+		isCurrent: filesWith("shared"),
+	},
+	{
+		label: "Morse",
+		icon: "morse",
+		route: { view: "files", filter: "published" },
+		isCurrent: filesWith("published"),
+	},
 ];
 
 /**
@@ -42,14 +71,15 @@ export function Rail({
 	transfersPanel,
 	profileMenu,
 }: RailProps) {
-	const [files, ...filters] = DESTINATIONS;
-	const link = (destination: (typeof DESTINATIONS)[number]) => {
-		const current = destination.on.includes(route.filter);
+	const views = DESTINATIONS.slice(0, 2);
+	const filters = DESTINATIONS.slice(2);
+	const link = (destination: Destination) => {
+		const current = destination.isCurrent(route);
 		return (
 			<a
 				key={destination.label}
 				className={current ? "ri on" : "ri"}
-				href={routeHash({ filter: destination.filter })}
+				href={routeHash(destination.route)}
 				aria-label={destination.label}
 				title={destination.label}
 				aria-current={current ? "page" : undefined}
@@ -63,7 +93,7 @@ export function Rail({
 			<span className="lg">
 				<Brand wordmark={false} />
 			</span>
-			{files ? link(files) : null}
+			{views.map(link)}
 			<button
 				type="button"
 				className="ri"
