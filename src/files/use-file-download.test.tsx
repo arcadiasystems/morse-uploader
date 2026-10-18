@@ -1,3 +1,4 @@
+import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -35,15 +36,17 @@ const seal: SealMaterial = {
 	sealNonce: new Uint8Array([4, 5]),
 };
 
+const me = Ed25519Keypair.fromSecretKey(new Uint8Array(32).fill(1));
+
 function makeHandles(file: unknown, decrypt = vi.fn()): MorseFilesHandles {
 	return {
 		reader: { getRecipientFile: vi.fn().mockResolvedValue(file) },
 		walrusRead: { readBlob: vi.fn().mockResolvedValue(new Uint8Array([1, 2])) },
 		seal: { decryptUnderRecipientFile: decrypt },
-		signer: {},
+		signer: me,
 		client: {},
 		config: { packageId: "0xpkg" },
-		address: "0xme",
+		address: me.toSuiAddress(),
 	} as unknown as MorseFilesHandles;
 }
 function wrap(handles: MorseFilesHandles) {
