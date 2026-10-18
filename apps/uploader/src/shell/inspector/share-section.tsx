@@ -1,6 +1,6 @@
 import type { ShareLink } from "@/manage/share";
 import type { NetworkConfig } from "@/network/networks";
-import { CopyField } from "./copy-field";
+import { CopyField } from "../copy-field";
 
 /**
  * Share (PROTOCOL-NOTES section 10): aggregator links and an embed snippet.

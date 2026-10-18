@@ -1,117 +1,143 @@
 import { useCurrentClient } from "@mysten/dapp-kit-react";
-import { useId, useMemo, useRef, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import type { BlobRow } from "@/blobs/blob-row";
-import { matchesFilter } from "@/blobs/filter-rows";
-import type { ListedBlobs } from "@/blobs/list-blobs";
+import type { EpochClock } from "@/blobs/epoch-clock";
 import { TokenAmount } from "@/components/token-amount";
-import type { Balances } from "@/funds/types";
-import type { ChainRead } from "@/lib/use-chain-read";
-import { useChainRead } from "@/lib/use-chain-read";
+import { type Balances, TOKEN_DECIMALS } from "@/funds/types";
+import { parseDecimalAmount } from "@/lib/parse-decimal-amount";
+import { type ChainRead, useChainRead } from "@/lib/use-chain-read";
 import { describeActionError } from "@/manage/action-error";
-import { MAX_EXTENDS_PER_TRANSACTION } from "@/manage/auto-extend";
 import {
 	buildExtendTransaction,
 	PriceChangedError,
 	readStoragePrice,
 	simulateTransaction,
 } from "@/manage/blob-transactions";
-import { planExtend } from "@/manage/extend-rules";
+import { bulkEligibility } from "@/manage/bulk-eligibility";
+import { planBulkExtend } from "@/manage/bulk-extend";
 import { explorerTxUrl } from "@/network/explorer-urls";
 import type { NetworkConfig } from "@/network/networks";
 import type { WalletActions } from "@/wallet/use-wallet-actions";
-import { useModalFocus } from "../use-modal-focus";
+import { BulkSheet, LeftOutList, rowNames } from "./bulk-sheet";
 
-export type ExtendAllScope = "expiring" | "view";
+/** What the sheet extends: the selected blobs, or every blob expiring within 30 days. */
+export type ExtendScope = "selected" | "expiring";
 
 type Signing =
 	| { kind: "idle" }
-	| { kind: "signing" }
+	| { kind: "signing"; batch: number; of: number }
 	| { kind: "price-changed" }
 	| { kind: "failed"; message: string }
-	| { kind: "done"; digest: string; blobs: number };
+	| { kind: "done" };
+
+/** What this sheet has signed so far: every run's transactions and the blobs they extended. */
+interface Signed {
+	digests: readonly string[];
+	objectIds: ReadonlySet<string>;
+}
+
+const NOTHING_SIGNED: Signed = { digests: [], objectIds: new Set() };
 
 /**
- * Extend all (PROTOCOL-NOTES section 8): one transaction with one extend per
- * blob, so one signature, for the blobs expiring within 30 days or every
- * blob listed in the current view. Each blob gets the chosen epochs, or as
- * many as still fit within the 53-epoch limit.
+ * Extend all (PROTOCOL-NOTES section 8): one extend per blob, up to 50 in
+ * a transaction, so the wallet asks once per 50, and the sheet says how
+ * many times before it asks. The cost is `units × storage price × epochs`
+ * per blob at the price read from the system object, the network fee comes
+ * from simulating each transaction, and the balances after are shown. An
+ * optional cap bounds what it spends. The price is read again before each
+ * transaction; if it moved, nothing more is signed until the new cost has
+ * been seen. A run that stops part way keeps what it signed, and the next
+ * run plans only the blobs it has not extended, so none is paid twice.
  */
-export function ExtendAllSheet({
+export function BulkExtendSheet({
 	network,
-	listed,
-	viewRows,
-	viewLabel,
-	initialScope,
+	scope,
+	rows,
+	clock,
 	actions,
 	balances,
 	onClose,
 	onExtended,
 }: {
 	network: NetworkConfig;
-	listed: ListedBlobs;
-	/** The rows the Walrus pane lists now: its view and search. */
-	viewRows: readonly BlobRow[];
-	viewLabel: string;
-	initialScope: ExtendAllScope;
+	scope: ExtendScope;
+	rows: readonly BlobRow[];
+	clock: EpochClock;
 	actions: WalletActions;
 	balances: ChainRead<Balances>;
 	onClose: () => void;
 	onExtended: () => void;
 }) {
 	const ids = useId();
-	const dialog = useRef<HTMLDivElement>(null);
-	useModalFocus(dialog, onClose);
 	const client = useCurrentClient();
-	const [scope, setScope] = useState<ExtendAllScope>(initialScope);
 	const [epochs, setEpochs] = useState(1);
+	const [capText, setCapText] = useState("");
 	const [priceRead, setPriceRead] = useState(0);
 	const [signing, setSigning] = useState<Signing>({ kind: "idle" });
+	const [signed, setSigned] = useState<Signed>(NOTHING_SIGNED);
 
-	const expiring = useMemo(
-		() => listed.rows.filter((row) => matchesFilter(row, "expiring")),
-		[listed.rows],
+	const { eligible, leftOut } = useMemo(
+		() => bulkEligibility("extend", rows, clock, network.maxEpochsAhead),
+		[rows, clock, network.maxEpochsAhead],
 	);
-	const rows = scope === "expiring" ? expiring : viewRows;
-	const price = useChainRead(`${network.id}:price-all:${priceRead}`, () =>
+	// Blobs this sheet already extended stay out of the next run's plan.
+	const remaining = useMemo(
+		() => eligible.filter((row) => !signed.objectIds.has(row.blob.objectId)),
+		[eligible, signed.objectIds],
+	);
+	const trimmedCap = capText.trim();
+	const capFrost =
+		trimmedCap === "" ? null : parseDecimalAmount(trimmedCap, TOKEN_DECIMALS);
+	const capInvalid = trimmedCap !== "" && capFrost === null;
+
+	const price = useChainRead(`${network.id}:price-bulk:${priceRead}`, () =>
 		readStoragePrice(client),
 	).read;
 	const pricePerUnit = price.status === "ready" ? price.data : null;
-	const plan = useMemo(() => {
-		if (pricePerUnit === null) return null;
-		const soonestFirst = [...rows].sort(
-			(a, b) => a.blob.endEpoch - b.blob.endEpoch,
-		);
-		const full = planExtend(
-			soonestFirst,
+	const plan = useMemo(
+		() =>
+			pricePerUnit === null || capInvalid
+				? null
+				: planBulkExtend({
+						rows: remaining,
+						epochs,
+						clock,
+						maxEpochsAhead: network.maxEpochsAhead,
+						pricePerUnit,
+						capFrost,
+					}),
+		[
+			remaining,
 			epochs,
-			listed.clock,
+			clock,
 			network.maxEpochsAhead,
 			pricePerUnit,
-		);
-		const items = full.items.slice(0, MAX_EXTENDS_PER_TRANSACTION);
-		return {
-			...full,
-			items,
-			totalFrost: items.reduce((sum, item) => sum + item.frost, 0n),
-			deferred: full.items.length - items.length,
-		};
-	}, [rows, epochs, listed.clock, network.maxEpochsAhead, pricePerUnit]);
+			capFrost,
+			capInvalid,
+		],
+	);
 
 	const gas = useChainRead(
 		plan && plan.items.length > 0
-			? `${network.id}:extend-all:${plan.items.map((item) => `${item.objectId}+${item.epochs}`).join(",")}:${pricePerUnit}`
+			? `${network.id}:bulk-extend:${plan.items.map((item) => `${item.objectId}+${item.epochs}`).join(",")}:${pricePerUnit}`
 			: null,
-		(signal) =>
-			plan === null || pricePerUnit === null
-				? Promise.reject(new Error("The storage price is not read yet."))
-				: simulateTransaction(
-						client,
-						buildExtendTransaction(client, plan.items, pricePerUnit),
-						actions.address,
-						signal,
-					),
+		async (signal) => {
+			if (plan === null || pricePerUnit === null)
+				throw new Error("The storage price is not read yet.");
+			let netMist = 0n;
+			for (const batch of plan.batches) {
+				const simulated = await simulateTransaction(
+					client,
+					buildExtendTransaction(client, batch, pricePerUnit),
+					actions.address,
+					signal,
+				);
+				netMist += simulated.netMist;
+			}
+			return netMist;
+		},
 	).read;
-	const gasMist = gas.status === "ready" ? gas.data.netMist : null;
+	const gasMist = gas.status === "ready" ? gas.data : null;
 	const wallet = balances.status === "ready" ? balances.data : null;
 	const walAfter = wallet && plan ? wallet.wal - plan.totalFrost : null;
 	const suiAfter = wallet && gasMist !== null ? wallet.sui - gasMist : null;
@@ -121,104 +147,68 @@ export function ExtendAllSheet({
 			: suiAfter !== null && suiAfter < 0n
 				? "SUI"
 				: null;
+	const count = plan?.items.length ?? 0;
+	const signatures = plan?.signatures ?? 0;
 
 	async function sign() {
 		if (!plan || pricePerUnit === null) return;
-		setSigning({ kind: "signing" });
+		let progress = signed;
+		const record = (digest: string, objectIds: readonly string[]) => {
+			progress = {
+				digests: [...progress.digests, digest],
+				objectIds: new Set([...progress.objectIds, ...objectIds]),
+			};
+			setSigned(progress);
+		};
 		try {
-			if ((await readStoragePrice(client)) !== pricePerUnit) {
-				setPriceRead((value) => value + 1);
-				setSigning({ kind: "price-changed" });
-				return;
+			for (const [index, batch] of plan.batches.entries()) {
+				setSigning({
+					kind: "signing",
+					batch: index + 1,
+					of: plan.batches.length,
+				});
+				if ((await readStoragePrice(client)) !== pricePerUnit)
+					throw new PriceChangedError();
+				const executed = await actions.executor.execute(
+					buildExtendTransaction(client, batch, pricePerUnit),
+				);
+				record(
+					executed.digest,
+					batch.map((item) => item.objectId),
+				);
 			}
-			const executed = await actions.executor.execute(
-				buildExtendTransaction(client, plan.items, pricePerUnit),
-			);
-			setSigning({
-				kind: "done",
-				digest: executed.digest,
-				blobs: plan.items.length,
-			});
-			onExtended();
+			setSigning({ kind: "done" });
 		} catch (error) {
 			if (error instanceof PriceChangedError) {
 				setPriceRead((value) => value + 1);
 				setSigning({ kind: "price-changed" });
 			} else
 				setSigning({ kind: "failed", message: describeActionError(error) });
+		} finally {
+			if (progress.digests.length > signed.digests.length) onExtended();
 		}
 	}
 
-	const count = plan?.items.length ?? 0;
 	return (
-		<div className="scrim">
-			<div
-				className="modal"
-				role="dialog"
-				aria-modal="true"
-				aria-labelledby={`${ids}-title`}
-				ref={dialog}
-			>
-				<div className="l">
-					<h2 id={`${ids}-title`}>Extend all</h2>
-					<p>
-						One transaction extends every blob below, so your wallet asks once.
-						Nobody can pay for more than {network.maxEpochsAhead} epochs ahead
-						of now, so a blob near that limit gets fewer epochs.
-					</p>
-					<fieldset>
-						<legend>
-							<h4>Which blobs</h4>
-						</legend>
-						<div className="keep">
-							<label className={scope === "expiring" ? "on" : undefined}>
-								<input
-									type="radio"
-									name={`${ids}-scope`}
-									checked={scope === "expiring"}
-									onChange={() => setScope("expiring")}
-								/>
-								Expiring within 30 days ({expiring.length})
-							</label>
-							<label className={scope === "view" ? "on" : undefined}>
-								<input
-									type="radio"
-									name={`${ids}-scope`}
-									checked={scope === "view"}
-									onChange={() => setScope("view")}
-								/>
-								Listed in {viewLabel} ({viewRows.length})
-							</label>
-						</div>
-					</fieldset>
-					<div className="epochs">
-						<label htmlFor={`${ids}-epochs`}>Extend each by</label>
-						<input
-							id={`${ids}-epochs`}
-							data-autofocus
-							type="number"
-							inputMode="numeric"
-							min={1}
-							max={network.maxEpochsAhead}
-							value={epochs}
-							onChange={(event) => {
-								const value = Math.floor(event.currentTarget.valueAsNumber);
-								setEpochs(
-									Number.isFinite(value)
-										? Math.max(1, Math.min(network.maxEpochsAhead, value))
-										: 1,
-								);
-								setSigning({ kind: "idle" });
-							}}
-						/>
-						<span>
-							{epochs === 1 ? "epoch" : "epochs"}; an epoch is{" "}
-							{network.epochDays === 1 ? "1 day" : `${network.epochDays} days`}{" "}
-							on {network.label}.
-						</span>
-					</div>
-				</div>
-				<div className="r">
+		<BulkSheet
+			title={
+				scope === "expiring"
+					? "Extend everything expiring"
+					: `Extend ${rows.length === 1 ? "1 selected blob" : `${rows.length} selected blobs`}`
+			}
+			intro={
+				<>
+					{scope === "expiring"
+						? "Every blob whose storage ends within 30 days. "
+						: ""}
+					One transaction extends up to 50 blobs, so your wallet asks once per
+					50. Nobody can pay for more than {network.maxEpochsAhead} epochs ahead
+					of now, so a blob near that limit gets fewer epochs.
+				</>
+			}
+			onClose={onClose}
+			aside={
+				<>
 					<h4>Cost</h4>
 					{price.status === "error" ? (
 						<p className="note warn">{describeActionError(price.error)}</p>
@@ -229,7 +219,10 @@ export function ExtendAllSheet({
 							<dd>{plan ? count : "…"}</dd>
 						</div>
 						<div>
-							<dt>Storage (WAL)</dt>
+							<dt>
+								Storage, {epochs === 1 ? "1 epoch" : `${epochs} epochs`} each
+								(WAL)
+							</dt>
 							<dd>
 								<TokenAmount
 									raw={plan?.totalFrost ?? null}
@@ -248,6 +241,10 @@ export function ExtendAllSheet({
 									</>
 								)}
 							</dd>
+						</div>
+						<div>
+							<dt>Signatures</dt>
+							<dd>{plan ? signatures : "…"}</dd>
 						</div>
 						<div className="tot">
 							<dt>WAL after</dt>
@@ -276,18 +273,12 @@ export function ExtendAllSheet({
 							fewer epochs: the {network.maxEpochsAhead}-epoch limit.
 						</p>
 					) : null}
-					{plan && plan.skipped.length > 0 ? (
+					{plan && plan.overCap.length > 0 ? (
 						<p className="note">
-							{plan.skipped.length === 1
-								? "1 blob is left out"
-								: `${plan.skipped.length} blobs are left out`}
-							: not certified, expired, or already at the limit.
-						</p>
-					) : null}
-					{plan && plan.deferred > 0 ? (
-						<p className="note">
-							{plan.deferred} more wait for a second run: one transaction holds{" "}
-							{MAX_EXTENDS_PER_TRANSACTION} extends, soonest to expire first.
+							{plan.overCap.length === 1
+								? "1 blob does"
+								: `${plan.overCap.length} blobs do`}{" "}
+							not fit in the cap: {rowNames(plan.overCap)}.
 						</p>
 					) : null}
 					{gas.status === "error" ? (
@@ -298,28 +289,7 @@ export function ExtendAllSheet({
 							Your wallet does not have enough {short} for this.
 						</p>
 					) : null}
-					{signing.kind === "price-changed" ? (
-						<p className="note warn" role="alert">
-							The storage price changed since this quote. Check the new cost and
-							sign again.
-						</p>
-					) : signing.kind === "failed" ? (
-						<p className="note warn" role="alert">
-							{signing.message}
-						</p>
-					) : signing.kind === "done" ? (
-						<p className="note" role="status">
-							Extended{" "}
-							{signing.blobs === 1 ? "1 blob" : `${signing.blobs} blobs`}.{" "}
-							<a
-								href={explorerTxUrl(network, signing.digest)}
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								View transaction
-							</a>
-						</p>
-					) : null}
+					<SigningNote signing={signing} signed={signed} network={network} />
 					<div className="acts">
 						<button
 							className="btn primary"
@@ -328,22 +298,133 @@ export function ExtendAllSheet({
 								count === 0 ||
 								short !== null ||
 								gas.status !== "ready" ||
-								signing.kind === "signing" ||
-								signing.kind === "done"
+								signing.kind === "signing"
 							}
 							aria-busy={signing.kind === "signing"}
 							onClick={sign}
 						>
 							{signing.kind === "signing"
-								? "Confirm in your wallet…"
-								: `Extend ${count === 1 ? "1 blob" : `${count} blobs`} · sign once`}
+								? `Confirm in your wallet… ${signing.batch} of ${signing.of}`
+								: `Extend ${count === 1 ? "1 blob" : `${count} blobs`} · sign ${signatures === 1 ? "once" : `${signatures} times`}`}
 						</button>
 						<button className="btn" type="button" onClick={onClose}>
 							{signing.kind === "done" ? "Close" : "Cancel"}
 						</button>
 					</div>
-				</div>
+				</>
+			}
+		>
+			<div className="epochs">
+				<label htmlFor={`${ids}-epochs`}>Extend each by</label>
+				<input
+					id={`${ids}-epochs`}
+					data-autofocus
+					type="number"
+					inputMode="numeric"
+					min={1}
+					max={network.maxEpochsAhead}
+					value={epochs}
+					onChange={(event) => {
+						const value = Math.floor(event.currentTarget.valueAsNumber);
+						setEpochs(
+							Number.isFinite(value)
+								? Math.max(1, Math.min(network.maxEpochsAhead, value))
+								: 1,
+						);
+						setSigning({ kind: "idle" });
+					}}
+				/>
+				<span>
+					{epochs === 1 ? "epoch" : "epochs"}; an epoch is{" "}
+					{network.epochDays === 1 ? "1 day" : `${network.epochDays} days`} on{" "}
+					{network.label}.
+				</span>
 			</div>
-		</div>
+			<div className="epochs">
+				<label htmlFor={`${ids}-cap`}>Spend at most</label>
+				<input
+					id={`${ids}-cap`}
+					type="text"
+					inputMode="decimal"
+					placeholder="no cap"
+					value={capText}
+					aria-invalid={capInvalid}
+					onChange={(event) => {
+						setCapText(event.currentTarget.value);
+						setSigning({ kind: "idle" });
+					}}
+				/>
+				<span>WAL. Soonest to expire go first; the rest wait.</span>
+			</div>
+			{capInvalid ? (
+				<p className="note warn">
+					Type the cap as a number of WAL, such as 0.05.
+				</p>
+			) : null}
+			<p className="note">
+				{eligible.length === 0
+					? "None of these blobs can be extended."
+					: `${eligible.length === 1 ? "1 blob" : `${eligible.length} blobs`} can be extended: ${rowNames(eligible)}.`}
+			</p>
+			<LeftOutList leftOut={leftOut} maxEpochsAhead={network.maxEpochsAhead} />
+		</BulkSheet>
 	);
+}
+
+function SigningNote({
+	signing,
+	signed,
+	network,
+}: {
+	signing: Signing;
+	signed: Signed;
+	network: NetworkConfig;
+}) {
+	const extended = signed.objectIds.size;
+	const links = signed.digests.map((digest, index) => (
+		<a
+			key={digest}
+			href={explorerTxUrl(network, digest)}
+			target="_blank"
+			rel="noopener noreferrer"
+		>
+			{signed.digests.length === 1
+				? "View transaction"
+				: `Transaction ${index + 1}`}
+		</a>
+	));
+	const soFar =
+		extended > 0
+			? `${extended === 1 ? "1 blob" : `${extended} blobs`} extended so far. `
+			: "";
+	switch (signing.kind) {
+		case "idle":
+		case "signing":
+			return extended > 0 ? (
+				<p className="note" role="status">
+					{soFar}
+					{links}
+				</p>
+			) : null;
+		case "price-changed":
+			return (
+				<p className="note warn" role="alert">
+					The storage price changed since this quote. {soFar}Check the new cost
+					and sign again for the rest. {links}
+				</p>
+			);
+		case "failed":
+			return (
+				<p className="note warn" role="alert">
+					{signing.message} {soFar}
+					{links}
+				</p>
+			);
+		case "done":
+			return (
+				<p className="note" role="status">
+					Extended {extended === 1 ? "1 blob" : `${extended} blobs`}. {links}
+				</p>
+			);
+	}
 }

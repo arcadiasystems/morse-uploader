@@ -48,16 +48,6 @@
 .filters .sp {
 	flex: 1;
 }
-.filters .picked {
-	display: inline-flex;
-	align-items: center;
-	gap: 4px;
-	font-family: var(--mono);
-	font-size: 10.5px;
-	letter-spacing: 0.12em;
-	text-transform: uppercase;
-	color: var(--cyan);
-}
 .filters .sortby {
 	display: inline-flex;
 	align-items: center;

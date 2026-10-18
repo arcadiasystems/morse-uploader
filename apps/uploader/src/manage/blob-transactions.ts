@@ -2,7 +2,7 @@ import { Transaction } from "@mysten/sui/transactions";
 import type { NetworkClient } from "@/network/create-network-client";
 
 /**
- * The transactions the inspector signs, built with `@mysten/walrus` 1.2.35
+ * The transactions the inspector and the bulk bar sign, built with `@mysten/walrus` 1.2.35
  * (PROTOCOL-NOTES section 8), and their simulation before signing.
  */
 
@@ -81,6 +81,33 @@ export function buildDeleteTransaction(
 	owner: string,
 ): Transaction {
 	return client.walrus.deleteBlobTransaction({ blobObjectId: objectId, owner });
+}
+
+/** Deletes per transaction: each is one Move call and one transfer, as for extends. */
+export const MAX_DELETES_PER_TRANSACTION = 50;
+
+/**
+ * Deletes several deletable blobs in one transaction; each `delete_blob`
+ * returns its `Storage` object to the owner, as a single delete does.
+ * @throws {RangeError} When there are no blobs or more than one transaction holds.
+ */
+export function buildDeleteManyTransaction(
+	client: NetworkClient,
+	objectIds: readonly string[],
+	owner: string,
+): Transaction {
+	if (objectIds.length === 0 || objectIds.length > MAX_DELETES_PER_TRANSACTION)
+		throw new RangeError(
+			`One transaction deletes 1 to ${MAX_DELETES_PER_TRANSACTION} blobs, not ${objectIds.length}.`,
+		);
+	const transaction = new Transaction();
+	for (const objectId of objectIds)
+		client.walrus.deleteBlobTransaction({
+			blobObjectId: objectId,
+			owner,
+			transaction,
+		});
+	return transaction;
 }
 
 /**

@@ -13,6 +13,7 @@ import { useQuiltPatches } from "@/blobs/use-quilt-patches";
 import { errorMessage } from "@/lib/error-message";
 import type { ChainRead } from "@/lib/use-chain-read";
 import type { NetworkConfig } from "@/network/networks";
+import { BulkBar, type BulkSheetKind } from "../bulk/bulk-bar";
 import { EmptyState } from "../empty-state";
 import {
 	Inspector,
@@ -26,6 +27,13 @@ import { FileList } from "./file-list";
 import { type FilesLayout, FilterBar } from "./filter-bar";
 import { buildListItems } from "./list-items";
 import { type InspectorAsk, RowMenu } from "./row-menu";
+import {
+	type Selection,
+	selectedRows,
+	selectionInView,
+	setSelected,
+	toggleSelected,
+} from "./selection";
 
 const PLACEHOLDER_ROWS = [1, 2, 3, 4, 5, 6] as const;
 
@@ -49,17 +57,22 @@ interface FilesViewProps {
 	onRefresh: () => void;
 	onConnect: () => void;
 	inspector: InspectorContext;
-	/** Opens Extend all for the blobs expiring soon. */
+	/** Opens Extend everything expiring. */
 	onExtendExpiring: () => void;
+	/** The selected blobs, which survive filter and search changes. */
+	selection: Selection;
+	onSelectionChange: (change: (current: Selection) => Selection) => void;
+	/** Opens a bulk action's sheet for the selection. */
+	onBulk: (sheet: BulkSheetKind) => void;
 }
 
 /**
  * Files (design/v2/app.html): the wallet's blobs on the current network,
  * read from chain, with filter chips, sort, a list or grid, quilts that
- * open in place, a selection, and an overflow menu per row. A row's
- * details open in the inspector beside the list. Selection and open quilts
+ * open in place, a selection with the bulk bar, and an overflow menu per
+ * row. A row's details open in the inspector beside the list. Open quilts
  * belong to one wallet and network; the shell remounts the view when
- * either changes.
+ * either changes, and keeps the selection per wallet and network.
  */
 export function FilesView({
 	network,
@@ -80,6 +93,9 @@ export function FilesView({
 	onConnect,
 	inspector,
 	onExtendExpiring,
+	selection,
+	onSelectionChange,
+	onBulk,
 }: FilesViewProps) {
 	const { store, patches } = useQuiltPatches();
 	const view = useRef<HTMLElement>(null);
@@ -88,7 +104,6 @@ export function FilesView({
 	const [inspectorOpen, setInspectorOpen] = useState(false);
 	const [request, setRequest] = useState<InspectorRequest | null>(null);
 	const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
-	const [checked, setChecked] = useState<ReadonlySet<string>>(new Set());
 	const [menu, setMenu] = useState<{
 		key: string;
 		anchor: HTMLButtonElement;
@@ -142,15 +157,18 @@ export function FilesView({
 	}
 
 	function check(objectId: string) {
-		setChecked((current) => {
-			const next = new Set(current);
-			if (!next.delete(objectId)) next.add(objectId);
-			return next;
-		});
+		onSelectionChange((current) => toggleSelected(current, objectId));
 	}
 
+	// The header box selects or clears what the view lists; hidden selections stay.
 	function checkAll(on: boolean) {
-		setChecked(on ? new Set(rows.map((row) => row.blob.objectId)) : new Set());
+		onSelectionChange((current) =>
+			setSelected(
+				current,
+				rows.map((row) => row.blob.objectId),
+				on,
+			),
+		);
 	}
 
 	// File counts show on quilt rows, so every readable quilt's index is read
@@ -256,7 +274,7 @@ export function FilesView({
 				rows={rows}
 				activeKey={activeKey}
 				onActivate={activate}
-				checked={checked}
+				checked={selection}
 				onCheck={check}
 				onMenu={(key, anchor) => setMenu({ key, anchor })}
 			/>
@@ -271,7 +289,7 @@ export function FilesView({
 				onSort={onSortBy}
 				activeKey={activeKey}
 				onActivate={activate}
-				checked={checked}
+				checked={selection}
 				onCheck={check}
 				onCheckAll={checkAll}
 				onMenu={(key, anchor) => setMenu({ key, anchor })}
@@ -291,8 +309,6 @@ export function FilesView({
 					filter={filter}
 					counts={counts}
 					countNotes={countNotes}
-					checked={checked.size}
-					onClearChecked={() => setChecked(new Set())}
 					sort={sort}
 					onSort={onSort}
 					layout={layout}
@@ -309,6 +325,22 @@ export function FilesView({
 				/>
 				{content}
 			</section>
+			{selection.size > 0 && listed !== null ? (
+				<BulkBar
+					network={network}
+					rows={selectedRows(selection, listed.rows)}
+					hidden={selectionInView(selection, rows).hidden}
+					clock={listed.clock}
+					storagePricePerUnit={
+						inspector.prices.status === "ready"
+							? inspector.prices.data.storagePerUnit
+							: null
+					}
+					canSign={inspector.actions !== null}
+					onOpen={onBulk}
+					onClear={() => onSelectionChange(() => new Set())}
+				/>
+			) : null}
 			{showInspector ? (
 				<Inspector
 					key={active.key}

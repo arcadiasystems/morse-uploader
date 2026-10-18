@@ -2,15 +2,17 @@ import { useCurrentNetwork } from "@mysten/dapp-kit-react";
 import { normalizeSuiAddress } from "@mysten/sui/utils";
 import { useCallback, useMemo, useState } from "react";
 import { useActivity } from "@/activity/use-activity";
+import type { BlobRow } from "@/blobs/blob-row";
 import {
 	type BlobFilter,
-	filterRows,
 	type MorseMarks,
+	matchesFilter,
 } from "@/blobs/filter-rows";
 import { type ListedBlobs, listBlobs } from "@/blobs/list-blobs";
 import { publishedObjectIds, sharedObjectIds } from "@/blobs/morse-marks";
 import { DEFAULT_SORT, nextSort, type RowSort } from "@/blobs/sort-rows";
 import { useBlobListing } from "@/blobs/use-blob-listing";
+import type { Balances } from "@/funds/types";
 import { useFunds } from "@/funds/use-funds";
 import { errorMessage } from "@/lib/error-message";
 import { formatBytes } from "@/lib/format-bytes";
@@ -22,18 +24,31 @@ import { useAutoExtend } from "@/manage/use-auto-extend";
 import type { Publications } from "@/morse/read-publications";
 import type { SharedFiles } from "@/morse/read-shared-files";
 import { useMorseReads } from "@/morse/use-morse-reads";
-import { NETWORKS } from "@/network/networks";
+import { NETWORKS, type NetworkConfig } from "@/network/networks";
 import { summarizeTransfers } from "@/transfers/summarize-transfers";
 import type { TransferBatch } from "@/transfers/transfer-job";
 import { useTransferQueue } from "@/transfers/use-transfer-queue";
 import { useSession } from "@/wallet/use-session";
-import { useWalletActions } from "@/wallet/use-wallet-actions";
+import {
+	useWalletActions,
+	type WalletActions,
+} from "@/wallet/use-wallet-actions";
 import { useAppRoute } from "./app-route";
-import { type ExtendAllScope, ExtendAllSheet } from "./bulk/bulk-extend-sheet";
+import type { BulkSheetKind } from "./bulk/bulk-bar";
+import { BulkDeleteSheet } from "./bulk/bulk-delete-sheet";
+import { BulkExtendSheet, type ExtendScope } from "./bulk/bulk-extend-sheet";
+import { BulkPublishSheet } from "./bulk/bulk-publish-sheet";
+import { BulkShareSheet } from "./bulk/bulk-share-sheet";
+import { BulkVerifySheet } from "./bulk/bulk-verify-sheet";
 import { useFilePickers } from "./file-pickers";
-import { FILE_FILTER_CONFIG } from "./files/file-filters";
 import { FilesView } from "./files/files-view";
 import type { FilesLayout } from "./files/filter-bar";
+import {
+	EMPTY_SELECTION,
+	pruneSelection,
+	type Selection,
+	selectedRows,
+} from "./files/selection";
 import type { InspectorContext } from "./inspector/inspector";
 import { Overview } from "./overview/overview";
 import { Rail } from "./rail/rail";
@@ -86,7 +101,18 @@ export function Shell() {
 	const transfers = useTransferQueue(network.id, address, refreshChain);
 	const transfersSummary = summarizeTransfers(transfers.state);
 	const actions = useWalletActions(network.id);
-	const [extendAll, setExtendAll] = useState<ExtendAllScope | null>(null);
+	// The bulk sheet open now: an action on the selection, or Extend everything expiring.
+	const [bulk, setBulk] = useState<
+		| { kind: Exclude<BulkSheetKind, "extend"> }
+		| { kind: "extend"; scope: ExtendScope }
+		| null
+	>(null);
+	// The selection belongs to one wallet and network.
+	const selectionScope = `${network.id}:${address ?? ""}`;
+	const [selectionOf, setSelectionOf] = useState<{
+		scope: string;
+		selected: Selection;
+	}>({ scope: selectionScope, selected: EMPTY_SELECTION });
 
 	function upload(files: PickedFile[]) {
 		picked.replace(files);
@@ -107,6 +133,23 @@ export function Shell() {
 				? listBlobs(listing.data, listing.readAt.getTime())
 				: null,
 		[listing],
+	);
+	// Blobs that left the listing drop out of the selection.
+	const selection =
+		selectionOf.scope === selectionScope && listed
+			? pruneSelection(selectionOf.selected, listed.rows)
+			: EMPTY_SELECTION;
+	const changeSelection = useCallback(
+		(change: (current: Selection) => Selection) =>
+			setSelectionOf((previous) => ({
+				scope: selectionScope,
+				selected: change(
+					previous.scope === selectionScope
+						? previous.selected
+						: EMPTY_SELECTION,
+				),
+			})),
+		[selectionScope],
 	);
 	const autoExtend = useAutoExtend({
 		network,
@@ -197,7 +240,11 @@ export function Shell() {
 							prices={funds.prices}
 							activity={activity.read}
 							morse={morse}
-							onExtendExpiring={actions ? () => setExtendAll("expiring") : null}
+							onExtendExpiring={
+								actions
+									? () => setBulk({ kind: "extend", scope: "expiring" })
+									: null
+							}
 							onTopUp={address === null ? null : balanceMenu.open}
 							onConnect={profileMenu.open}
 							onRetryBlobs={blobs.refresh}
@@ -228,7 +275,16 @@ export function Shell() {
 							onRefresh={refreshChain}
 							onConnect={profileMenu.open}
 							inspector={inspector}
-							onExtendExpiring={() => setExtendAll("expiring")}
+							onExtendExpiring={() =>
+								setBulk({ kind: "extend", scope: "expiring" })
+							}
+							selection={selection}
+							onSelectionChange={changeSelection}
+							onBulk={(kind) =>
+								setBulk(
+									kind === "extend" ? { kind, scope: "selected" } : { kind },
+								)
+							}
 						/>
 					)}
 				</div>
@@ -246,17 +302,20 @@ export function Shell() {
 					onConfirm={confirmUpload}
 				/>
 			) : null}
-			{extendAll !== null && actions !== null && listed !== null ? (
-				<ExtendAllSheet
+			{bulk !== null && listed !== null ? (
+				<BulkSheetFor
+					bulk={bulk}
 					network={network}
 					listed={listed}
-					viewRows={filterRows(listed.rows, filter, query, marks)}
-					viewLabel={FILE_FILTER_CONFIG[filter].label}
-					initialScope={extendAll}
+					rows={
+						bulk.kind === "extend" && bulk.scope === "expiring"
+							? listed.rows.filter((row) => matchesFilter(row, "expiring"))
+							: selectedRows(selection, listed.rows)
+					}
 					actions={actions}
 					balances={funds.balances}
-					onClose={() => setExtendAll(null)}
-					onExtended={refreshChain}
+					onClose={() => setBulk(null)}
+					onChanged={refreshChain}
 				/>
 			) : null}
 			{pickers.inputs}
@@ -286,5 +345,85 @@ function markNote(
 			return `Could not read ${what}: ${errorMessage(read.error)}`;
 		case "ready":
 			return read.data.kind === "unavailable" ? read.data.reason : undefined;
+	}
+}
+
+/** The open bulk sheet; the ones that sign need a connected wallet. */
+function BulkSheetFor({
+	bulk,
+	network,
+	listed,
+	rows,
+	actions,
+	balances,
+	onClose,
+	onChanged,
+}: {
+	bulk:
+		| { kind: Exclude<BulkSheetKind, "extend"> }
+		| { kind: "extend"; scope: ExtendScope };
+	network: NetworkConfig;
+	listed: ListedBlobs;
+	rows: readonly BlobRow[];
+	actions: WalletActions | null;
+	balances: ChainRead<Balances>;
+	onClose: () => void;
+	onChanged: () => void;
+}) {
+	const { clock } = listed;
+	switch (bulk.kind) {
+		case "share":
+			return (
+				<BulkShareSheet
+					network={network}
+					rows={rows}
+					clock={clock}
+					onClose={onClose}
+				/>
+			);
+		case "verify":
+			return (
+				<BulkVerifySheet
+					network={network}
+					rows={rows}
+					clock={clock}
+					onClose={onClose}
+				/>
+			);
+		case "extend":
+			return actions ? (
+				<BulkExtendSheet
+					network={network}
+					scope={bulk.scope}
+					rows={rows}
+					clock={clock}
+					actions={actions}
+					balances={balances}
+					onClose={onClose}
+					onExtended={onChanged}
+				/>
+			) : null;
+		case "publish":
+			return actions ? (
+				<BulkPublishSheet
+					network={network}
+					rows={rows}
+					clock={clock}
+					actions={actions}
+					onClose={onClose}
+					onPublished={onChanged}
+				/>
+			) : null;
+		case "delete":
+			return actions ? (
+				<BulkDeleteSheet
+					network={network}
+					rows={rows}
+					clock={clock}
+					actions={actions}
+					onClose={onClose}
+					onDeleted={onChanged}
+				/>
+			) : null;
 	}
 }

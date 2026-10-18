@@ -3,7 +3,6 @@ import { type ReactNode, useId, useState } from "react";
 import { CONTENT_TYPE_ATTRIBUTE } from "@/blobs/blob-attributes";
 import type { QuiltPatchEntry } from "@/blobs/quilt-patch-list";
 import { signatureCount } from "@/lib/batches";
-import { errorMessage } from "@/lib/error-message";
 import type { ChainRead } from "@/lib/use-chain-read";
 import { describeActionError } from "@/manage/action-error";
 import { mediaTypeOf } from "@/manage/preview-plan";
@@ -14,17 +13,14 @@ import {
 } from "@/morse/add-entries";
 import { attachToMorse } from "@/morse/attach-to-morse";
 import { MAX_ENTRIES_PER_TRANSACTION } from "@/morse/entry-batch";
-import { usePublishTargets } from "@/morse/use-publish-targets";
 import { explorerTxUrl } from "@/network/explorer-urls";
 import type { NetworkConfig } from "@/network/networks";
 import {
-	choiceKey,
-	choiceLabel,
 	MAX_ENTRY_NAME_BYTES,
 	type PublishChoice,
-	publishChoices,
 } from "@/upload/publish-rules";
 import type { WalletActions } from "@/wallet/use-wallet-actions";
+import { CollectionPicker, useCollectionChoice } from "../collection-picker";
 
 const UTF8 = new TextEncoder();
 /** Morse needs a media type for every entry; this one means "bytes". */
@@ -111,85 +107,6 @@ export function PublishSection({
 				</div>
 			) : null}
 		</section>
-	);
-}
-
-/** The publications and collections of one mode the wallet can write to, and the picked one. */
-function useCollectionChoice(
-	network: NetworkConfig,
-	owner: string,
-	mode: "blob" | "quilt",
-) {
-	const targets = usePublishTargets(network.id, owner);
-	const choices =
-		targets.read.status === "ready"
-			? publishChoices(targets.read.data, mode)
-			: [];
-	const [choiceId, setChoiceId] = useState<string | null>(null);
-	const choice =
-		choices.find((option) => choiceKey(option) === choiceId) ??
-		choices[0] ??
-		null;
-	return { targets, choices, choice, setChoiceId };
-}
-
-/** The picker, or why there is nothing to pick. */
-function CollectionPicker({
-	network,
-	mode,
-	state,
-	onPick,
-}: {
-	network: NetworkConfig;
-	mode: "blob" | "quilt";
-	state: ReturnType<typeof useCollectionChoice>;
-	onPick: () => void;
-}) {
-	const ids = useId();
-	const { targets, choices, choice, setChoiceId } = state;
-	if (targets.read.status === "loading" || targets.read.status === "idle")
-		return (
-			<span className="note" role="status">
-				Reading the publications this wallet can publish to…
-			</span>
-		);
-	if (targets.read.status === "error")
-		return (
-			<span className="note warn" role="alert">
-				Could not read your publications: {errorMessage(targets.read.error)}{" "}
-				<button className="cp" type="button" onClick={targets.refresh}>
-					Try again
-				</button>
-			</span>
-		);
-	if (choices.length === 0)
-		return (
-			<span className="note">
-				This wallet holds no PublisherCap for a {mode} collection on{" "}
-				{network.label}. A {mode} collection takes{" "}
-				{mode === "quilt" ? "files from quilts" : "standalone blobs"}.
-			</span>
-		);
-	return (
-		<>
-			<label className="sr-only" htmlFor={`${ids}-target`}>
-				Publication and collection
-			</label>
-			<select
-				id={`${ids}-target`}
-				value={choice ? choiceKey(choice) : ""}
-				onChange={(event) => {
-					setChoiceId(event.currentTarget.value);
-					onPick();
-				}}
-			>
-				{choices.map((option) => (
-					<option key={choiceKey(option)} value={choiceKey(option)}>
-						{choiceLabel(option, choices)}
-					</option>
-				))}
-			</select>
-		</>
 	);
 }
 

@@ -1,0 +1,196 @@
+/* The bulk bar (design/v2/app-bulk.html) and its sheets. */
+
+/* The bar floats over the list's column, centred on it, above the rows. */
+.content {
+	position: relative;
+	--list-width: 100%;
+}
+.content.with-insp {
+	--list-width: calc(100% - var(--insp));
+}
+.bulk {
+	position: absolute;
+	left: calc(var(--list-width) / 2);
+	bottom: 26px;
+	transform: translateX(-50%);
+	max-width: calc(var(--list-width) - 32px);
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	background: rgba(12, 13, 18, 0.9);
+	border: 1px solid var(--line-2);
+	border-radius: 999px;
+	padding: 8px 10px 8px 16px;
+	backdrop-filter: blur(14px);
+	box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+	white-space: nowrap;
+	z-index: 20;
+	overflow-x: auto;
+	scrollbar-width: none;
+}
+.bulk > b {
+	font-family: var(--mono);
+	font-variant-numeric: tabular-nums;
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--cyan);
+	margin-right: 6px;
+}
+.bulk > b small {
+	font-size: inherit;
+	color: var(--fg-3);
+}
+.bulk .btn.danger {
+	border-color: var(--err-line);
+}
+.bulk .x {
+	width: 28px;
+	height: 28px;
+	flex: 0 0 auto;
+	border: 0;
+	border-radius: 8px;
+	background: transparent;
+	color: var(--fg-3);
+	display: grid;
+	place-items: center;
+	cursor: pointer;
+}
+.bulk .x:hover {
+	color: var(--fg);
+	background: var(--panel);
+}
+@media (prefers-reduced-motion: no-preference) {
+	.bulk {
+		animation: bulk-rise 180ms var(--ease);
+	}
+}
+@keyframes bulk-rise {
+	from {
+		opacity: 0;
+		transform: translate(-50%, 12px);
+	}
+}
+
+/* ---------- Sheets ---------- */
+.bulk-sheet .leftout-list h4 {
+	margin-bottom: 4px;
+}
+.bulk-sheet .leftout-list ul,
+.bulk-sheet .share-links,
+.bulk-sheet .checks {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	font-size: 12.5px;
+	color: var(--fg-2);
+}
+.bulk-sheet .leftout-list li {
+	padding: 3px 0;
+	overflow-wrap: anywhere;
+}
+.bulk-sheet .leftout-list b {
+	font-weight: 500;
+	color: var(--fg);
+}
+.bulk-sheet .share-links,
+.bulk-sheet .checks {
+	border: 1px solid var(--line);
+	border-radius: 12px;
+	max-height: 320px;
+	overflow: auto;
+}
+.bulk-sheet .share-links li,
+.bulk-sheet .checks li {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding: 8px 12px;
+	border-bottom: 1px solid var(--line);
+	min-width: 0;
+}
+.bulk-sheet .share-links li:last-child,
+.bulk-sheet .checks li:last-child {
+	border-bottom: 0;
+}
+.bulk-sheet .share-links small {
+	color: var(--fg-3);
+}
+.bulk-sheet .share-links a {
+	font-family: var(--mono);
+	font-size: 11px;
+	color: var(--cyan);
+	overflow-wrap: anywhere;
+}
+.bulk-sheet .checks li {
+	display: grid;
+	grid-template-columns: 8px minmax(0, 1fr);
+	column-gap: 10px;
+	align-items: baseline;
+}
+.bulk-sheet .checks i {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--fg-4);
+	align-self: center;
+}
+.bulk-sheet .checks .ok i {
+	background: var(--ok);
+	box-shadow: 0 0 8px var(--ok);
+}
+.bulk-sheet .checks .warn i {
+	background: var(--warn);
+	box-shadow: 0 0 8px var(--warn);
+}
+.bulk-sheet .checks .nm {
+	color: var(--fg);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.bulk-sheet .checks .st {
+	grid-column: 2;
+	font-family: var(--mono);
+	font-size: 11px;
+	color: var(--fg-3);
+}
+.bulk-sheet .checks .warn .st {
+	color: var(--warn);
+}
+.bulk-sheet .checks .st small {
+	display: block;
+	font-family: var(--sans);
+	font-size: 12px;
+	color: var(--fg-3);
+}
+.bulk-sheet .copy-field textarea {
+	min-height: 96px;
+}
+.bulk-sheet .acts .btn {
+	white-space: normal;
+	text-align: center;
+	line-height: 1.35;
+}
+
+/* Phones: the bar spans the width above the tab bar and scrolls sideways (dark.css). */
+@media (max-width: 860px) {
+	.bulk {
+		position: fixed;
+		left: 12px;
+		right: 12px;
+		bottom: calc(var(--tabbar) + 22px);
+		transform: none;
+		max-width: none;
+		justify-content: flex-start;
+	}
+	@keyframes bulk-rise {
+		from {
+			opacity: 0;
+			transform: translateY(12px);
+		}
+	}
+}
