@@ -18,6 +18,29 @@ export type WalCoinTypeSource =
 	| { kind: "fixed"; coinType: string }
 	| { kind: "chain" };
 
+/**
+ * Whether the upload sheet can Seal-encrypt on a network. Encryption needs
+ * key servers that will later serve decryption keys to the browser without
+ * a credential (PROTOCOL-NOTES section 11).
+ */
+export type SealAvailability =
+	| { kind: "available" }
+	| { kind: "unavailable"; reason: string };
+
+/**
+ * Net gas (computation + storage - rebate) observed on chain for the
+ * transactions the upload flow cannot simulate before it signs, in MIST.
+ * The register transaction is simulated instead.
+ */
+export interface ObservedGas {
+	/** One `certify_blob` (PROTOCOL-NOTES section 4). */
+	certifyMist: bigint;
+	/** One morse-sdk `addEntry` (`add_entry_to_collection`). */
+	entryMist: bigint;
+	/** One morse-sdk `createEncryptedRecipientFile`; `null` where Seal is unavailable. */
+	recipientFileMist: bigint | null;
+}
+
 /** An official place to get tokens for a network. Never an exchange we pick. */
 export interface TopUpLink {
 	title: string;
@@ -33,6 +56,17 @@ export interface NetworkConfig {
 	walrusLabel: string;
 	/** Sui full node; one URL serves gRPC for both networks. */
 	grpcUrl: string;
+	/**
+	 * Mysten's public aggregator (PROTOCOL-NOTES section 10, docs
+	 * network-reference "Aggregators and publishers"). Answers with CORS `*`.
+	 */
+	aggregatorUrl: string;
+	/**
+	 * Mysten's public upload relay (notes section 4, docs network-reference
+	 * "Upload relays"): browsers write through it with one request instead of
+	 * about 2,200 to storage nodes. Answers with CORS `*`.
+	 */
+	uploadRelayUrl: string;
 	walCoinType: WalCoinTypeSource;
 	/** Fixed system parameters (network reference, "Network parameters"). */
 	epochDays: number;
@@ -43,6 +77,8 @@ export interface NetworkConfig {
 	 * sheet replaces it with a simulated figure for the exact transaction.
 	 */
 	uploadGasMist: bigint;
+	observedGas: ObservedGas;
+	seal: SealAvailability;
 	topUp: readonly TopUpLink[];
 }
 
@@ -52,11 +88,25 @@ export const NETWORKS: Readonly<Record<NetworkId, NetworkConfig>> = {
 		label: "Testnet",
 		walrusLabel: "Walrus Testnet",
 		grpcUrl: "https://fullnode.testnet.sui.io:443",
+		aggregatorUrl: "https://aggregator.walrus-testnet.walrus.space",
+		uploadRelayUrl: "https://upload-relay.testnet.walrus.space",
 		walCoinType: { kind: "chain" },
 		epochDays: 1,
 		maxEpochsAhead: 53,
 		// register 3,975,376 + certify 1,030,696
 		uploadGasMist: 5_006_072n,
+		observedGas: {
+			// Testnet certify, 2026-10-18, e.g. GS8YBWbAgU28777EB3KqpYRMsMpAmiw54xh3q2uT4emF.
+			certifyMist: 1_030_696n,
+			// The highest of recent add_entry_to_collection transactions,
+			// 2026-10-17: HAQ338U6Rk9RCzwwwo6rm49vo7mp5B56rFNEptDpewuf.
+			entryMist: 3_972_353n,
+			// This app's own createEncryptedRecipientFile in the phase 3 e2e run,
+			// 2026-10-18: DdjTt9rnSD8AnjmexEd8oqV1aomzz6pSVtxJnJT62SfW.
+			recipientFileMist: 5_803_299n,
+		},
+		// Mysten's two open Testnet key servers, which morse-sdk pins.
+		seal: { kind: "available" },
 		topUp: [
 			{
 				title: "Sui faucet",
@@ -80,6 +130,8 @@ export const NETWORKS: Readonly<Record<NetworkId, NetworkConfig>> = {
 		label: "Walrus Mainnet",
 		walrusLabel: "Walrus Mainnet",
 		grpcUrl: "https://fullnode.mainnet.sui.io:443",
+		aggregatorUrl: "https://aggregator.walrus-mainnet.walrus.space",
+		uploadRelayUrl: "https://upload-relay.mainnet.walrus.space",
 		walCoinType: {
 			kind: "fixed",
 			coinType:
@@ -89,6 +141,18 @@ export const NETWORKS: Readonly<Record<NetworkId, NetworkConfig>> = {
 		maxEpochsAhead: 53,
 		// register 2,134,878 + certify 173,696
 		uploadGasMist: 2_308_574n,
+		observedGas: {
+			certifyMist: 173_696n,
+			// The highest of morse-sdk's Walrus Mainnet add_entry_to_collection
+			// runs, 2026-09-09: EPjwdcpiuBMA7BEqRD1AJXLNnQafgKQkEvTN9S37E8pX.
+			entryMist: 2_917_396n,
+			recipientFileMist: null,
+		},
+		seal: {
+			kind: "unavailable",
+			reason:
+				"Every Seal key server on Walrus Mainnet is commercial and needs its own credential to decrypt. Morse Uploader holds none, so encrypting here would store files nobody could read back.",
+		},
 		topUp: [
 			{
 				title: "WAL token page",

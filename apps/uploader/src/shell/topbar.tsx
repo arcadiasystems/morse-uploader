@@ -13,10 +13,25 @@ interface TopbarProps {
 	address: string | null;
 	funds: Funds;
 	profileMenu: Popover;
+	query: string;
+	onQueryChange: (query: string) => void;
+	/** Search is off until there are listed blobs to search. */
+	searchDisabled: boolean;
+	/** Opens the upload sheet for the selection, or the file picker when nothing is selected. */
+	onUpload: () => void;
 }
 
 /** Brand, profile, network, search, balances and the upload action. */
-export function Topbar({ network, address, funds, profileMenu }: TopbarProps) {
+export function Topbar({
+	network,
+	address,
+	funds,
+	profileMenu,
+	query,
+	onQueryChange,
+	searchDisabled,
+	onUpload,
+}: TopbarProps) {
 	const balanceMenu = usePopover();
 	return (
 		<header className="topbar">
@@ -24,7 +39,11 @@ export function Topbar({ network, address, funds, profileMenu }: TopbarProps) {
 			<span className="sep" aria-hidden="true" />
 			<ProfileMenu popover={profileMenu} />
 			<NetworkChip network={network} />
-			<SearchField />
+			<SearchField
+				query={query}
+				onQueryChange={onQueryChange}
+				disabled={searchDisabled}
+			/>
 			<div className="right">
 				{address ? (
 					<BalancePill
@@ -37,8 +56,10 @@ export function Topbar({ network, address, funds, profileMenu }: TopbarProps) {
 				<button
 					className="btn btn-ultra upload"
 					type="button"
-					disabled
+					disabled={address === null}
+					title={address === null ? "Connect a wallet to upload" : undefined}
 					aria-label="Upload"
+					onClick={onUpload}
 				>
 					<Icon name="upload" />
 					<span className="lbl">Upload</span>

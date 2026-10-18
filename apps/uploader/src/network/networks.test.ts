@@ -26,6 +26,12 @@ describe("network config", () => {
 		for (const id of NETWORK_IDS) expect(NETWORKS[id].maxEpochsAhead).toBe(53);
 		expect(NETWORKS.testnet.uploadGasMist).toBe(3_975_376n + 1_030_696n);
 		expect(NETWORKS.mainnet.uploadGasMist).toBe(2_134_878n + 173_696n);
+		expect(NETWORKS.testnet.aggregatorUrl).toBe(
+			"https://aggregator.walrus-testnet.walrus.space",
+		);
+		expect(NETWORKS.mainnet.aggregatorUrl).toBe(
+			"https://aggregator.walrus-mainnet.walrus.space",
+		);
 	});
 
 	it("offers official top-up pages only, with the faucet on Testnet", () => {
@@ -39,6 +45,37 @@ describe("network config", () => {
 		expect(
 			NETWORKS.mainnet.topUp.map((link) => new URL(link.href).host),
 		).toEqual(["walrus.xyz", "docs.sui.io"]);
+	});
+
+	it("writes through each network's public upload relay", () => {
+		expect(NETWORKS.testnet.uploadRelayUrl).toBe(
+			"https://upload-relay.testnet.walrus.space",
+		);
+		expect(NETWORKS.mainnet.uploadRelayUrl).toBe(
+			"https://upload-relay.mainnet.walrus.space",
+		);
+	});
+
+	it("offers Seal on Testnet only, and says why not on Walrus Mainnet", () => {
+		expect(NETWORKS.testnet.seal).toEqual({ kind: "available" });
+		const mainnet = NETWORKS.mainnet.seal;
+		expect(mainnet.kind).toBe("unavailable");
+		expect(mainnet.kind === "unavailable" && mainnet.reason).toMatch(
+			/credential/,
+		);
+	});
+
+	it("prices what cannot be simulated with gas observed on chain", () => {
+		expect(NETWORKS.testnet.observedGas).toEqual({
+			certifyMist: 1_030_696n,
+			entryMist: 3_972_353n,
+			recipientFileMist: 5_803_299n,
+		});
+		expect(NETWORKS.mainnet.observedGas).toEqual({
+			certifyMist: 173_696n,
+			entryMist: 2_917_396n,
+			recipientFileMist: null,
+		});
 	});
 
 	it("recognizes network ids", () => {

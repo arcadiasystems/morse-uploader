@@ -227,6 +227,14 @@
 .side .item.on svg {
 	color: var(--ultra);
 }
+.side .item .n {
+	margin-left: auto;
+	font-family: var(--mono);
+	font-variant-numeric: tabular-nums;
+	font-size: 11px;
+	color: var(--stone);
+	font-weight: 400;
+}
 /* Addition: planned features, disabled and marked Coming. */
 .side .item.soon {
 	color: var(--stone);
@@ -469,6 +477,18 @@
 	flex: 1;
 }
 
+/* Addition: a problem stated where it happens: a drop, the upload sheet, the queue. */
+.drop .problem,
+.modal .problem,
+.qnote.problem {
+	color: var(--warn);
+	background: var(--warn-bg);
+	border: 1px solid var(--warn-line);
+	border-radius: 8px;
+	padding: 8px 10px;
+	font-size: 12.5px;
+}
+
 /* ---------- Transfer queue ---------- */
 .queue {
 	border-top: 1px solid var(--line);
@@ -573,8 +593,9 @@
 	.side {
 		display: none;
 	}
+	/* The list scrolls inside the pane (and stays virtual) instead of growing the page. */
 	.main {
-		min-height: calc(100vh - var(--bar));
+		height: calc(100dvh - var(--bar));
 	}
 	.panes {
 		grid-template-columns: 1fr;

@@ -6,6 +6,7 @@ import {
 	verifyTransactionSignature,
 } from "@mysten/sui/verify";
 import { expect, type Locator, type Page, test } from "@playwright/test";
+import { connect, openProfileMenu, short } from "./app-actions";
 import {
 	balance,
 	decimal,
@@ -18,15 +19,10 @@ import {
 	installTestWallet,
 	KEY_ENV,
 	keypairFromEnv,
-	TEST_WALLET_NAME,
 	type TestWallet,
 } from "./test-wallet";
 
 const funded = keypairFromEnv();
-
-function short(address: string): string {
-	return `${address.slice(0, 6)}…${address.slice(-4)}`;
-}
 
 /** The exact amount a balance row shows, read from its accessible text. */
 async function shownAmount(row: Locator): Promise<string> {
@@ -63,23 +59,6 @@ async function expectBalancesMatchChain(
 			),
 		).toBe(decimal(suiOnChain));
 	}).toPass({ timeout: 45_000 });
-}
-
-async function openProfileMenu(page: Page): Promise<Locator> {
-	const menu = page.getByRole("dialog", {
-		name: "Profiles, network and wallet",
-	});
-	if (!(await menu.isVisible())) await page.locator(".topbar .profile").click();
-	await expect(menu).toBeVisible();
-	return menu;
-}
-
-async function connect(page: Page, address: string): Promise<void> {
-	const menu = await openProfileMenu(page);
-	await menu
-		.getByRole("button", { name: new RegExp(TEST_WALLET_NAME) })
-		.click();
-	await expect(page.locator(".topbar .profile")).toContainText(short(address));
 }
 
 test.describe("wallet, balances and profiles", () => {
