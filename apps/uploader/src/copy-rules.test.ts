@@ -171,4 +171,33 @@ describe("copy rules", () => {
 			'"record"',
 		]);
 	});
+
+	it("words the bulk bar and the palette by the notes (items 6, 11, 12 and 16)", () => {
+		const text = (suffix: string) =>
+			(files.find((file) => file.path.endsWith(suffix))?.text ?? "").replace(
+				/\s+/g,
+				" ",
+			);
+		// Item 16: a bulk delete returns Storage objects; no WAL comes back.
+		const remove = text("bulk/bulk-delete-sheet.tsx");
+		expect(remove).toContain("returns their storage to your wallet");
+		expect(remove).toContain("No WAL is refunded.");
+		// Item 12: Walrus Sites deploy is not built, and the inspector says so.
+		expect(text("inspector/publish-section.tsx")).toContain(
+			"Walrus Sites deploy is coming",
+		);
+		// Item 11: bulk verify says what happens, never how many nodes answered.
+		const verify = text("bulk/bulk-verify-sheet.tsx");
+		expect(verify).toContain("rebuilt from storage nodes");
+		expect(verify).not.toMatch(/\b\d+ storage nodes\b/);
+		// Item 6: extends are bought in epochs within 53, never by the year.
+		const palette = text("palette/palette-commands.tsx");
+		expect(palette).toContain("by 1 epoch");
+		expect(
+			files
+				.filter((file) => /(^|\/)(bulk|palette)\//.test(file.path))
+				.filter((file) => /\b1 year\b/i.test(file.text))
+				.map((file) => file.path),
+		).toEqual([]);
+	});
 });

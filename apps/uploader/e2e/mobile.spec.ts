@@ -123,9 +123,9 @@ test.describe("phones, with the test wallet", () => {
 		page,
 	}) => {
 		await page.locator('tbody tr[aria-level="1"] td.nm').first().click();
-		const drawer = page.locator("aside.drawer");
-		await expect(drawer).toBeVisible();
-		expect((await drawer.boundingBox())?.width).toBe(PHONE.width);
+		const inspector = page.locator("aside.insp");
+		await expect(inspector).toBeVisible();
+		expect((await inspector.boundingBox())?.width).toBe(PHONE.width);
 		await expectNoOverflow(page, "details");
 		await page.getByRole("button", { name: "Close details" }).click();
 
@@ -152,5 +152,56 @@ test.describe("phones, with the test wallet", () => {
 			await expectNoOverflow(page, dialog);
 			await page.keyboard.press("Escape");
 		}
+	});
+
+	test("the inspector, the bulk bar and the palette fit 390", async ({
+		page,
+	}) => {
+		const fits = () =>
+			page.evaluate(
+				() => document.documentElement.scrollWidth === window.innerWidth,
+			);
+		const rows = page.locator('tbody tr[aria-level="1"]');
+
+		// The inspector is a full sheet.
+		await rows.first().locator("td.nm").click();
+		const inspector = page.locator("aside.insp");
+		await expect(inspector.locator("#insp-storage")).toBeVisible({
+			timeout: 60_000,
+		});
+		expect((await inspector.boundingBox())?.width).toBe(PHONE.width);
+		expect(await fits()).toBe(true);
+		await inspector.getByRole("button", { name: "Close details" }).click();
+
+		// Checkboxes are hidden on a phone: a row's menu starts the selection.
+		await expect(rows.first().locator("input.cb")).toBeHidden();
+		await rows.first().locator("button.more").click();
+		await page.getByRole("menuitem", { name: "Select" }).click();
+		await expect(rows.nth(1).locator("input.cb")).toBeVisible();
+		await rows.nth(1).locator("input.cb").check();
+		const bar = page.getByRole("toolbar", { name: "Selected blobs" });
+		await expect(bar).toContainText("2 selected");
+		const box = await bar.boundingBox();
+		// The bar spans the width above the tab bar and scrolls sideways inside it.
+		expect(box?.x).toBe(12);
+		expect((box?.x ?? 0) + (box?.width ?? 0)).toBe(PHONE.width - 12);
+		expect((box?.y ?? 0) + (box?.height ?? 0)).toBeLessThanOrEqual(
+			PHONE.height - 60,
+		);
+		expect(await fits()).toBe(true);
+
+		// The palette opens from the top bar's search button.
+		await page.getByRole("button", { name: "Search and commands" }).click();
+		const palette = page.getByRole("dialog", { name: "Command palette" });
+		await expect(palette).toBeVisible();
+		await page.keyboard.type("extend");
+		const paletteBox = await palette.boundingBox();
+		expect(paletteBox?.x).toBe(12);
+		expect((paletteBox?.x ?? 0) + (paletteBox?.width ?? 0)).toBe(
+			PHONE.width - 12,
+		);
+		expect(await fits()).toBe(true);
+		await page.keyboard.press("Escape");
+		await expect(palette).toBeHidden();
 	});
 });

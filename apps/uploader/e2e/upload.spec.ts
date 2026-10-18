@@ -380,8 +380,12 @@ async function writeFolder(
 	return root;
 }
 
-/** The blob's row in Files, found by searching its blob id. */
+/** The blob's row in Files, found with the Files filter box by its blob id. */
 async function expectListed(page: Page, blob: ChainBlob): Promise<void> {
+	// The filter box lives on the Files view; the suite starts on the Overview.
+	await page.evaluate(() => {
+		window.location.hash = "#files";
+	});
 	const search = page.getByRole("searchbox", { name: /Search blobs/ });
 	await search.fill(blob.blobId);
 	await expect(

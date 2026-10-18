@@ -5,7 +5,7 @@ import { WalrusClient, walrus } from "@mysten/walrus";
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import type { ChainBlob } from "./chain";
 
-/** Drawer helpers for the phase 4 Testnet spec. */
+/** Inspector and bulk helpers for the R2 Testnet specs. */
 
 export const AGGREGATOR = "https://aggregator.walrus-testnet.walrus.space";
 const FULLNODE = "https://fullnode.testnet.sui.io:443";
@@ -18,29 +18,34 @@ export function nodeClient() {
 	);
 }
 
-export function drawer(page: Page): Locator {
-	return page.locator("aside.drawer");
+export function inspector(page: Page): Locator {
+	return page.locator("aside.insp");
+}
+
+/** The Files filter box, which narrows the list by name, blob id or object id. */
+export function filterBox(page: Page): Locator {
+	return page.getByRole("searchbox", { name: /Search blobs/ });
 }
 
 /**
- * Opens the drawer on a blob (or one file of a quilt) by searching its
- * object id and activating its row in Files. The drawer takes a column
+ * Opens the inspector on a blob (or one file of a quilt) by filtering Files
+ * to its object id and activating its row. The inspector takes a column
  * beside the list, so it never covers the row.
  */
-export async function openDrawer(
+export async function openInspector(
 	page: Page,
 	objectId: string,
 	patchIdentifier?: string,
 ): Promise<Locator> {
 	// Confirming an upload opens the transfers slide-over, which covers the
-	// details column; close it first, as a person would.
+	// inspector's column; close it first, as a person would.
 	const transfers = page.getByRole("dialog", { name: "Transfers" });
 	if (await transfers.isVisible())
 		await transfers.getByRole("button", { name: "Close transfers" }).click();
-	const panel = drawer(page);
+	const panel = inspector(page);
 	if (await panel.isVisible())
 		await panel.getByRole("button", { name: "Close details" }).click();
-	await page.getByRole("searchbox", { name: /Search blobs/ }).fill(objectId);
+	await filterBox(page).fill(objectId);
 	const row = page.locator(`table.tbl tr[data-key="${objectId}"]`);
 	await row.locator("td.nm").click();
 	if (patchIdentifier !== undefined) {
@@ -56,7 +61,7 @@ export async function openDrawer(
 }
 
 /**
- * Records the digest of the transaction a drawer note links to, for the PR.
+ * Records the digest of the transaction a note links to, for the PR.
  */
 export async function annotateTransaction(
 	note: Locator,
@@ -146,7 +151,7 @@ function crc32(bytes: Buffer): number {
 /**
  * Registers a blob from the test process with the test key, for one epoch,
  * and optionally uploads it through the relay, but never certifies it: the
- * Registered state the drawer's Finish is for.
+ * Registered state the inspector's Finish is for.
  * @returns The new Blob object id.
  */
 export async function registerWithoutCertify({

@@ -9,7 +9,7 @@ import {
 
 /**
  * Upload sheet, queue and chain helpers shared by the Testnet specs that
- * write: the upload flow (phase 3) and the blob drawer (phase 4).
+ * write: the upload flow (phase 3) and the inspector (R2).
  */
 const NETWORK = "testnet";
 

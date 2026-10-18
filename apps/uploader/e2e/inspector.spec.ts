@@ -1,6 +1,8 @@
 import { readFile } from "node:fs/promises";
 import {
 	morseConfig,
+	NotFoundError,
+	quiltPatchIdToString,
 	RpcPublicationReader,
 	RpcRecipientFilesReader,
 	toPublicationId,
@@ -23,16 +25,16 @@ import {
 import {
 	AGGREGATOR,
 	annotateTransaction,
-	drawer,
 	extendCost,
+	inspector,
 	isPlain,
 	liveCertified,
 	nodeClient,
-	openDrawer,
+	openInspector,
 	registerWithoutCertify,
 	tinyPng,
 	toDecimal,
-} from "./drawer-actions";
+} from "./inspector-actions";
 import { installTestWallet, KEY_ENV, keypairFromEnv } from "./test-wallet";
 import {
 	chainBlob,
@@ -47,11 +49,13 @@ import {
 } from "./upload-actions";
 
 /**
- * The blob drawer against Testnet with the funded test wallet. Fixtures are
- * picked from chain when each test runs, because Testnet blobs expire. Real
- * writes are small: one-epoch extends, one auto-extend cycle under a tight
- * cap, one Morse entry, one recipient, one tiny upload and two Finishes.
- * Delete is only ever simulated: no test presses the button that signs it.
+ * The inspector against Testnet with the funded test wallet: phase 4's
+ * drawer suite, ported, plus a quilt's files by path and its entries.
+ * Fixtures are picked from chain when each test runs, because Testnet blobs
+ * expire. Real writes are small: one-epoch extends, one auto-extend cycle
+ * under a tight cap, one Morse entry, one quilt's entries in one
+ * transaction, one recipient, one tiny upload and two Finishes. Delete is
+ * only ever simulated: no test presses the button that signs it.
  */
 const funded = keypairFromEnv();
 const NETWORK = "testnet";
@@ -62,9 +66,11 @@ const SEALED_BLOB =
 const SEALED_TEXT = "Sealed on Testnet for one epoch.";
 const PUBLICATION_SLUG_PREFIX = "claude-testnet-run-";
 const COLLECTION = "notes";
+/** The Claude Testnet Run publication's quilt collection. */
+const QUILT_COLLECTION = "gallery";
 
-test.describe("blob drawer on Testnet", () => {
-	test.skip(!funded, `Set ${KEY_ENV} to run the drawer tests.`);
+test.describe("inspector on Testnet", () => {
+	test.skip(!funded, `Set ${KEY_ENV} to run the inspector tests.`);
 	test.describe.configure({ mode: "serial", timeout: 300_000 });
 
 	let page: Page;
@@ -128,7 +134,7 @@ test.describe("blob drawer on Testnet", () => {
 		let fileId: string | null = null;
 		let chosen: ChainBlob | null = null;
 		for (const blob of encrypted.slice(0, 4)) {
-			const panel = await openDrawer(page, blob.objectId);
+			const panel = await openInspector(page, blob.objectId);
 			const policy = panel.locator(".note", { hasText: /^RecipientFile/ });
 			const none = panel.getByText(/None of this wallet's RecipientFiles/);
 			await expect(policy.or(none)).toBeVisible({ timeout: 90_000 });
@@ -147,21 +153,21 @@ test.describe("blob drawer on Testnet", () => {
 		// One personal-message signature, no transaction: nothing is paid.
 		const before = submitted;
 		const download = page.waitForEvent("download");
-		await drawer(page)
+		await inspector(page)
 			.getByRole("button", { name: "Decrypt and download" })
 			.click();
 		const saved = await download;
 		const text = await readFile((await saved.path()) ?? "", "utf8");
 		if (chosen?.objectId === SEALED_BLOB) expect(text).toContain(SEALED_TEXT);
-		await expect(drawer(page).locator(".thumb pre")).toContainText(
+		await expect(inspector(page).locator(".thumb pre")).toContainText(
 			text.trim().split("\n")[0] ?? "",
 		);
 		await expect(
-			drawer(page).getByText(/Decrypted in this browser/),
+			inspector(page).getByText(/Decrypted in this browser/),
 		).toBeVisible();
 		expect(submitted).toBe(before);
 
-		// The policy the drawer found, read independently: the owner is a member.
+		// The policy the inspector found, read independently: the owner is a member.
 		const config = morseConfig({ network: NETWORK });
 		const file = await RpcRecipientFilesReader.fromConfig(nodeClient(), {
 			packageId: config.packageId,
@@ -170,12 +176,12 @@ test.describe("blob drawer on Testnet", () => {
 	});
 
 	test("adds a recipient to the RecipientFile", async () => {
-		const panel = drawer(page);
+		const panel = inspector(page);
 		const fileId = await panel
 			.locator(".note", { hasText: /^RecipientFile/ })
 			.locator("a")
 			.getAttribute("title");
-		if (!fileId) throw new Error("The drawer shows no RecipientFile.");
+		if (!fileId) throw new Error("The inspector shows no RecipientFile.");
 		const recipient = new Ed25519Keypair().toSuiAddress();
 		const spend = await spendTracker(owner, wal);
 		await panel
@@ -220,7 +226,7 @@ test.describe("blob drawer on Testnet", () => {
 			first.identifier,
 		);
 
-		const panel = await openDrawer(page, quilt.objectId, first.identifier);
+		const panel = await openInspector(page, quilt.objectId, first.identifier);
 		await expect(panel.locator("h3")).toHaveText(first.identifier);
 		const link = panel.getByRole("textbox", { name: "Aggregator link" });
 		await expect(link).toHaveValue(
@@ -249,6 +255,109 @@ test.describe("blob drawer on Testnet", () => {
 		await expect(panel.getByText(/No Walrus Site link/)).toBeVisible();
 	});
 
+	test("lists a quilt's files by path and adds them to Morse in one transaction", async () => {
+		const { blobs, epoch } = await chain();
+		const quilt = liveCertified(blobs, epoch)
+			.filter(
+				(blob) => blob.attributes._walrusBlobType === "quilt" && blob.deletable,
+			)
+			.sort((a, b) => b.endEpoch - a.endEpoch)[0];
+		if (!quilt)
+			throw new Error("The test wallet owns no live deletable quilt.");
+		const patches = (await (
+			await fetch(`${AGGREGATOR}/v1/quilts/${quilt.blobId}/patches`)
+		).json()) as { identifier: string; patch_id: string }[];
+		expect(patches.length).toBeGreaterThan(0);
+		test.info().annotations.push({
+			type: "fixture",
+			description: `quilt ${quilt.objectId} with ${patches.length} files`,
+		});
+
+		const panel = await openInspector(page, quilt.objectId);
+		await panel.getByRole("button", { name: "Files", exact: true }).click();
+		const files = panel.locator("#insp-files");
+		for (const patch of patches.slice(0, 4)) {
+			const link = files.getByRole("link", {
+				name: `Open ${patch.identifier} on the aggregator`,
+			});
+			const href = `${AGGREGATOR}/v1/blobs/by-quilt-id/${quilt.blobId}/${encodeURIComponent(patch.identifier)}`;
+			await expect(link).toHaveAttribute("href", href);
+			// The path address serves the same bytes as the file's patch id.
+			const [byPath, byPatch] = await Promise.all(
+				[
+					href,
+					`${AGGREGATOR}/v1/blobs/by-quilt-patch-id/${patch.patch_id}`,
+				].map(async (url) => {
+					const response = await fetch(url);
+					expect(response.status, url).toBe(200);
+					return Buffer.from(await response.arrayBuffer());
+				}),
+			);
+			expect(byPath?.equals(byPatch ?? Buffer.alloc(0))).toBe(true);
+		}
+
+		// Walrus Sites deploy is not built: it shows, disabled, as coming.
+		const publish = panel.locator("#insp-publish");
+		await expect(
+			publish.getByRole("button", { name: /Deploy as site/ }),
+		).toBeDisabled();
+		await expect(
+			publish.getByText("Walrus Sites deploy is coming."),
+		).toBeVisible();
+
+		const picker = publish.getByRole("combobox", {
+			name: "Publication and collection",
+		});
+		await expect(picker).toBeVisible({ timeout: 90_000 });
+		const option = picker
+			.locator("option", {
+				hasText: `Claude Testnet Run · ${QUILT_COLLECTION}`,
+			})
+			.first();
+		await picker.selectOption((await option.getAttribute("value")) ?? "");
+		const count = patches.length;
+		const add = publish.getByRole("button", {
+			name: `Add ${count === 1 ? "1 entry" : `${count} entries`} · 1 signature`,
+		});
+		const spend = await spendTracker(owner, wal);
+		const before = submitted;
+		await add.click();
+		const done = publish.getByText(
+			new RegExp(
+				`^Added ${count === 1 ? "1 entry" : `${count} entries`} in Claude Testnet Run`,
+			),
+		);
+		await expect(done).toBeVisible({ timeout: 120_000 });
+		expect(submitted - before).toBe(1);
+		const [, first, last] =
+			/entries (\d+) to (\d+)/.exec((await done.textContent()) ?? "") ?? [];
+		await annotateTransaction(done, "quilt entries");
+
+		const config = morseConfig({ network: NETWORK });
+		const reader = RpcPublicationReader.fromMorseConfig(config, nodeClient());
+		const publicationId = await claudeRunPublication(reader, owner);
+		const ids = Array.from(
+			{ length: Number(last) - Number(first) + 1 },
+			(_, index) => Number(first) + index,
+		);
+		expect(ids).toHaveLength(count);
+		const entries = await Promise.all(
+			ids.map((id) =>
+				reader.getEntry(toPublicationId(publicationId), QUILT_COLLECTION, id),
+			),
+		);
+		expect(
+			entries.map((entry) => {
+				const ref = entry.revisions.at(-1)?.blobRef;
+				return [
+					entry.name,
+					ref?.kind === "quilt" ? quiltPatchIdToString(ref.patchId) : null,
+				];
+			}),
+		).toEqual(patches.map((patch) => [patch.identifier, patch.patch_id]));
+		await expectSuiOnly(spend);
+	});
+
 	test("verifies a live blob and shares a link the aggregator serves", async () => {
 		const { blobs, epoch } = await chain();
 		const target = liveCertified(blobs, epoch)
@@ -258,10 +367,10 @@ test.describe("blob drawer on Testnet", () => {
 			)
 			.sort((a, b) => b.endEpoch - a.endEpoch)[0];
 		if (!target) throw new Error("The test wallet owns no live plain blob.");
-		const panel = await openDrawer(page, target.objectId);
+		const panel = await openInspector(page, target.objectId);
 
 		await panel.getByRole("button", { name: "Verify", exact: true }).click();
-		const result = panel.locator("#drawer-verify .ver");
+		const result = panel.locator("#insp-verify .ver");
 		await expect(result).toContainText(
 			"Bytes match the blob id. Rebuilt from storage nodes just now.",
 			{ timeout: 120_000 },
@@ -298,8 +407,13 @@ test.describe("blob drawer on Testnet", () => {
 			type: "fixture",
 			description: `extend ${target.objectId} from end epoch ${target.endEpoch}`,
 		});
-		const panel = await openDrawer(page, target.objectId);
-		const storage = panel.locator("#drawer-storage");
+		const panel = await openInspector(page, target.objectId);
+		// The action row's Extend opens the extend panel in Storage.
+		await panel
+			.getByRole("region", { name: "Actions" })
+			.getByRole("button", { name: "Extend", exact: true })
+			.click();
+		const storage = panel.locator("#insp-storage");
 		await expect(
 			storage.getByRole("spinbutton", { name: "Extend by" }),
 		).toHaveValue("1");
@@ -375,8 +489,9 @@ test.describe("blob drawer on Testnet", () => {
 		expect(expected.length).toBeGreaterThan(0);
 		expect(expected.length).toBeLessThan(due.length);
 
-		const panel = await openDrawer(page, first.objectId);
-		const storage = panel.locator("#drawer-storage");
+		const panel = await openInspector(page, first.objectId);
+		const storage = panel.locator("#insp-storage");
+		await storage.getByRole("button", { name: /^Auto-extend/ }).click();
 		const toggle = storage.getByRole("switch", { name: "Auto-extend" });
 		await toggle.check();
 		// The cap starts at 0, so turning it on renews nothing until a cap is set.
@@ -435,8 +550,8 @@ test.describe("blob drawer on Testnet", () => {
 			(blob) => isPlain(blob) && blob.deletable && blob.attributes.name,
 		);
 		if (!target) throw new Error("The test wallet owns no blob to publish.");
-		const panel = await openDrawer(page, target.objectId);
-		const section = panel.locator("#drawer-publish");
+		const panel = await openInspector(page, target.objectId);
+		const section = panel.locator("#insp-publish");
 		const picker = section.getByRole("combobox", {
 			name: "Publication and collection",
 		});
@@ -447,7 +562,7 @@ test.describe("blob drawer on Testnet", () => {
 		await picker.selectOption((await option.getAttribute("value")) ?? "");
 		await section
 			.getByRole("textbox", { name: "Entry name" })
-			.fill(`drawer ${RUN}`);
+			.fill(`inspector ${RUN}`);
 		const spend = await spendTracker(owner, wal);
 		await section.getByRole("button", { name: "Add as entry · 1 tx" }).click();
 		const done = section.getByText(/^Added as entry \d+ in Claude Testnet Run/);
@@ -459,25 +574,13 @@ test.describe("blob drawer on Testnet", () => {
 
 		const config = morseConfig({ network: NETWORK });
 		const reader = RpcPublicationReader.fromMorseConfig(config, nodeClient());
-		const caps = await reader.listPublisherCapsOwnedBy(toSuiAddress(owner), {
-			limit: 50,
-		});
-		let publicationId: string | null = null;
-		for (const cap of caps.results) {
-			const publication = await reader
-				.getPublication(cap.publicationId)
-				.catch(() => null);
-			if (publication?.slug.startsWith(PUBLICATION_SLUG_PREFIX))
-				publicationId = publication.id;
-		}
-		if (!publicationId)
-			throw new Error("The Claude Testnet Run publication is gone.");
+		const publicationId = await claudeRunPublication(reader, owner);
 		const entry = await reader.getEntry(
 			toPublicationId(publicationId),
 			COLLECTION,
 			entryId,
 		);
-		expect(entry.name).toBe(`drawer ${RUN}`);
+		expect(entry.name).toBe(`inspector ${RUN}`);
 		expect(entry.revisions.at(-1)?.blobRef).toEqual({
 			kind: "blob",
 			blobObjectId: target.objectId,
@@ -498,7 +601,7 @@ test.describe("blob drawer on Testnet", () => {
 		if (!deletable || !expired) throw new Error("Missing a delete fixture.");
 		const before = submitted;
 
-		const panel = await openDrawer(page, deletable.objectId);
+		const panel = await openInspector(page, deletable.objectId);
 		await panel
 			.getByRole("button", {
 				name: "Delete blob · returns its storage to your wallet",
@@ -535,7 +638,7 @@ test.describe("blob drawer on Testnet", () => {
 				)?.idOperation,
 			).toBe("Deleted");
 
-		const expiredPanel = await openDrawer(page, expired.objectId);
+		const expiredPanel = await openInspector(page, expired.objectId);
 		await expect(
 			expiredPanel.getByRole("button", { name: /^Delete (blob|quilt)/ }),
 		).toBeDisabled();
@@ -557,17 +660,17 @@ test.describe("blob drawer on Testnet", () => {
 		const png = tinyPng(RUN);
 		const spend = await spendTracker(owner, wal);
 		const sheet = await openSheet(page, [
-			{ name: "drawer-pixels.png", mimeType: "image/png", buffer: png },
+			{ name: "inspector-pixels.png", mimeType: "image/png", buffer: png },
 		]);
 		await sheet.getByRole("switch", { name: /^Deletable/ }).uncheck();
 		const predicted = await predictedWal(sheet, 1);
 		await confirm(sheet, 2);
-		const [item] = await waitForDone(page, ["drawer-pixels.png"]);
+		const [item] = await waitForDone(page, ["inspector-pixels.png"]);
 		const blob = await chainBlob(owner, item?.blobId);
 		expect(blob.deletable).toBe(false);
 		await expectWalSpent(spend, predicted);
 
-		const panel = await openDrawer(page, blob.objectId);
+		const panel = await openInspector(page, blob.objectId);
 		const image = panel.locator(".thumb img");
 		await expect(image).toBeVisible({ timeout: 90_000 });
 		expect(
@@ -588,11 +691,11 @@ test.describe("blob drawer on Testnet", () => {
 		const objectId = await registerWithoutCertify({
 			keypair: funded as Keypair,
 			bytes: new TextEncoder().encode(`Uploaded, never certified. ${RUN}\n`),
-			name: "drawer-finish-nodes.txt",
+			name: "inspector-finish-nodes.txt",
 			upload: true,
 		});
 		await refreshList();
-		const panel = await openDrawer(page, objectId);
+		const panel = await openInspector(page, objectId);
 		await expect(panel.getByText(/^Registered, not certified/)).toBeVisible();
 		await panel.getByRole("button", { name: "Finish · 1 signature" }).click();
 		await expect(panel.getByText(/^Certified\./)).toBeVisible({
@@ -622,11 +725,11 @@ test.describe("blob drawer on Testnet", () => {
 		const objectId = await registerWithoutCertify({
 			keypair: funded as Keypair,
 			bytes: new TextEncoder().encode(text),
-			name: "drawer-finish-file.txt",
+			name: "inspector-finish-file.txt",
 			upload: false,
 		});
 		await refreshList();
-		const panel = await openDrawer(page, objectId);
+		const panel = await openInspector(page, objectId);
 		await panel.getByRole("button", { name: "Finish · 1 signature" }).click();
 		await expect(
 			panel.getByText(
@@ -638,7 +741,7 @@ test.describe("blob drawer on Testnet", () => {
 		// A different file is refused before anything is signed.
 		const before = submitted;
 		await panel.locator('input[type="file"]').setInputFiles({
-			name: "drawer-finish-file.txt",
+			name: "inspector-finish-file.txt",
 			mimeType: "text/plain",
 			buffer: Buffer.from(`${text}changed`),
 		});
@@ -649,7 +752,7 @@ test.describe("blob drawer on Testnet", () => {
 		});
 		expect(submitted).toBe(before);
 		await panel.locator('input[type="file"]').setInputFiles({
-			name: "drawer-finish-file.txt",
+			name: "inspector-finish-file.txt",
 			mimeType: "text/plain",
 			buffer: Buffer.from(text),
 		});
@@ -676,8 +779,8 @@ test.describe("blob drawer on Testnet", () => {
 	});
 });
 
-test.describe("blob drawer at 390", () => {
-	test.skip(!funded, `Set ${KEY_ENV} to run the drawer tests.`);
+test.describe("inspector at 390", () => {
+	test.skip(!funded, `Set ${KEY_ENV} to run the inspector tests.`);
 
 	test("opens as a full-width sheet with no horizontal overflow", async ({
 		page,
@@ -695,9 +798,9 @@ test.describe("blob drawer at 390", () => {
 			.first()
 			.locator("td.nm")
 			.click({ timeout: 90_000 });
-		const panel = drawer(page);
+		const panel = inspector(page);
 		await expect(panel).toBeVisible();
-		await expect(panel.locator("#drawer-storage")).toBeVisible({
+		await expect(panel.locator("#insp-storage")).toBeVisible({
 			timeout: 60_000,
 		});
 		expect((await panel.boundingBox())?.width).toBe(390);
@@ -731,4 +834,26 @@ async function expectSuiOnly(spend: Spend): Promise<void> {
 		type: "spend",
 		description: `WAL spent 0; SUI spent ${suiSpent} MIST`,
 	});
+}
+
+/** The Claude Testnet Run publication, found through the wallet's PublisherCaps. */
+async function claudeRunPublication(
+	reader: RpcPublicationReader,
+	owner: string,
+): Promise<string> {
+	const caps = await reader.listPublisherCapsOwnedBy(toSuiAddress(owner), {
+		limit: 50,
+	});
+	for (const cap of caps.results) {
+		const publication = await reader
+			.getPublication(cap.publicationId)
+			.catch((error: unknown) => {
+				// Deleted publications keep their caps; skip those, report anything else.
+				if (error instanceof NotFoundError) return null;
+				throw error;
+			});
+		if (publication?.slug.startsWith(PUBLICATION_SLUG_PREFIX))
+			return publication.id;
+	}
+	throw new Error("The Claude Testnet Run publication is gone.");
 }
