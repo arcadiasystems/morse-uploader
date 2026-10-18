@@ -4,6 +4,7 @@ import "@/styles/shell.css";
 import "@/styles/menus.css";
 import "@/styles/blobs.css";
 import "@/styles/local.css";
+import "@/styles/upload.css";
 
 export const metadata: Metadata = {
 	title: "Walrus",
