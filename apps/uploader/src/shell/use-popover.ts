@@ -26,9 +26,15 @@ export interface Popover {
  * that opened it (a second trigger, such as the transfers pill and the rail
  * item, works too); a click or focus outside closes it without moving
  * focus. Every trigger sets `aria-controls` to the popover's id while it is
- * open, which is how a click on any of them counts as inside.
+ * open, which is how a click on any of them counts as inside. Elements
+ * matching `keepOpenWithin` count as inside too: a surface used alongside
+ * the popover, such as the staging tray beside the transfers slide-over.
  */
-export function usePopover(): Popover {
+export function usePopover({
+	keepOpenWithin,
+}: {
+	keepOpenWithin?: string;
+} = {}): Popover {
 	const id = useId();
 	const [isOpen, setIsOpen] = useState(false);
 	const triggerRef = useRef<HTMLButtonElement>(null);
@@ -69,7 +75,8 @@ export function usePopover(): Popover {
 			return Boolean(
 				panel?.contains(target) ||
 					triggerRef.current?.contains(target) ||
-					target.closest(`[aria-controls="${CSS.escape(id)}"]`),
+					target.closest(`[aria-controls="${CSS.escape(id)}"]`) ||
+					(keepOpenWithin !== undefined && target.closest(keepOpenWithin)),
 			);
 		}
 		function onKeyDown(event: KeyboardEvent) {
@@ -89,7 +96,7 @@ export function usePopover(): Popover {
 			document.removeEventListener("pointerdown", onOutside);
 			document.removeEventListener("focusin", onOutside);
 		};
-	}, [isOpen, close, id]);
+	}, [isOpen, close, id, keepOpenWithin]);
 
 	return { id, isOpen, open, toggle, close, triggerRef, panelRef };
 }

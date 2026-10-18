@@ -82,7 +82,8 @@ export function Shell() {
 	const [route, navigate] = useAppRoute();
 	const profileMenu = usePopover();
 	const balanceMenu = usePopover();
-	const transfersPanel = usePopover();
+	// The slide-over stays open while the staging tray beside it is used.
+	const transfersPanel = usePopover({ keepOpenWithin: "[data-tray]" });
 	const [query, setQuery] = useState("");
 	const [sort, setSort] = useState<RowSort>(DEFAULT_SORT);
 	const [layout, setLayout] = useState<FilesLayout>("list");
