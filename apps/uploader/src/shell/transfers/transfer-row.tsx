@@ -314,7 +314,7 @@ function Detail({ item }: { item: TransferItem }) {
 	if (status.kind !== "failed" && status.kind !== "retrying") return null;
 	return (
 		<small className="detail">
-			{status.error}
+			{asSentence(status.error)}
 			{status.kind === "failed" && status.finishable && item.blobObjectId ? (
 				<>
 					{" "}
@@ -327,6 +327,12 @@ function Detail({ item }: { item: TransferItem }) {
 			) : null}
 		</small>
 	);
+}
+
+/** An error as a sentence, so what follows it reads apart: browsers say "Failed to fetch". */
+function asSentence(text: string): string {
+	const trimmed = text.trim();
+	return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
 }
 
 function formatSeconds(ms: number): string {

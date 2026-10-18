@@ -421,9 +421,11 @@ body:has(aside.insp) .tray {
 	font-size: 11px;
 	color: var(--fg-4);
 }
+/* The design runs Total on as one more row, without the sheets' divider. */
 .tray .cost .tot {
 	font-weight: 500;
-	padding-top: 6px;
+	border-top: 0;
+	padding-top: 0;
 }
 .tray .cost .tot dd {
 	font-size: 13px;
