@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AppShot } from "@/landing/app-shot";
+import { ConsoleComparison } from "@/landing/console-comparison";
 import { FeatureCards } from "@/landing/feature-cards";
 import { Hero } from "@/landing/hero";
 import { LandingFooter } from "@/landing/landing-footer";
@@ -27,6 +28,7 @@ export default function HomePage() {
 					<Hero />
 					<AppShot />
 					<FeatureCards />
+					<ConsoleComparison />
 				</main>
 				<LandingFooter />
 			</div>
