@@ -273,3 +273,22 @@
 		opacity: 0.45;
 	}
 }
+
+@media (max-width: 860px) {
+	/* One column of cards, as the design's 390 render. */
+	.ov > * {
+		grid-column: 1 / -1;
+	}
+	.card.hello h2 {
+		font-size: 24px;
+	}
+	/* A long action wraps inside its card instead of running past it. */
+	.card .acts .btn {
+		max-width: 100%;
+		white-space: normal;
+		text-align: center;
+		line-height: 1.35;
+		padding-top: 7px;
+		padding-bottom: 7px;
+	}
+}

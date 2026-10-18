@@ -369,3 +369,88 @@ button.net:hover {
 		transform: translateX(24px);
 	}
 }
+
+/* ---------- Phones: the rail becomes a bottom tab bar ---------- */
+@media (max-width: 860px) {
+	.app {
+		grid-template-columns: minmax(0, 1fr);
+		height: 100dvh;
+	}
+	.rail {
+		position: fixed;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		height: var(--tabbar);
+		flex-direction: row;
+		justify-content: space-around;
+		gap: 0;
+		padding: 0 6px;
+		border-right: 0;
+		border-top: 1px solid var(--line);
+		/* Opaque rather than blurred: a backdrop filter would make the bar the
+		   backdrop root of the menus that open from it, and they would show
+		   the list through. */
+		background: rgba(7, 8, 11, 0.97);
+		z-index: 45;
+	}
+	.rail .lg,
+	.rail .sp,
+	.rail .ri.soon {
+		display: none;
+	}
+	.rail .ri {
+		width: 40px;
+		height: 40px;
+	}
+	.rail .me {
+		margin-top: 0;
+	}
+	.rail .me .av {
+		width: 30px;
+		height: 30px;
+		border-radius: 9px;
+	}
+	/* Rail popovers rise above the tab bar, full width with 12px gutters. */
+	.rail .pop.rail-pop {
+		position: fixed;
+		top: auto;
+		left: 12px;
+		right: 12px;
+		bottom: calc(var(--tabbar) + 8px);
+		width: auto;
+		max-height: calc(100dvh - var(--bar) - var(--tabbar) - 24px);
+	}
+	.top {
+		gap: 8px;
+		padding: 0 14px;
+	}
+	.top .ctx,
+	.top .cmd,
+	.net .rest,
+	.tpill.idle,
+	.tpill .word {
+		display: none;
+	}
+	.top .r {
+		gap: 8px;
+	}
+	.tpill,
+	.net {
+		padding: 0 10px;
+	}
+	.top .upload {
+		padding: 0 11px;
+	}
+	.top .upload .lbl {
+		display: none;
+	}
+	.view {
+		padding: 14px 14px calc(var(--tabbar) + 28px);
+	}
+	.tpanel {
+		width: 100%;
+		bottom: var(--tabbar);
+		border-left: 0;
+	}
+}

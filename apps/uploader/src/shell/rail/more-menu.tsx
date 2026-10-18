@@ -43,7 +43,7 @@ export function MoreMenu() {
 						<ul className="links">
 							{COMING_FEATURES.map((feature) => (
 								<li key={feature}>
-									<button type="button" className="soon" disabled>
+									<button type="button" className="coming" disabled>
 										<span>
 											<b>{feature}</b>
 										</span>

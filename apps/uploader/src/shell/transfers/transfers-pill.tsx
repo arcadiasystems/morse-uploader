@@ -37,7 +37,7 @@ export function TransfersPill({
 				/>
 			) : null}
 			<span aria-hidden="true">
-				{countText(summary)}
+				<CountText summary={summary} />
 				{active > 0 ? (
 					<span className="state"> · {stateText(summary)}</span>
 				) : null}
@@ -46,10 +46,20 @@ export function TransfersPill({
 	);
 }
 
-function countText({ active, failed }: TransfersSummary): string {
-	if (active > 0) return active === 1 ? "1 transfer" : `${active} transfers`;
-	if (failed > 0) return `${failed} failed`;
-	return "No transfers";
+/** The count, with its noun in a span that phones drop to save room. */
+function CountText({ summary }: { summary: TransfersSummary }) {
+	const { active, failed } = summary;
+	if (active > 0)
+		return (
+			<>
+				{active}
+				<span className="word">
+					{active === 1 ? " transfer" : " transfers"}
+				</span>
+			</>
+		);
+	if (failed > 0) return <>{failed} failed</>;
+	return <>No transfers</>;
 }
 
 function stateText({ now }: TransfersSummary): string {

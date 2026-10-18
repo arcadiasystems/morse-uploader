@@ -327,7 +327,7 @@
 	font-weight: 600;
 }
 .links a,
-.links .soon {
+.links .coming {
 	display: flex;
 	align-items: center;
 	gap: 10px;
@@ -340,7 +340,7 @@
 	border-color: var(--line-3);
 }
 .links a > span:first-child,
-.links .soon > span:first-child {
+.links .coming > span:first-child {
 	flex: 1;
 	min-width: 0;
 	display: flex;
@@ -359,13 +359,13 @@
 	flex: 0 0 auto;
 }
 /* A planned feature in the More menu: present, labelled, and not clickable. */
-.links .soon {
+.links .coming {
 	width: 100%;
 	text-align: left;
 	color: var(--fg-3);
 	cursor: not-allowed;
 }
-.links .soon b {
+.links .coming b {
 	color: var(--fg-2);
 }
 .addr {

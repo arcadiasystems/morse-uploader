@@ -524,3 +524,58 @@
 		animation: pop-in 140ms var(--ease);
 	}
 }
+
+@media (max-width: 860px) {
+	.filters .sp {
+		display: none;
+	}
+	.filters .sortby {
+		margin-right: auto;
+	}
+	/* Rows keep the name, size and the overflow menu. */
+	.tr {
+		grid-template-columns: 24px minmax(0, 1fr) 80px 28px;
+		padding: 0 12px;
+	}
+	.tr .cbc,
+	.tr .dt,
+	.tr .life,
+	.tr.h th:nth-child(1),
+	.tr.h th:nth-child(5),
+	.tr.h th:nth-child(6) {
+		display: none;
+	}
+	.tr.child {
+		padding-left: 30px;
+	}
+	.tr.note .msg {
+		padding-left: 36px;
+	}
+	.tr .tw {
+		left: -10px;
+	}
+	.tr.skel {
+		grid-template-columns: 24px minmax(0, 1fr) 80px;
+		padding-left: 12px;
+	}
+	.tr.skel i:nth-child(4) {
+		display: none;
+	}
+	.cards {
+		grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+	}
+	/* Details open as a full sheet between the top bar and the tab bar. */
+	.content.insp {
+		grid-template-columns: minmax(0, 1fr);
+	}
+	.content.insp .drawer {
+		position: fixed;
+		top: var(--bar);
+		left: 0;
+		right: 0;
+		bottom: var(--tabbar);
+		border-left: 0;
+		background: var(--glass-strong);
+		z-index: 40;
+	}
+}
