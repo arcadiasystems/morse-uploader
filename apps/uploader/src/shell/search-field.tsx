@@ -41,12 +41,12 @@ export function SearchField({
 	}
 
 	return (
-		<label className="search">
+		<label className="cmd">
 			<span aria-hidden="true">⌕</span>
 			<input
 				ref={input}
 				type="search"
-				placeholder="Search blobs, quilts, names, ids"
+				placeholder="Search blobs, quilts, ids, or type a command"
 				aria-label="Search blobs by name, blob id or object id"
 				aria-keyshortcuts="Meta+K Control+K"
 				value={query}

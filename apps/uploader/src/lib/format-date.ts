@@ -23,21 +23,6 @@ export function formatDays(days: number): string {
 	return days === 1 ? "1 day" : `${days} days`;
 }
 
-/**
- * A file's modified time as the design's local pane shows it: `today`,
- * `yesterday`, otherwise a short date. Days are the viewer's calendar days.
- */
-export function formatModified(ms: number, nowMs: number): string {
-	const day = (value: number) => {
-		const date = new Date(value);
-		return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
-	};
-	const daysAgo = Math.round((day(nowMs) - day(ms)) / 86_400_000);
-	if (daysAgo === 0) return "today";
-	if (daysAgo === 1) return "yesterday";
-	return formatShortDate(ms, nowMs);
-}
-
 /** How long ago a moment was, for "checked 2 minutes ago": `just now`, minutes, hours, then days. */
 export function formatAgo(ms: number, nowMs: number): string {
 	const minutes = Math.floor(Math.max(0, nowMs - ms) / 60_000);

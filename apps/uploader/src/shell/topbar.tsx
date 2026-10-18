@@ -1,50 +1,60 @@
-import { Brand } from "@/components/brand";
 import { Icon } from "@/components/icon";
 import type { Funds } from "@/funds/use-funds";
 import type { NetworkConfig } from "@/network/networks";
+import type { TransfersSummary } from "@/transfers/summarize-transfers";
 import { BalancePill } from "./balance/balance-pill";
 import { NetworkChip } from "./network-chip";
-import { ProfileMenu } from "./profile-menu/profile-menu";
 import { SearchField } from "./search-field";
-import { type Popover, usePopover } from "./use-popover";
+import { TransfersPill } from "./transfers/transfers-pill";
+import type { Popover } from "./use-popover";
 
 interface TopbarProps {
+	/** The view's name. */
+	title: string;
+	/** One line under it: the address, how many blobs and their total size. */
+	context: string;
 	network: NetworkConfig;
 	address: string | null;
 	funds: Funds;
-	profileMenu: Popover;
+	balanceMenu: Popover;
 	query: string;
 	onQueryChange: (query: string) => void;
 	/** Search is off until there are listed blobs to search. */
 	searchDisabled: boolean;
-	/** Opens the upload sheet for the selection, or the file picker when nothing is selected. */
+	transfers: TransfersSummary;
+	transfersPanel: Popover;
+	/** Opens the file picker; what is picked goes to the upload sheet. */
 	onUpload: () => void;
 }
 
-/** Brand, profile, network, search, balances and the upload action. */
+/** The view title and context, search, transfers, balances and the upload action. */
 export function Topbar({
+	title,
+	context,
 	network,
 	address,
 	funds,
-	profileMenu,
+	balanceMenu,
 	query,
 	onQueryChange,
 	searchDisabled,
+	transfers,
+	transfersPanel,
 	onUpload,
 }: TopbarProps) {
-	const balanceMenu = usePopover();
 	return (
-		<header className="topbar">
-			<Brand />
-			<span className="sep" aria-hidden="true" />
-			<ProfileMenu popover={profileMenu} />
-			<NetworkChip network={network} />
+		<header className="top">
+			<div className="title">
+				<h1>{title}</h1>
+				<span className="ctx">{context}</span>
+			</div>
 			<SearchField
 				query={query}
 				onQueryChange={onQueryChange}
 				disabled={searchDisabled}
 			/>
-			<div className="right">
+			<div className="r">
+				<TransfersPill summary={transfers} panel={transfersPanel} />
 				{address ? (
 					<BalancePill
 						popover={balanceMenu}
@@ -52,7 +62,9 @@ export function Topbar({
 						network={network}
 						address={address}
 					/>
-				) : null}
+				) : (
+					<NetworkChip network={network} />
+				)}
 				<button
 					className="btn primary upload"
 					type="button"
@@ -61,7 +73,7 @@ export function Topbar({
 					aria-label="Upload"
 					onClick={onUpload}
 				>
-					<Icon name="upload" />
+					<Icon name="upload" size={14} />
 					<span className="lbl">Upload</span>
 				</button>
 			</div>

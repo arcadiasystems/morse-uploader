@@ -18,9 +18,9 @@ import { ProfileList } from "./profile-list";
 import { WalletSection } from "./wallet-section";
 
 /**
- * The profile pill and its menu, FileZilla's site manager for wallets:
- * saved wallet and network pairs to add, switch and remove, the network
- * switch, and the wallet connection.
+ * The rail's profile avatar and its menu, FileZilla's site manager for
+ * wallets: saved wallet and network pairs to add, switch and remove, the
+ * network switch, and the wallet connection.
  */
 export function ProfileMenu({ popover }: { popover: Popover }) {
 	const connection = useWalletConnection();
@@ -50,47 +50,43 @@ export function ProfileMenu({ popover }: { popover: Popover }) {
 		? (session.profile?.name ?? session.account.label ?? session.wallet.name)
 		: null;
 
+	const short = session ? shortenAddress(session.account.address) : null;
 	return (
 		<div className="anchor">
 			<button
 				ref={popover.triggerRef}
 				type="button"
-				className="profile"
+				className="me"
+				data-profile-trigger=""
+				title={displayName && short ? `${displayName} · ${short}` : undefined}
 				aria-haspopup="dialog"
 				aria-expanded={popover.isOpen}
 				aria-controls={popover.isOpen ? popover.id : undefined}
 				onClick={popover.toggle}
 			>
-				{session && displayName ? (
+				{displayName && short ? (
 					<>
 						<ProfileAvatar name={displayName} />
-						<b>{displayName}</b>
-						<code>{shortenAddress(session.account.address)}</code>
+						<span className="sr-only">
+							Profile {displayName}, {short}
+						</span>
 					</>
 				) : (
 					<>
 						<span className="av none" aria-hidden="true">
-							<Icon name="wallet" size={13} />
+							<Icon name="wallet" size={16} />
 						</span>
-						<b>{connecting ? "Connecting…" : "Connect wallet"}</b>
+						<span className="sr-only">
+							{connecting ? "Connecting…" : "Connect wallet"}
+						</span>
 					</>
 				)}
-				<svg
-					className="caret"
-					width="8"
-					height="5"
-					viewBox="0 0 8 5"
-					aria-hidden="true"
-					focusable="false"
-				>
-					<path d="M0 0h8L4 5z" fill="currentColor" />
-				</svg>
 			</button>
 			{popover.isOpen ? (
 				<div
 					ref={popover.panelRef}
 					id={popover.id}
-					className="pop"
+					className="pop rail-pop"
 					role="dialog"
 					aria-label="Profiles, network and wallet"
 				>

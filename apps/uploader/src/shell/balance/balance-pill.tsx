@@ -11,7 +11,7 @@ interface BalancePillProps {
 	address: string;
 }
 
-/** WAL and SUI for the active address; turns to "top up" when funds are low. */
+/** WAL, SUI and the network for the active address; turns amber with "top up" when funds are low. */
 export function BalancePill({
 	popover,
 	funds,
@@ -28,21 +28,27 @@ export function BalancePill({
 			<button
 				ref={popover.triggerRef}
 				type="button"
-				className={low ? "bal low" : "bal"}
+				className={low ? "net low" : "net"}
 				aria-haspopup="dialog"
 				aria-expanded={popover.isOpen}
 				aria-controls={popover.isOpen ? popover.id : undefined}
 				onClick={popover.toggle}
 			>
+				<i aria-hidden="true" />
 				<b>
 					<TokenAmount raw={wal} context="compact" /> WAL
 				</b>
-				<span aria-hidden="true">·</span>
-				<b>
+				<span className="more">
+					<span aria-hidden="true"> · </span>
 					<TokenAmount raw={sui} context="compact" /> SUI
-				</b>
-				<span aria-hidden="true">·</span>
-				<span className="hint">{low ? "top up" : "balances"}</span>
+					<span aria-hidden="true"> · </span>
+					{network.label}
+				</span>
+				{low ? (
+					<span className="hint">
+						<span aria-hidden="true"> · </span>top up
+					</span>
+				) : null}
 			</button>
 			{popover.isOpen ? (
 				<BalancePanel

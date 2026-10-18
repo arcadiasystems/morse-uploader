@@ -261,3 +261,157 @@
 		display: none;
 	}
 }
+
+/* ---------- The Walrus pane's frame ---------- */
+.pane {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	min-width: 0;
+	background: var(--bg-2);
+}
+.pane .ft {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	padding: 8px 14px;
+	border-top: 1px solid var(--line);
+	font-family: var(--mono);
+	font-variant-numeric: tabular-nums;
+	font-size: 11.5px;
+	color: var(--fg-3);
+	background: var(--panel);
+	white-space: nowrap;
+}
+.pane .ft b {
+	color: var(--fg);
+	font-weight: 500;
+}
+.pane .ft .sp {
+	flex: 1;
+}
+
+.pane .hd {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 10px 14px;
+	border-bottom: 1px solid var(--line);
+	min-height: 48px;
+}
+.pane .hd h3 {
+	font-family: var(--disp);
+	font-size: 15px;
+	font-weight: 800;
+	letter-spacing: -0.02em;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	white-space: nowrap;
+}
+.pane .hd h3 i {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--ok);
+}
+/* Addition: the dot shows whether the last chain read worked. */
+.pane .hd h3 i.wait {
+	background: var(--line-2);
+}
+.pane .hd h3 i.warn {
+	background: var(--warn);
+}
+.pane .hd .crumb {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-family: var(--mono);
+	font-size: 12px;
+	color: var(--fg-3);
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+}
+.pane .hd .crumb b {
+	color: var(--fg);
+	font-weight: 500;
+}
+.pane .hd .acts {
+	margin-left: auto;
+	display: flex;
+	gap: 6px;
+}
+.pane .tools {
+	position: relative;
+	display: flex;
+	gap: 6px;
+	padding: 8px 14px;
+	border-bottom: 1px solid var(--line);
+	align-items: center;
+	background: var(--panel);
+}
+.pane .tools .sp {
+	flex: 1;
+}
+.pane .tools .view {
+	margin: 0;
+	padding: 0;
+	min-width: 0;
+	display: inline-flex;
+	border: 1px solid var(--line);
+	border-radius: 8px;
+	overflow: hidden;
+	flex: 0 0 auto;
+}
+.pane .tools .view button {
+	border: 0;
+	background: var(--bg-2);
+	width: 30px;
+	height: 28px;
+	color: var(--fg-3);
+	display: grid;
+	place-items: center;
+}
+.pane .tools .view button.on {
+	background: var(--fg);
+	color: var(--panel);
+}
+.pane .tools .view button:disabled {
+	cursor: not-allowed;
+}
+.list {
+	flex: 1;
+	overflow: auto;
+	min-height: 0;
+}
+/* The pane footer's Extend all link. */
+.pane .ft .link {
+	border: 0;
+	background: transparent;
+	padding: 0;
+	font: inherit;
+	color: var(--cyan);
+	font-weight: 600;
+	cursor: pointer;
+	text-align: left;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
+@media (max-width: 860px) {
+	.pane .hd .crumb {
+		display: none;
+	}
+	.pane .tools {
+		overflow-x: auto;
+		scrollbar-width: none;
+	}
+	.pane .tools .btn {
+		flex: 0 0 auto;
+	}
+	.pane .ft {
+		flex-wrap: wrap;
+		row-gap: 4px;
+	}
+}

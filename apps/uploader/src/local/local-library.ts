@@ -1,6 +1,6 @@
 /**
- * The files the user dropped or picked on "This computer". A dropped folder
- * is one root holding every file under it; a dropped file is a root of its
+ * The files the user dropped or picked for an upload. A dropped folder is
+ * one root holding every file under it; a dropped file is a root of its
  * own. Nothing is read until an upload starts: a `File` is a handle.
  */
 
@@ -84,34 +84,6 @@ export function rootsFromPicked(
 	});
 }
 
-/**
- * Adds roots to the library. A root with the same kind and name as one
- * already there replaces it, so dropping a folder again picks up its
- * current contents instead of listing it twice.
- */
-export function addRoots(
-	library: LocalLibrary,
-	added: readonly LocalRoot[],
-): LocalLibrary {
-	const replaced = new Set(added.map((root) => `${root.kind}:${root.name}`));
-	return [
-		...library.filter((root) => !replaced.has(`${root.kind}:${root.name}`)),
-		...added,
-	];
-}
-
-/** Removes files from the library; a root left with no files goes too. */
-export function removeFiles(
-	library: LocalLibrary,
-	fileIds: ReadonlySet<string>,
-): LocalLibrary {
-	return library.flatMap((root) => {
-		const files = root.files.filter((file) => !fileIds.has(file.id));
-		if (files.length === 0) return [];
-		return files.length === root.files.length ? [root] : [{ ...root, files }];
-	});
-}
-
 /** Every file in the library. */
 export function allFiles(library: LocalLibrary): LocalFile[] {
 	return library.flatMap((root) => root.files);
@@ -124,7 +96,7 @@ export function pathInFolder(file: LocalFile): string {
 }
 
 /** Natural order for names and paths: digits compare as numbers, case is ignored. */
-export function comparePaths(a: string, b: string): number {
+function comparePaths(a: string, b: string): number {
 	return PATH_COLLATOR.compare(a, b);
 }
 

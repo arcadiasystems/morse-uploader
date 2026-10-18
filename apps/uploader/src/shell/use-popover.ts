@@ -22,24 +22,42 @@ export interface Popover {
 
 /**
  * A non-modal popover anchored to a trigger button. Opening moves focus to
- * the first control inside; Escape closes and returns focus to the trigger;
- * a click or focus outside closes it without moving focus.
+ * the first control inside; Escape closes and returns focus to the control
+ * that opened it (a second trigger, such as the transfers pill and the rail
+ * item, works too); a click or focus outside closes it without moving
+ * focus. Every trigger sets `aria-controls` to the popover's id while it is
+ * open, which is how a click on any of them counts as inside.
  */
 export function usePopover(): Popover {
 	const id = useId();
 	const [isOpen, setIsOpen] = useState(false);
 	const triggerRef = useRef<HTMLButtonElement>(null);
 	const panelRef = useRef<HTMLDivElement>(null);
+	// The focused control when the popover opened, to return focus to.
+	const openerRef = useRef<HTMLElement | null>(null);
 
+	const rememberOpener = useCallback(() => {
+		const active = document.activeElement;
+		openerRef.current =
+			active instanceof HTMLElement && active !== document.body ? active : null;
+	}, []);
 	const close = useCallback(
 		({ restoreFocus = true }: { restoreFocus?: boolean } = {}) => {
 			setIsOpen(false);
-			if (restoreFocus) triggerRef.current?.focus();
+			if (!restoreFocus) return;
+			const opener = openerRef.current;
+			(opener?.isConnected ? opener : triggerRef.current)?.focus();
 		},
 		[],
 	);
-	const open = useCallback(() => setIsOpen(true), []);
-	const toggle = useCallback(() => setIsOpen((value) => !value), []);
+	const open = useCallback(() => {
+		rememberOpener();
+		setIsOpen(true);
+	}, [rememberOpener]);
+	const toggle = useCallback(() => {
+		rememberOpener();
+		setIsOpen((value) => !value);
+	}, [rememberOpener]);
 
 	useEffect(() => {
 		if (!isOpen) return;
@@ -47,9 +65,11 @@ export function usePopover(): Popover {
 		panel?.querySelector<HTMLElement>(FOCUSABLE)?.focus();
 
 		function isInside(target: EventTarget | null): boolean {
-			if (!(target instanceof Node)) return false;
+			if (!(target instanceof Element)) return false;
 			return Boolean(
-				panel?.contains(target) || triggerRef.current?.contains(target),
+				panel?.contains(target) ||
+					triggerRef.current?.contains(target) ||
+					target.closest(`[aria-controls="${CSS.escape(id)}"]`),
 			);
 		}
 		function onKeyDown(event: KeyboardEvent) {
@@ -69,7 +89,7 @@ export function usePopover(): Popover {
 			document.removeEventListener("pointerdown", onOutside);
 			document.removeEventListener("focusin", onOutside);
 		};
-	}, [isOpen, close]);
+	}, [isOpen, close, id]);
 
 	return { id, isOpen, open, toggle, close, triggerRef, panelRef };
 }

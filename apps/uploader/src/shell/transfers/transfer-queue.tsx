@@ -1,4 +1,5 @@
 import { type KeyboardEvent, useId, useRef, useState } from "react";
+import { Icon } from "@/components/icon";
 import { TokenAmount } from "@/components/token-amount";
 import { errorMessage } from "@/lib/error-message";
 import type {
@@ -7,7 +8,7 @@ import type {
 	TransferTab,
 } from "@/transfers/transfer-state";
 import { tabOf } from "@/transfers/transfer-state";
-import { QueueRow } from "./queue/queue-row";
+import { QueueRow } from "./queue-row";
 
 const TABS: Readonly<Record<TransferTab, { label: string; empty: string }>> = {
 	queue: {
@@ -35,13 +36,16 @@ interface TransfersPaneProps {
 	onPause: () => void;
 	onResume: () => void;
 	restoreError: unknown;
+	/** Closes the slide-over the queue opens in. */
+	onClose: () => void;
 }
 
 /**
- * The transfer queue (design/app.html): Queue, Done and Failed tabs, each
- * item's steps with progress, speed and its blob id as soon as it exists,
- * the batch cost line, and Pause all, which pauses between items. Arrow
- * keys move between the tabs.
+ * The transfer queue: Queue, Done and Failed tabs, each item's steps with
+ * progress, speed and its blob id as soon as it exists, the batch cost
+ * line, and Pause all, which pauses between items. Arrow keys move between
+ * the tabs. It opens as a slide-over from the transfers pill until R3
+ * builds the design's transfers panel.
  */
 export function TransfersPane({
 	state,
@@ -50,6 +54,7 @@ export function TransfersPane({
 	onPause,
 	onResume,
 	restoreError,
+	onClose,
 }: TransfersPaneProps) {
 	const ids = useId();
 	const [tab, setTab] = useState<TransferTab>("queue");
@@ -119,6 +124,14 @@ export function TransfersPane({
 					onClick={state.paused ? onResume : onPause}
 				>
 					{state.paused ? "Resume all" : "Pause all"}
+				</button>
+				<button
+					className="x"
+					type="button"
+					aria-label="Close transfers"
+					onClick={onClose}
+				>
+					<Icon name="close" size={16} />
 				</button>
 			</div>
 			<div

@@ -27,14 +27,14 @@ export default function HomePage() {
 					</div>
 				</nav>
 				<main className="hero">
-					<span className="eyebrow">FileZilla for Walrus</span>
+					<span className="eyebrow">Transfer client for Walrus</span>
 					<h1>
 						Your files on Walrus. <em>Your keys, your epochs, your records.</em>
 					</h1>
 					<p className="lead">
-						Morse Uploader is a two-pane transfer client for Walrus that runs in
-						your browser. Your wallet is the login and signs every transaction.
-						No account, no API key, no custodian.
+						Morse Uploader is a transfer client for Walrus that runs in your
+						browser. Your wallet is the login and signs every transaction. No
+						account, no API key, no custodian.
 					</p>
 					<div className="cta">
 						<Link className="btn solid lg" href="/app">

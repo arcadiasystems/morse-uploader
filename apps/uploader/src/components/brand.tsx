@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-/** The Trace mark and the Morse Uploader wordmark, linking home. */
-export function Brand() {
+/** The Trace mark, with the wordmark unless only the mark fits, linking home. */
+export function Brand({ wordmark = true }: { wordmark?: boolean }) {
 	return (
 		<Link className="brand" href="/" aria-label="Morse Uploader home">
 			<svg aria-hidden="true" viewBox="0 0 100 100">
@@ -14,9 +14,11 @@ export function Brand() {
 					strokeLinejoin="round"
 				/>
 			</svg>
-			<span className="wm" aria-hidden="true">
-				morse <em>uploader</em>
-			</span>
+			{wordmark ? (
+				<span className="wm" aria-hidden="true">
+					morse <em>uploader</em>
+				</span>
+			) : null}
 		</Link>
 	);
 }
