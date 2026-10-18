@@ -26,6 +26,12 @@ describe("network config", () => {
 		for (const id of NETWORK_IDS) expect(NETWORKS[id].maxEpochsAhead).toBe(53);
 		expect(NETWORKS.testnet.uploadGasMist).toBe(3_975_376n + 1_030_696n);
 		expect(NETWORKS.mainnet.uploadGasMist).toBe(2_134_878n + 173_696n);
+		expect(NETWORKS.testnet.aggregatorUrl).toBe(
+			"https://aggregator.walrus-testnet.walrus.space",
+		);
+		expect(NETWORKS.mainnet.aggregatorUrl).toBe(
+			"https://aggregator.walrus-mainnet.walrus.space",
+		);
 	});
 
 	it("offers official top-up pages only, with the faucet on Testnet", () => {

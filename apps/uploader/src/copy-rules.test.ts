@@ -2,7 +2,11 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 
-/** The copy rules from the handover: no em dashes, and the production network is "Walrus Mainnet". */
+/**
+ * The copy rules from the handover and PROTOCOL-NOTES section 13: no em
+ * dashes, and the networks are "Walrus Mainnet" and "Testnet", never
+ * "Sui mainnet" or a lower-case "Walrus mainnet" / "Walrus testnet".
+ */
 const SOURCE_ROOT = import.meta.dirname;
 // Built from its code point so this file holds no em dash either.
 const EM_DASH = String.fromCharCode(0x2014);
@@ -41,5 +45,20 @@ describe("copy rules", () => {
 				.filter((file) => /sui mainnet/i.test(file.text))
 				.map((file) => file.path),
 		).toEqual([]);
+	});
+
+	it("capitalizes the network names after Walrus", () => {
+		expect(
+			files
+				.filter((file) => /Walrus (mainnet|testnet)\b/.test(file.text))
+				.map((file) => file.path),
+		).toEqual([]);
+	});
+
+	it("says an expired blob keeps its record on Sui, as the notes confirm", () => {
+		const pane = files.find((file) =>
+			file.path.endsWith("blob-list/list-row.tsx"),
+		);
+		expect(pane?.text).toContain('"record on Sui"');
 	});
 });
