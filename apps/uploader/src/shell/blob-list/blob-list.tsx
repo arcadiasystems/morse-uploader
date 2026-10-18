@@ -8,6 +8,8 @@ import {
 } from "react";
 import { hasReadablePatches } from "@/blobs/blob-row";
 import { type QuiltPatches, UNREAD_PATCHES } from "@/blobs/quilt-patch-store";
+import type { RowSort, SortKey } from "@/blobs/sort-rows";
+import { Icon } from "@/components/icon";
 import {
 	ITEM_HEIGHT,
 	type ListItem,
@@ -21,6 +23,8 @@ interface BlobListProps {
 	label: string;
 	items: readonly ListItem[];
 	patches: ReadonlyMap<string, QuiltPatches>;
+	sort: RowSort;
+	onSort: (key: SortKey) => void;
 	selectedKey: string | null;
 	onSelect: (key: string | null) => void;
 	/** Expands or collapses a quilt, by object id. */
@@ -29,7 +33,7 @@ interface BlobListProps {
 	nowMs: number;
 }
 
-const COLUMNS: readonly { key: string; label: string; className: string }[] = [
+const COLUMNS: readonly { key: SortKey; label: string; className: string }[] = [
 	{ key: "name", label: "Name", className: "nm" },
 	{ key: "size", label: "Size", className: "sz" },
 	{ key: "expiry", label: "Expires", className: "ex" },
@@ -45,6 +49,8 @@ export function BlobList({
 	label,
 	items,
 	patches,
+	sort,
+	onSort,
 	selectedKey,
 	onSelect,
 	onToggle,
@@ -186,11 +192,26 @@ export function BlobList({
 						<th scope="col">
 							<span className="sr-only">Type</span>
 						</th>
-						{COLUMNS.map((column) => (
-							<th key={column.key} scope="col" className={column.className}>
-								{column.label}
-							</th>
-						))}
+						{COLUMNS.map((column) => {
+							const sorted = sort.key === column.key;
+							return (
+								<th
+									key={column.key}
+									scope="col"
+									className={column.className}
+									aria-sort={sorted ? sort.direction : undefined}
+								>
+									<button
+										type="button"
+										className={sorted ? `sort on ${sort.direction}` : "sort"}
+										onClick={() => onSort(column.key)}
+									>
+										{column.label}
+										<Icon name="arrowUp" size={10} />
+									</button>
+								</th>
+							);
+						})}
 					</tr>
 				</thead>
 				<tbody

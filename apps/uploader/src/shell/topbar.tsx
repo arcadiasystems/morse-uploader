@@ -13,10 +13,22 @@ interface TopbarProps {
 	address: string | null;
 	funds: Funds;
 	profileMenu: Popover;
+	query: string;
+	onQueryChange: (query: string) => void;
+	/** Search is off until there are listed blobs to search. */
+	searchDisabled: boolean;
 }
 
 /** Brand, profile, network, search, balances and the upload action. */
-export function Topbar({ network, address, funds, profileMenu }: TopbarProps) {
+export function Topbar({
+	network,
+	address,
+	funds,
+	profileMenu,
+	query,
+	onQueryChange,
+	searchDisabled,
+}: TopbarProps) {
 	const balanceMenu = usePopover();
 	return (
 		<header className="topbar">
@@ -24,7 +36,11 @@ export function Topbar({ network, address, funds, profileMenu }: TopbarProps) {
 			<span className="sep" aria-hidden="true" />
 			<ProfileMenu popover={profileMenu} />
 			<NetworkChip network={network} />
-			<SearchField />
+			<SearchField
+				query={query}
+				onQueryChange={onQueryChange}
+				disabled={searchDisabled}
+			/>
 			<div className="right">
 				{address ? (
 					<BalancePill

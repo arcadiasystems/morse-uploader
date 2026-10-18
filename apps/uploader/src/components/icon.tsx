@@ -151,7 +151,16 @@ const ICONS = {
 			</>
 		),
 	},
+	search: {
+		body: (
+			<>
+				<circle cx="11" cy="11" r="7" />
+				<path d="m20 20-4-4" />
+			</>
+		),
+	},
 	chevron: { body: <path d="m9 6 6 6-6 6" />, strokeWidth: 2.4 },
+	arrowUp: { body: <path d="M12 19V5M6 11l6-6 6 6" />, strokeWidth: 2.4 },
 } satisfies Record<string, IconShape>;
 
 export type IconName = keyof typeof ICONS;

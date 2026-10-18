@@ -1,7 +1,8 @@
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { hasReadablePatches } from "@/blobs/blob-row";
-import { matchesFilter } from "@/blobs/filter-rows";
+import { filterRows } from "@/blobs/filter-rows";
 import type { ListedBlobs } from "@/blobs/list-blobs";
+import { type RowSort, type SortKey, sortRows } from "@/blobs/sort-rows";
 import type { BlobListing } from "@/blobs/use-blob-listing";
 import { useQuiltPatches } from "@/blobs/use-quilt-patches";
 import type { WalrusPrices } from "@/funds/types";
@@ -23,6 +24,10 @@ interface WalrusPaneProps {
 	network: NetworkConfig;
 	address: string | null;
 	view: BlobView;
+	query: string;
+	onClearQuery: () => void;
+	sort: RowSort;
+	onSort: (key: SortKey) => void;
 	listing: ChainRead<BlobListing>;
 	/** The listing with statuses computed, once it is read. */
 	listed: ListedBlobs | null;
@@ -40,6 +45,10 @@ export function WalrusPane({
 	network,
 	address,
 	view,
+	query,
+	onClearQuery,
+	sort,
+	onSort,
 	listing,
 	listed,
 	onRefresh,
@@ -54,9 +63,9 @@ export function WalrusPane({
 	const rows = useMemo(
 		() =>
 			listed && filter
-				? listed.rows.filter((row) => matchesFilter(row, filter))
+				? sortRows(filterRows(listed.rows, filter, query), sort)
 				: [],
-		[listed, filter],
+		[listed, filter, query, sort],
 	);
 	const items = useMemo(
 		() => buildListItems(rows, expanded, patches),
@@ -141,7 +150,9 @@ export function WalrusPane({
 			<NothingListed
 				view={view}
 				hasBlobs={listed.rows.length > 0}
+				query={filter === null ? "" : query.trim()}
 				networkLabel={network.walrusLabel}
+				onClearQuery={onClearQuery}
 			/>
 		);
 	} else {
@@ -150,6 +161,8 @@ export function WalrusPane({
 				label={`${BLOB_VIEWS[view].label} on ${network.walrusLabel}`}
 				items={items}
 				patches={patches}
+				sort={sort}
+				onSort={onSort}
 				selectedKey={selectedKey}
 				onSelect={setSelectedKey}
 				onToggle={toggleQuilt}
@@ -197,17 +210,36 @@ export function WalrusPane({
 	);
 }
 
-/** Why the list is empty: no blobs at all, or none in this view. */
+/** Why the list is empty: no blobs at all, none in this view, or none matching the search. */
 function NothingListed({
 	view,
 	hasBlobs,
+	query,
 	networkLabel,
+	onClearQuery,
 }: {
 	view: BlobView;
 	hasBlobs: boolean;
+	query: string;
 	networkLabel: string;
+	onClearQuery: () => void;
 }) {
 	const config = BLOB_VIEWS[view];
+	if (query !== "") {
+		return (
+			<EmptyState
+				icon="search"
+				title={`No blobs match “${query}”`}
+				action={
+					<button className="btn btn-soft" type="button" onClick={onClearQuery}>
+						Clear search
+					</button>
+				}
+			>
+				Search looks at names, blob ids and object ids in {config.label}.
+			</EmptyState>
+		);
+	}
 	if (!hasBlobs && view === "all") {
 		return (
 			<EmptyState icon="folder" title={`No blobs on ${networkLabel}`}>

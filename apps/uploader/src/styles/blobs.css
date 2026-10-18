@@ -53,6 +53,35 @@
 	opacity: 0.72;
 }
 
+/* Addition: sortable column headers. */
+.row.h .sort {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	border: 0;
+	border-radius: 4px;
+	padding: 0;
+	background: transparent;
+	font: inherit;
+	letter-spacing: inherit;
+	text-transform: inherit;
+	color: inherit;
+	cursor: pointer;
+}
+.row.h .sort:hover,
+.row.h .sort.on {
+	color: var(--ink);
+}
+.row.h .sort svg {
+	opacity: 0;
+}
+.row.h .sort.on svg {
+	opacity: 1;
+}
+.row.h .sort.descending svg {
+	transform: rotate(180deg);
+}
+
 /* Addition: keyboard focus lands on the grid; the selected row carries the ring. */
 .blist:focus-visible {
 	outline: 2px solid var(--ultra);
