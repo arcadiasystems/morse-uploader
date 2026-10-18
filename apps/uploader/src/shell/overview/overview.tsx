@@ -164,7 +164,7 @@ function StoredCard({ summary }: { summary: OverviewSummary | null }) {
 			</div>
 		);
 	}
-	const { stored, owned, expired, unfinished } = summary;
+	const { stored, expired, unfinished } = summary;
 	const [amount = "0", unit = "B"] = formatBytes(stored.size).split(" ");
 	const others = [
 		expired > 0 ? `${expired} expired` : null,
@@ -184,7 +184,7 @@ function StoredCard({ summary }: { summary: OverviewSummary | null }) {
 			</p>
 			<p className="fine">
 				{formatBytes(stored.encodedSize)} encoded and paid for
-				{others.length > 0 ? `. ${others.join(", ")}, of ${owned} owned.` : "."}
+				{others.length > 0 ? ` · ${others.join(", ")}` : ""}
 			</p>
 		</div>
 	);
@@ -244,7 +244,7 @@ function PaidThroughCard({
 				{formatShortDate(firstEnd.expiresAtMs, listed.nowMs)}.{" "}
 				{expiringSoon.length === 0
 					? "None ends within 30 days."
-					: `${count(expiringSoon.length, "blob")} ${expiringSoon.length === 1 ? "ends" : "end"} within 30 days.`}
+					: `${expiringSoon.length} ${expiringSoon.length === 1 ? "ends" : "end"} within 30 days.`}
 			</p>
 			{expiringSoon.length > 0 && onExtendExpiring ? (
 				<div className="acts">
@@ -298,19 +298,16 @@ function PriceCard({
 						}
 						unit="WAL / GiB·epoch"
 					/>
-					<p>
-						Per GiB of encoded size, per {epoch} on {network.label}. From the
-						Walrus system object.
-					</p>
+					<p>Per encoded GiB, per {epoch}. From the Walrus system object.</p>
 					<p className="fine">
-						Writing costs{" "}
+						Write fee{" "}
 						<TokenAmount
 							raw={prices.data.writePerUnit * MIB_PER_GIB}
 							context="compact"
 						/>{" "}
-						WAL per GiB once. Network fees are about{" "}
+						WAL per GiB · gas about{" "}
 						<TokenAmount raw={network.uploadGasMist} context="compact" /> SUI
-						per upload.
+						per upload
 					</p>
 				</>
 			) : prices.status === "error" ? (

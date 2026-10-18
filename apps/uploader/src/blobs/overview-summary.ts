@@ -19,7 +19,6 @@ export interface StorageEnd {
  * - `expiringSoon`: stored blobs ending within 30 days, the Expiring filter.
  */
 export interface OverviewSummary {
-	owned: number;
 	stored: {
 		blobs: number;
 		quilts: number;
@@ -70,7 +69,6 @@ export function summarizeOverview(rows: readonly BlobRow[]): OverviewSummary {
 		if (last === null || row.blob.endEpoch > last.blob.endEpoch) last = row;
 	}
 	return {
-		owned: rows.length,
 		stored,
 		unfinished,
 		expired,
