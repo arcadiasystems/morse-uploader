@@ -17,10 +17,11 @@ import type { NetworkConfig } from "@/network/networks";
 import { type DrawerTarget, targetRow } from "./drawer-target";
 import { PreviewSection } from "./preview-section";
 import { RecordSection } from "./record-section";
+import { VerifySection } from "./verify-section";
 
 /**
- * The blob drawer (design/app-blob.html): preview and record for a blob, a quilt, or one file in a quilt. The
- * record is read live from chain when the drawer opens.
+ * The blob drawer (design/app-blob.html): preview, verification and record for a blob, a quilt, or one file in a
+ * quilt. The record is read live from chain when the drawer opens.
  */
 export function BlobDrawer({
 	target,
@@ -195,6 +196,15 @@ export function BlobDrawer({
 							</div>
 						</section>
 					)}
+
+					{certified || expired ? (
+						<VerifySection
+							key={blob.blobId}
+							blob={blob}
+							expired={expired}
+							scope={patch ? "quilt-file" : "blob"}
+						/>
+					) : null}
 
 					<RecordSection
 						network={network}
