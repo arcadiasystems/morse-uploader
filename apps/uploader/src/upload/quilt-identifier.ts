@@ -15,7 +15,7 @@ export type IdentifierProblem =
 	| "first-character"
 	| "duplicate";
 
-/** Why a file cannot go into a quilt, as the upload sheet says it. */
+/** Why a file cannot go into a quilt, as the staging tray says it. */
 export const IDENTIFIER_PROBLEM_TEXT: Readonly<
 	Record<IdentifierProblem, string>
 > = {
