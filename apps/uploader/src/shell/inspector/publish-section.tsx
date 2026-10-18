@@ -57,10 +57,10 @@ export function PublishSection({
 	return (
 		<section
 			className="sec"
-			id="drawer-publish"
-			aria-labelledby="drawer-publish-title"
+			id="insp-publish"
+			aria-labelledby="insp-publish-title"
 		>
-			<h4 id="drawer-publish-title">Publish to Morse</h4>
+			<h4 id="insp-publish-title">Publish to Morse</h4>
 			{subject.kind === "blocked" || actions === null ? (
 				<p className="note">
 					{subject.kind === "blocked"

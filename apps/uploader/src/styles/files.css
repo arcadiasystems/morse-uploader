@@ -1,7 +1,7 @@
 /* Files, from design/v2/app.html: filter chips, the blob table, the grid and row menus. */
 
-/* With details open, they take the inspector's column beside the list. */
-.content.insp {
+/* With the inspector open, it takes its column beside the list. */
+.content.with-insp {
 	grid-template-columns: minmax(0, 1fr) var(--insp);
 }
 
@@ -564,18 +564,8 @@
 	.cards {
 		grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
 	}
-	/* Details open as a full sheet between the top bar and the tab bar. */
-	.content.insp {
+	/* The inspector opens as a full sheet over the list (inspector.css). */
+	.content.with-insp {
 		grid-template-columns: minmax(0, 1fr);
-	}
-	.content.insp .drawer {
-		position: fixed;
-		top: var(--bar);
-		left: 0;
-		right: 0;
-		bottom: var(--tabbar);
-		border-left: 0;
-		background: var(--glass-strong);
-		z-index: 40;
 	}
 }

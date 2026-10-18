@@ -13,13 +13,14 @@ import { useQuiltPatches } from "@/blobs/use-quilt-patches";
 import { errorMessage } from "@/lib/error-message";
 import type { ChainRead } from "@/lib/use-chain-read";
 import type { NetworkConfig } from "@/network/networks";
-import {
-	BlobDrawer,
-	type DrawerContext,
-	type DrawerSection,
-} from "../drawer/blob-drawer";
-import { drawerTarget } from "../drawer/drawer-target";
 import { EmptyState } from "../empty-state";
+import {
+	Inspector,
+	type InspectorContext,
+	type InspectorRequest,
+	type InspectorSection,
+} from "../inspector/inspector";
+import { inspectorTarget } from "../inspector/inspector-target";
 import { FILE_FILTER_CONFIG } from "./file-filters";
 import { FileGrid } from "./file-grid";
 import { FileList } from "./file-list";
@@ -48,7 +49,7 @@ interface FilesViewProps {
 	countNotes: Readonly<Partial<Record<BlobFilter, string | undefined>>>;
 	onRefresh: () => void;
 	onConnect: () => void;
-	drawer: DrawerContext;
+	inspector: InspectorContext;
 	/** Opens Extend all for the blobs expiring soon. */
 	onExtendExpiring: () => void;
 }
@@ -56,10 +57,10 @@ interface FilesViewProps {
 /**
  * Files (design/v2/app.html): the wallet's blobs on the current network,
  * read from chain, with filter chips, sort, a list or grid, quilts that
- * open in place, a selection, and an overflow menu per row. Until R2's
- * inspector, a row's details open in the blob drawer beside the list.
- * Selection and open quilts belong to one wallet and network; the shell
- * remounts the view when either changes.
+ * open in place, a selection, and an overflow menu per row. A row's
+ * details open in the inspector beside the list. Selection and open quilts
+ * belong to one wallet and network; the shell remounts the view when
+ * either changes.
  */
 export function FilesView({
 	network,
@@ -78,18 +79,15 @@ export function FilesView({
 	countNotes,
 	onRefresh,
 	onConnect,
-	drawer,
+	inspector,
 	onExtendExpiring,
 }: FilesViewProps) {
 	const { store, patches } = useQuiltPatches();
 	const view = useRef<HTMLElement>(null);
 	const [activeKey, setActiveKey] = useState<string | null>(null);
-	// Activating a row opens the drawer; closing it keeps the row active.
-	const [drawerOpen, setDrawerOpen] = useState(false);
-	const [focus, setFocus] = useState<{
-		section: DrawerSection;
-		request: number;
-	} | null>(null);
+	// Activating a row opens the inspector; closing it keeps the row active.
+	const [inspectorOpen, setInspectorOpen] = useState(false);
+	const [request, setRequest] = useState<InspectorRequest | null>(null);
 	const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
 	const [checked, setChecked] = useState<ReadonlySet<string>>(new Set());
 	const [menu, setMenu] = useState<{
@@ -119,22 +117,26 @@ export function FilesView({
 
 	function activate(key: string | null) {
 		setActiveKey(key);
-		setDrawerOpen(key !== null);
-		setFocus(null);
+		setInspectorOpen(key !== null);
+		setRequest(null);
 	}
 
-	function openDetails(key: string, section: DrawerSection | null) {
+	function openDetails(key: string, section: InspectorSection | null) {
 		setActiveKey(key);
-		setDrawerOpen(true);
-		setFocus(
+		setInspectorOpen(true);
+		setRequest(
 			section === null
 				? null
-				: (current) => ({ section, request: (current?.request ?? 0) + 1 }),
+				: (current) => ({
+						section,
+						action: null,
+						request: (current?.request ?? 0) + 1,
+					}),
 		);
 	}
 
-	function closeDrawer() {
-		setDrawerOpen(false);
+	function closeInspector() {
+		setInspectorOpen(false);
 		view.current?.querySelector<HTMLElement>(".tbl")?.focus();
 	}
 
@@ -286,9 +288,9 @@ export function FilesView({
 		);
 	}
 
-	const showDrawer = drawerOpen && active !== null && listed !== null;
+	const showInspector = inspectorOpen && active !== null && listed !== null;
 	return (
-		<div className={showDrawer ? "content insp" : "content"}>
+		<div className={showInspector ? "content with-insp" : "content"}>
 			<section className="view" ref={view} aria-label="Files">
 				<FilterBar
 					filter={filter}
@@ -305,27 +307,27 @@ export function FilesView({
 					extendExpiring={
 						filter === "expiring" &&
 						(counts.expiring ?? 0) > 0 &&
-						drawer.actions
+						inspector.actions
 							? onExtendExpiring
 							: null
 					}
 				/>
 				{content}
 			</section>
-			{showDrawer ? (
-				<BlobDrawer
+			{showInspector ? (
+				<Inspector
 					key={active.key}
-					target={drawerTarget(active)}
+					target={inspectorTarget(active)}
 					network={network}
 					listed={listed}
-					context={drawer}
-					focus={focus}
-					onClose={closeDrawer}
+					context={inspector}
+					request={request}
+					onClose={closeInspector}
 				/>
 			) : null}
 			{menu && menuItem ? (
 				<RowMenu
-					target={drawerTarget(menuItem)}
+					target={inspectorTarget(menuItem)}
 					anchor={menu.anchor}
 					network={network}
 					onOpen={(section) => {

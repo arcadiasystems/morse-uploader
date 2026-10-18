@@ -4,7 +4,7 @@ import type { BlobRecord } from "./blob-record";
 import { parseBlob } from "./parse-blob";
 import { readAttributes } from "./read-owned-blobs";
 
-/** One Blob object as chain holds it now, with what the drawer's record shows. */
+/** One Blob object as chain holds it now, with what the inspector's record shows. */
 export interface LiveBlob {
 	record: BlobRecord;
 	/** The transaction that last changed the object: its register, certify or latest extend. */
@@ -14,7 +14,7 @@ export interface LiveBlob {
 }
 
 /**
- * Reads one Blob object and its attributes over gRPC, for the drawer: the
+ * Reads one Blob object and its attributes over gRPC, for the inspector: the
  * list is a snapshot, while extend and certify change the object.
  * @returns `null` when the object no longer exists (it was deleted or burned).
  */

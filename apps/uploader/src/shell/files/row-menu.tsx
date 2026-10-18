@@ -3,11 +3,11 @@ import { blobByObjectIdUrl } from "@/blobs/aggregator-urls";
 import type { BlobRow } from "@/blobs/blob-row";
 import { useClipboardCopy } from "@/lib/use-clipboard-copy";
 import type { NetworkConfig } from "@/network/networks";
-import type { DrawerSection } from "../drawer/blob-drawer";
-import type { DrawerTarget } from "../drawer/drawer-target";
+import type { InspectorSection } from "../inspector/inspector";
+import type { InspectorTarget } from "../inspector/inspector-target";
 
 /** Actions a row's menu opens the details at, as the design's inspector orders them. */
-const SECTIONS: readonly { label: string; section: DrawerSection }[] = [
+const SECTIONS: readonly { label: string; section: InspectorSection }[] = [
 	{ label: "Extend", section: "storage" },
 	{ label: "Share", section: "share" },
 	{ label: "Verify", section: "verify" },
@@ -15,12 +15,12 @@ const SECTIONS: readonly { label: string; section: DrawerSection }[] = [
 ];
 
 /** What a quilt file's details can do; storage and verify belong to its quilt. */
-const FILE_SECTIONS: readonly DrawerSection[] = ["share", "publish"];
+const FILE_SECTIONS: readonly InspectorSection[] = ["share", "publish"];
 
 /**
  * A row's overflow menu, anchored under its ⋯ button: open the details, or
  * jump to one of their sections, download through the aggregator, and copy
- * the blob id. Until R2's inspector, the details are the blob drawer.
+ * the blob id. The details open in the inspector.
  * Arrow keys move between items; Escape and Tab close it and return focus.
  */
 export function RowMenu({
@@ -30,10 +30,10 @@ export function RowMenu({
 	onOpen,
 	onClose,
 }: {
-	target: DrawerTarget;
+	target: InspectorTarget;
 	anchor: HTMLButtonElement;
 	network: NetworkConfig;
-	onOpen: (section: DrawerSection | null) => void;
+	onOpen: (section: InspectorSection | null) => void;
 	onClose: (restoreFocus: boolean) => void;
 }) {
 	const menu = useRef<HTMLDivElement>(null);

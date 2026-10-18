@@ -1,10 +1,10 @@
 /**
- * What the drawer previews, read through the aggregator: images up to a
+ * What the inspector previews, read through the aggregator: images up to a
  * size the tab can show at once, and the start of text files. Text is
  * always shown as text, never rendered as HTML.
  */
 
-/** Images above this are not drawn in the drawer; Download still works. */
+/** Images above this are not drawn in the inspector; Download still works. */
 export const MAX_IMAGE_PREVIEW_BYTES = 10_000_000n;
 /** Text previews read only this many bytes, with a Range request. */
 export const TEXT_PREVIEW_BYTES = 32_768;

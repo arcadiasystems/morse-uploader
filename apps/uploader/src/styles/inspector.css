@@ -1,5 +1,5 @@
-/* The blob drawer, drawn as the design's inspector until R2 builds it: a column beside the list. */
-.drawer {
+/* The inspector (design/v2/app.html): a persistent column beside the list for the selection. */
+.insp {
 	position: relative;
 	min-width: 0;
 	min-height: 0;
@@ -11,18 +11,18 @@
 	overflow: auto;
 	overscroll-behavior: contain;
 }
-.drawer > * {
-	/* The drawer scrolls as a whole; its sections never shrink to fit. */
+.insp > * {
+	/* The inspector scrolls as a whole; its sections never shrink to fit. */
 	flex: 0 0 auto;
 }
-.drawer .hd {
+.insp .hd {
 	padding: 18px 20px;
 	border-bottom: 1px solid var(--line);
 	display: flex;
 	gap: 12px;
 	align-items: flex-start;
 }
-.drawer .hd .ico {
+.insp .hd .ic {
 	width: 42px;
 	height: 42px;
 	border-radius: 12px;
@@ -32,23 +32,23 @@
 	color: var(--fg-3);
 	flex: 0 0 auto;
 }
-.drawer .hd .ico.dir {
+.insp .hd .ic.quilt {
 	color: var(--violet);
 }
-.drawer .hd .ico.enc {
+.insp .hd .ic.enc {
 	color: var(--pink);
 }
-.drawer .hd > div {
+.insp .hd > div {
 	min-width: 0;
 }
-.drawer .hd h3 {
+.insp .hd h3 {
 	font-family: var(--disp);
 	font-size: 16px;
 	font-weight: 700;
 	letter-spacing: -0.02em;
 	word-break: break-all;
 }
-.drawer .hd small {
+.insp .hd small {
 	font-family: var(--mono);
 	font-size: 10.5px;
 	letter-spacing: 0.06em;
@@ -57,7 +57,7 @@
 	display: block;
 	margin-top: 4px;
 }
-.drawer .hd .x {
+.insp .hd .x {
 	margin-left: auto;
 	border: 0;
 	background: transparent;
@@ -70,11 +70,11 @@
 	place-items: center;
 	flex: 0 0 auto;
 }
-.drawer .hd .x:hover {
+.insp .hd .x:hover {
 	color: var(--fg);
 	background: var(--panel);
 }
-.drawer .sec {
+.insp .sec {
 	padding: 14px 20px;
 	border-bottom: 1px solid var(--line);
 	display: flex;
@@ -82,10 +82,10 @@
 	gap: 10px;
 	scroll-margin-top: 8px;
 }
-.drawer .sec:last-child {
+.insp .sec:last-child {
 	border-bottom: 0;
 }
-.drawer .sec h4 {
+.insp .sec h4 {
 	font-family: var(--mono);
 	font-size: 10px;
 	letter-spacing: 0.16em;
@@ -93,28 +93,28 @@
 	color: var(--fg-4);
 	font-weight: 500;
 }
-.drawer dl {
+.insp dl {
 	display: grid;
 	grid-template-columns: auto minmax(0, 1fr);
 	gap: 7px 12px;
 	font-size: 12px;
 }
-.drawer dt {
+.insp dt {
 	color: var(--fg-3);
 }
-.drawer dd {
+.insp dd {
 	font-family: var(--mono);
 	font-size: 11.5px;
 	color: var(--fg-2);
 	/* Ids wrap anywhere; words wrap at their boundaries. */
 	overflow-wrap: anywhere;
 }
-.drawer dd a {
+.insp dd a {
 	color: var(--cyan);
 	text-decoration: underline;
 	text-underline-offset: 2px;
 }
-.drawer dd .cp {
+.insp dd .cp {
 	font-family: var(--mono);
 	font-size: 11px;
 	color: var(--cyan);
@@ -126,13 +126,13 @@
 	text-decoration: underline;
 	text-underline-offset: 2px;
 }
-.drawer .acts {
+.insp .acts {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 6px;
 }
 /* Long actions (the delete step names what it does) wrap inside the column. */
-.drawer .acts .btn {
+.insp .acts .btn {
 	max-width: 100%;
 	white-space: normal;
 	text-align: center;
@@ -140,7 +140,7 @@
 	padding-top: 6px;
 	padding-bottom: 6px;
 }
-.drawer .ver {
+.insp .ver {
 	display: flex;
 	gap: 10px;
 	align-items: center;
@@ -151,7 +151,7 @@
 	font-size: 12px;
 	color: var(--fg-2);
 }
-.drawer .ver i {
+.insp .ver i {
 	width: 8px;
 	height: 8px;
 	border-radius: 50%;
@@ -160,49 +160,62 @@
 	flex: 0 0 auto;
 }
 /* A failed check and a note in the same box, in amber. */
-.drawer .ver.warn {
+.insp .ver.warn {
 	background: var(--warn-tint);
 	border-color: var(--warn-line);
 	color: var(--warn);
 }
-.drawer .ver.warn i {
+.insp .ver.warn i {
 	background: var(--warn);
 	box-shadow: 0 0 10px var(--warn);
 }
-.drawer .ver.wait {
+.insp .ver.wait {
 	background: var(--panel);
 	border-color: var(--line);
 	color: var(--fg-2);
 }
-.drawer .ver.wait i {
+.insp .ver.wait i {
 	background: var(--fg-4);
 	box-shadow: none;
 }
-.drawer .exp {
+.insp .lifebig {
 	display: flex;
 	flex-direction: column;
 	gap: 6px;
 }
-.drawer .exp .bar {
+.insp .lifebig .bar {
 	height: 6px;
 	border-radius: 999px;
 	background: rgba(255, 255, 255, 0.1);
 	overflow: hidden;
 }
-.drawer .exp .bar i {
+.insp .lifebig .bar i {
 	display: block;
 	height: 100%;
 	background: var(--grad);
 }
-.drawer .exp .bar.warn i {
+.insp .lifebig .bar.warn i {
 	background: var(--warn);
 }
-.drawer .exp small,
-.drawer .hint {
+.insp .lifebig .row {
+	display: flex;
+	justify-content: space-between;
+	gap: 10px;
+	font-family: var(--mono);
+	font-variant-numeric: tabular-nums;
+	font-size: 10.5px;
+	letter-spacing: 0.06em;
+	color: var(--fg-3);
+}
+.insp .lifebig .row b {
+	color: var(--fg);
+	font-weight: 500;
+}
+.insp .hint {
 	font-size: 12px;
 	color: var(--fg-3);
 }
-.drawer .thumb {
+.insp .thumb {
 	border: 1px solid var(--line);
 	border-radius: 10px;
 	background: var(--panel);
@@ -217,13 +230,13 @@
 	padding: 0;
 }
 /* The real preview inside the thumb. */
-.drawer .thumb img {
+.insp .thumb img {
 	display: block;
 	max-width: 100%;
 	max-height: 240px;
 	object-fit: contain;
 }
-.drawer .thumb pre {
+.insp .thumb pre {
 	margin: 0;
 	width: 100%;
 	max-height: 240px;
@@ -238,10 +251,10 @@
 	overflow-wrap: anywhere;
 	background: var(--bg-2);
 }
-.drawer .thumb .msg {
+.insp .thumb .msg {
 	padding: 16px;
 }
-.drawer .pub {
+.insp .pub {
 	border: 1px solid var(--line);
 	border-radius: 12px;
 	padding: 12px;
@@ -251,9 +264,9 @@
 	font-size: 12px;
 	color: var(--fg-2);
 }
-.drawer .pub select,
-.drawer .pub input[type="text"],
-.drawer .field-row input {
+.insp .pub select,
+.insp .pub input[type="text"],
+.insp .field-row input {
 	width: 100%;
 	border: 1px solid var(--line-2);
 	border-radius: 8px;
@@ -262,35 +275,35 @@
 	color: var(--fg);
 	font-size: 13px;
 }
-.drawer .danger {
+.insp .danger {
 	color: var(--err);
 }
 
 /* A short note under an action: why it is off, or what happened. */
-.drawer .note {
+.insp .note {
 	font-size: 12px;
 	color: var(--fg-3);
 }
-.drawer .note.warn {
+.insp .note.warn {
 	color: var(--warn);
 	background: var(--warn-tint);
 	border: 1px solid var(--warn-line);
 	border-radius: 10px;
 	padding: 8px 10px;
 }
-.drawer .note.ok {
+.insp .note.ok {
 	color: var(--fg-2);
 	background: var(--ok-tint);
 	border: 1px solid var(--ok-line);
 	border-radius: 10px;
 	padding: 8px 10px;
 }
-.drawer .note a {
+.insp .note a {
 	color: var(--cyan);
 	text-decoration: underline;
 	text-underline-offset: 2px;
 }
-.drawer .panel {
+.insp .panel {
 	border: 1px solid var(--line);
 	border-radius: 12px;
 	padding: 12px;
@@ -299,15 +312,15 @@
 	gap: 10px;
 	background: var(--panel);
 }
-.drawer .panel.danger-zone {
+.insp .panel.danger-zone {
 	border-color: var(--err-line);
 	background: var(--err-tint);
 }
-.drawer .panel p {
+.insp .panel p {
 	font-size: 12.5px;
 	color: var(--fg-2);
 }
-.drawer .stepper {
+.insp .stepper {
 	display: flex;
 	align-items: center;
 	gap: 6px;
@@ -315,7 +328,7 @@
 	font-size: 12.5px;
 	color: var(--fg-2);
 }
-.drawer .stepper input {
+.insp .stepper input {
 	width: 64px;
 	border: 1px solid var(--line-2);
 	border-radius: 8px;
@@ -325,32 +338,32 @@
 	font-variant-numeric: tabular-nums;
 	font-size: 12.5px;
 }
-.drawer dl.cost {
+.insp dl.cost {
 	/* The cost list keeps the sheet's rows, not the record's two-column grid. */
 	display: flex;
 	flex-direction: column;
 	gap: 6px;
 	font-size: 12.5px;
 }
-.drawer dl.cost dd {
+.insp dl.cost dd {
 	overflow-wrap: normal;
 }
-.drawer .copy-field {
+.insp .copy-field {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
 }
-.drawer .copy-field > label {
+.insp .copy-field > label {
 	font-size: 12px;
 	color: var(--fg-3);
 }
-.drawer .copy-field .line {
+.insp .copy-field .line {
 	display: flex;
 	gap: 6px;
 	min-width: 0;
 }
-.drawer .copy-field input,
-.drawer .copy-field textarea {
+.insp .copy-field input,
+.insp .copy-field textarea {
 	flex: 1;
 	min-width: 0;
 	border: 1px solid var(--line);
@@ -362,7 +375,7 @@
 	color: var(--fg-2);
 	resize: none;
 }
-.drawer .members {
+.insp .members {
 	list-style: none;
 	margin: 0;
 	padding: 0;
@@ -373,24 +386,100 @@
 	font-size: 12px;
 	color: var(--fg-2);
 }
-.drawer .lock {
+.insp .lock {
 	display: flex;
 	gap: 10px;
 	align-items: flex-start;
 	font-size: 12.5px;
 	color: var(--fg-2);
 }
-.drawer .lock svg {
+.insp .lock svg {
 	flex: 0 0 auto;
 	color: var(--pink);
 	margin-top: 1px;
 }
-.drawer input[type="file"] {
+.insp input[type="file"] {
 	font-size: 12px;
 	max-width: 100%;
 }
-.drawer sub {
+.insp sub {
 	font-size: 0.75em;
 	line-height: 0;
 	vertical-align: -0.25em;
+}
+/* A note under an action row takes the row's full width. */
+.insp .acts > .note {
+	flex: 1 0 100%;
+}
+/* A pill whose setting is on, such as Auto-extend. */
+.insp .btn.on {
+	border-color: var(--cyan-line);
+	color: var(--cyan);
+}
+
+/* A quilt's files by path: the identifier, then its address in mono. */
+.insp .files {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+}
+.insp .files li {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 10px;
+	padding: 6px 0;
+	border-bottom: 1px solid var(--line);
+	font-size: 12px;
+	min-width: 0;
+}
+.insp .files li:last-child {
+	border-bottom: 0;
+}
+.insp .files .nm {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+.insp .files a {
+	font-family: var(--mono);
+	font-size: 11px;
+	color: var(--fg-3);
+	text-align: right;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+.insp .files a:hover {
+	color: var(--cyan);
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+.insp .more-files {
+	border: 0;
+	padding: 0;
+	background: transparent;
+	font-family: var(--mono);
+	font-size: 11px;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--fg-3);
+	cursor: pointer;
+}
+.insp .more-files:hover {
+	color: var(--fg);
+}
+
+/* Phones: the inspector is a full sheet between the top bar and the tab bar. */
+@media (max-width: 860px) {
+	.content.with-insp .insp {
+		position: fixed;
+		top: var(--bar);
+		left: 0;
+		right: 0;
+		bottom: var(--tabbar);
+		border-left: 0;
+		background: var(--glass-strong);
+		z-index: 40;
+	}
 }

@@ -6,7 +6,7 @@ import "@/styles/overview.css";
 import "@/styles/files.css";
 import "@/styles/upload.css";
 import "@/styles/transfers.css";
-import "@/styles/drawer.css";
+import "@/styles/inspector.css";
 
 export const metadata: Metadata = {
 	title: "Overview and files",

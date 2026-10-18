@@ -13,7 +13,7 @@ import {
 	walletRequestError,
 } from "@/transfers/wallet-executor";
 
-/** What the drawer signs with: transactions and personal messages, for the connected account. */
+/** What the inspector signs with: transactions and personal messages, for the connected account. */
 export interface WalletActions {
 	address: string;
 	executor: WalletExecutor;

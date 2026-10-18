@@ -2,7 +2,7 @@ import { Transaction } from "@mysten/sui/transactions";
 import type { NetworkClient } from "@/network/create-network-client";
 
 /**
- * The transactions the drawer signs, built with `@mysten/walrus` 1.2.35
+ * The transactions the inspector signs, built with `@mysten/walrus` 1.2.35
  * (PROTOCOL-NOTES section 8), and their simulation before signing.
  */
 

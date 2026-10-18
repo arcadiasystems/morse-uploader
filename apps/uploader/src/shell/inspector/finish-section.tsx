@@ -20,7 +20,7 @@ type Finishing =
 	/** The nodes do not hold the slivers: the original file is needed. */
 	| { kind: "needs-file" }
 	| { kind: "failed"; message: string; needsFile: boolean }
-	/** Certified: the drawer shows the result and reads the blob again. */
+	/** Certified: the inspector shows the result and reads the blob again. */
 	| { kind: "done" };
 
 /**
@@ -53,7 +53,7 @@ export function FinishSection({
 	const [state, setState] = useState<Finishing>({ kind: "idle" });
 	const busy = state.kind === "working";
 	const rebuildable = !blob.isEncrypted && !blob.isQuilt;
-	// Node reads stop when the drawer closes or shows another blob.
+	// Node reads stop when the inspector closes or shows another blob.
 	const mountedSignal = useMountedSignal();
 	// A tip paid by an attempt whose relay upload failed, reused by the retry.
 	const paidTip = useRef<PaidTip | null>(null);
@@ -62,7 +62,7 @@ export function FinishSection({
 		if (!actions) return;
 		const signal = mountedSignal();
 		const transaction = await build(signal);
-		// The drawer closed or moved on while nodes answered: ask nothing.
+		// The inspector closed or moved on while nodes answered: ask nothing.
 		if (signal.aborted) return;
 		setState({
 			kind: "working",
@@ -134,8 +134,8 @@ export function FinishSection({
 		state.kind === "needs-file" || (state.kind === "failed" && state.needsFile);
 
 	return (
-		<section className="sec" aria-labelledby="drawer-finish">
-			<h4 id="drawer-finish">Finish</h4>
+		<section className="sec" aria-labelledby="insp-finish">
+			<h4 id="insp-finish">Finish</h4>
 			<p className="ver warn">
 				<i aria-hidden="true" />
 				Registered, not certified. Until certify, nodes have not confirmed they

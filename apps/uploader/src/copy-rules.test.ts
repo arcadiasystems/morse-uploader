@@ -108,7 +108,7 @@ describe("copy rules", () => {
 		);
 	});
 
-	it("uses the notes' wording in the blob drawer (items 11, 12, 13 and 16)", () => {
+	it("uses the notes' wording in the inspector (items 11, 12, 13 and 16)", () => {
 		// JSX wraps long copy over lines, so whitespace is folded before matching.
 		const text = (suffix: string) =>
 			(files.find((file) => file.path.endsWith(suffix))?.text ?? "").replace(
@@ -116,22 +116,24 @@ describe("copy rules", () => {
 				" ",
 			);
 		// Item 11: verify says what happened, never a node count.
-		expect(text("drawer/verify-section.tsx")).toContain(
+		expect(text("inspector/verify-section.tsx")).toContain(
 			"Bytes match the blob id. Rebuilt from storage nodes",
 		);
 		// Item 16: delete returns a Storage object; no WAL comes back.
-		const remove = text("drawer/delete-section.tsx");
+		const remove = text("inspector/delete-section.tsx");
 		expect(remove).toContain("returns its storage to your wallet");
 		expect(remove).toContain("No WAL is refunded.");
 		// Item 13 and section 9: auto-extend only runs while the app is open.
-		expect(text("drawer/auto-extend-panel.tsx")).toContain(
+		expect(text("inspector/auto-extend-panel.tsx")).toContain(
 			"Auto-extend runs while Morse Uploader is open. It asks your wallet to sign one transaction for all blobs that are close to expiry and never spends more than your WAL cap.",
 		);
-		// Item 12: a blob has no Walrus Site link, and the drawer says so.
-		expect(text("drawer/share-section.tsx")).toContain("No Walrus Site link");
+		// Item 12: a blob has no Walrus Site link, and the inspector says so.
+		expect(text("inspector/share-section.tsx")).toContain(
+			"No Walrus Site link",
+		);
 		// Item 5: the end is an epoch, with days as an estimate. Storage is
 		// valid while epoch < end_epoch (section 5), so it runs until that epoch starts.
-		expect(text("drawer/storage-section.tsx")).toContain(
+		expect(text("inspector/storage-section.tsx")).toContain(
 			"Paid until epoch {blob.endEpoch} starts",
 		);
 	});

@@ -87,7 +87,7 @@ export interface UploadAgainInput {
 	/** A tip an earlier attempt paid for this blob, if any. */
 	paidTip: PaidTip | null;
 	signal: AbortSignal;
-	/** Called after each step, so the drawer can show progress and keep the tip. */
+	/** Called after each step, so the inspector can show progress and keep the tip. */
 	onStep: (
 		step: { kind: "tip-paid"; tip: PaidTip } | { kind: "uploaded" },
 	) => void;

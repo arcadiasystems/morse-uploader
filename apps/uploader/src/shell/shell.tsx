@@ -29,12 +29,12 @@ import { useTransferQueue } from "@/transfers/use-transfer-queue";
 import { useSession } from "@/wallet/use-session";
 import { useWalletActions } from "@/wallet/use-wallet-actions";
 import { useAppRoute } from "./app-route";
-import type { DrawerContext } from "./drawer/blob-drawer";
-import { type ExtendAllScope, ExtendAllSheet } from "./drawer/extend-all-sheet";
+import { type ExtendAllScope, ExtendAllSheet } from "./bulk/bulk-extend-sheet";
 import { useFilePickers } from "./file-pickers";
 import { FILE_FILTER_CONFIG } from "./files/file-filters";
 import { FilesView } from "./files/files-view";
 import type { FilesLayout } from "./files/filter-bar";
+import type { InspectorContext } from "./inspector/inspector";
 import { Overview } from "./overview/overview";
 import { Rail } from "./rail/rail";
 import { Topbar } from "./topbar";
@@ -117,9 +117,10 @@ export function Shell() {
 		refreshBlobs,
 		onRenewed: refreshChain,
 	});
-	const drawer: DrawerContext = {
+	const inspector: InspectorContext = {
 		actions,
 		balances: funds.balances,
+		prices: funds.prices,
 		autoExtend,
 		onChanged: refreshChain,
 	};
@@ -226,7 +227,7 @@ export function Shell() {
 							countNotes={countNotes}
 							onRefresh={refreshChain}
 							onConnect={profileMenu.open}
-							drawer={drawer}
+							inspector={inspector}
 							onExtendExpiring={() => setExtendAll("expiring")}
 						/>
 					)}
