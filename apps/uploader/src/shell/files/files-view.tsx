@@ -18,7 +18,6 @@ import {
 	Inspector,
 	type InspectorContext,
 	type InspectorRequest,
-	type InspectorSection,
 } from "../inspector/inspector";
 import { inspectorTarget } from "../inspector/inspector-target";
 import { FILE_FILTER_CONFIG } from "./file-filters";
@@ -26,7 +25,7 @@ import { FileGrid } from "./file-grid";
 import { FileList } from "./file-list";
 import { type FilesLayout, FilterBar } from "./filter-bar";
 import { buildListItems } from "./list-items";
-import { RowMenu } from "./row-menu";
+import { type InspectorAsk, RowMenu } from "./row-menu";
 
 const PLACEHOLDER_ROWS = [1, 2, 3, 4, 5, 6] as const;
 
@@ -121,17 +120,13 @@ export function FilesView({
 		setRequest(null);
 	}
 
-	function openDetails(key: string, section: InspectorSection | null) {
+	function openDetails(key: string, ask: InspectorAsk | null) {
 		setActiveKey(key);
 		setInspectorOpen(true);
 		setRequest(
-			section === null
+			ask === null
 				? null
-				: (current) => ({
-						section,
-						action: null,
-						request: (current?.request ?? 0) + 1,
-					}),
+				: (current) => ({ ...ask, request: (current?.request ?? 0) + 1 }),
 		);
 	}
 
@@ -330,9 +325,9 @@ export function FilesView({
 					target={inspectorTarget(menuItem)}
 					anchor={menu.anchor}
 					network={network}
-					onOpen={(section) => {
+					onOpen={(ask) => {
 						setMenu(null);
-						openDetails(menu.key, section);
+						openDetails(menu.key, ask);
 					}}
 					onClose={closeMenu}
 				/>

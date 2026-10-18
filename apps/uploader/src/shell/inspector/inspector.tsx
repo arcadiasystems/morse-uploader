@@ -5,7 +5,10 @@ import { CONTENT_TYPE_ATTRIBUTE } from "@/blobs/blob-attributes";
 import type { BlobRecord } from "@/blobs/blob-record";
 import { blobStatus } from "@/blobs/blob-status";
 import type { ListedBlobs } from "@/blobs/list-blobs";
-import { readQuiltPatchList } from "@/blobs/quilt-patch-list";
+import {
+	type QuiltPatchEntry,
+	readQuiltPatchList,
+} from "@/blobs/quilt-patch-list";
 import { readLiveBlob } from "@/blobs/read-blob-object";
 import { Icon, type IconName } from "@/components/icon";
 import type { Balances, WalrusPrices } from "@/funds/types";
@@ -480,9 +483,11 @@ export function Inspector({
 							blob,
 							liveAndCertified,
 							patch,
+							patchFiles,
 							name,
 							mediaType,
 						)}
+						quilt={isWholeQuilt}
 						actions={context.actions}
 					/>
 
@@ -519,6 +524,7 @@ function publishSubject(
 		entry: { patchId: string } | null;
 		missing: string;
 	} | null,
+	quiltFiles: ChainRead<readonly QuiltPatchEntry[]>,
 	name: string,
 	mediaType: string | null,
 ): PublishSubject {
@@ -543,11 +549,7 @@ function publishSubject(
 				"Morse only takes deletable blobs, so a publication can unpublish and correct. This blob is permanent.",
 		};
 	if (blob.isQuilt && !patch)
-		return {
-			kind: "blocked",
-			reason:
-				"A quilt goes into Morse file by file. Open the quilt and select a file to publish it.",
-		};
+		return { kind: "quilt", blobObjectId: blob.objectId, files: quiltFiles };
 	if (patch && !patch.entry) return { kind: "blocked", reason: patch.missing };
 	return {
 		kind: "ready",

@@ -19,7 +19,7 @@ export interface PublishChoice {
 }
 
 /** `ENameTooLong` aborts above this many bytes (`string::length` in `entry.move`). */
-const MAX_ENTRY_NAME_BYTES = 256;
+export const MAX_ENTRY_NAME_BYTES = 256;
 const UTF8 = new TextEncoder();
 
 export type PublishBlocker =

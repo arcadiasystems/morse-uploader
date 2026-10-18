@@ -483,3 +483,10 @@
 		z-index: 40;
 	}
 }
+/* Delete, as the design draws it: an outlined pill in red. */
+.insp .btn.danger {
+	border-color: var(--err-line);
+}
+.insp .btn.danger:not([disabled]):hover {
+	border-color: var(--err);
+}
