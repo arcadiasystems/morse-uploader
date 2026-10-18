@@ -33,6 +33,11 @@ export interface NetworkConfig {
 	walrusLabel: string;
 	/** Sui full node; one URL serves gRPC for both networks. */
 	grpcUrl: string;
+	/**
+	 * Mysten's public aggregator (PROTOCOL-NOTES section 10, docs
+	 * network-reference "Aggregators and publishers"). Answers with CORS `*`.
+	 */
+	aggregatorUrl: string;
 	walCoinType: WalCoinTypeSource;
 	/** Fixed system parameters (network reference, "Network parameters"). */
 	epochDays: number;
@@ -52,6 +57,7 @@ export const NETWORKS: Readonly<Record<NetworkId, NetworkConfig>> = {
 		label: "Testnet",
 		walrusLabel: "Walrus Testnet",
 		grpcUrl: "https://fullnode.testnet.sui.io:443",
+		aggregatorUrl: "https://aggregator.walrus-testnet.walrus.space",
 		walCoinType: { kind: "chain" },
 		epochDays: 1,
 		maxEpochsAhead: 53,
@@ -80,6 +86,7 @@ export const NETWORKS: Readonly<Record<NetworkId, NetworkConfig>> = {
 		label: "Walrus Mainnet",
 		walrusLabel: "Walrus Mainnet",
 		grpcUrl: "https://fullnode.mainnet.sui.io:443",
+		aggregatorUrl: "https://aggregator.walrus-mainnet.walrus.space",
 		walCoinType: {
 			kind: "fixed",
 			coinType:
