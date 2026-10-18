@@ -2,7 +2,8 @@ import type { ReactNode } from "react";
 import { type BlobRow, shortenBlobId } from "@/blobs/blob-row";
 import type { BlobStatus, BlobStatusKind } from "@/blobs/blob-status";
 import type { Phase } from "@/blobs/quilt-patch-store";
-import { Icon, type IconName } from "@/components/icon";
+import { fileIcon } from "@/components/file-icon";
+import { Icon } from "@/components/icon";
 import { errorMessage } from "@/lib/error-message";
 import { formatBytes } from "@/lib/format-bytes";
 import { formatDays, formatShortDate } from "@/lib/format-date";
@@ -141,12 +142,6 @@ function rowClass(kind: BlobStatusKind, selected: boolean): string {
 	return ["row", kind, kind === "expired" ? "dep" : "", selected ? "sel" : ""]
 		.filter(Boolean)
 		.join(" ");
-}
-
-const IMAGE_EXTENSION = /\.(png|jpe?g|gif|webp|avif|svg|bmp|ico|heic)$/i;
-
-function fileIcon(name: string): IconName {
-	return IMAGE_EXTENSION.test(name) ? "image" : "file";
 }
 
 function BlobIcon({ row }: { row: BlobRow }) {

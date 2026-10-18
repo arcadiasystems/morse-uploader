@@ -47,6 +47,37 @@ describe("network config", () => {
 		).toEqual(["walrus.xyz", "docs.sui.io"]);
 	});
 
+	it("writes through each network's public upload relay", () => {
+		expect(NETWORKS.testnet.uploadRelayUrl).toBe(
+			"https://upload-relay.testnet.walrus.space",
+		);
+		expect(NETWORKS.mainnet.uploadRelayUrl).toBe(
+			"https://upload-relay.mainnet.walrus.space",
+		);
+	});
+
+	it("offers Seal on Testnet only, and says why not on Walrus Mainnet", () => {
+		expect(NETWORKS.testnet.seal).toEqual({ kind: "available" });
+		const mainnet = NETWORKS.mainnet.seal;
+		expect(mainnet.kind).toBe("unavailable");
+		expect(mainnet.kind === "unavailable" && mainnet.reason).toMatch(
+			/credential/,
+		);
+	});
+
+	it("prices what cannot be simulated with gas observed on chain", () => {
+		expect(NETWORKS.testnet.observedGas).toEqual({
+			certifyMist: 1_030_696n,
+			entryMist: 3_972_353n,
+			recipientFileMist: 5_803_299n,
+		});
+		expect(NETWORKS.mainnet.observedGas).toEqual({
+			certifyMist: 173_696n,
+			entryMist: 2_917_396n,
+			recipientFileMist: null,
+		});
+	});
+
 	it("recognizes network ids", () => {
 		expect(isNetworkId("testnet")).toBe(true);
 		expect(isNetworkId("mainnet")).toBe(true);

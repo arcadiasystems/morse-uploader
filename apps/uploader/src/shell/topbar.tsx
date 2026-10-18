@@ -17,6 +17,8 @@ interface TopbarProps {
 	onQueryChange: (query: string) => void;
 	/** Search is off until there are listed blobs to search. */
 	searchDisabled: boolean;
+	/** Opens the upload sheet for the selection, or the file picker when nothing is selected. */
+	onUpload: () => void;
 }
 
 /** Brand, profile, network, search, balances and the upload action. */
@@ -28,6 +30,7 @@ export function Topbar({
 	query,
 	onQueryChange,
 	searchDisabled,
+	onUpload,
 }: TopbarProps) {
 	const balanceMenu = usePopover();
 	return (
@@ -53,8 +56,10 @@ export function Topbar({
 				<button
 					className="btn btn-ultra upload"
 					type="button"
-					disabled
+					disabled={address === null}
+					title={address === null ? "Connect a wallet to upload" : undefined}
 					aria-label="Upload"
+					onClick={onUpload}
 				>
 					<Icon name="upload" />
 					<span className="lbl">Upload</span>

@@ -61,4 +61,54 @@ describe("copy rules", () => {
 		);
 		expect(pane?.text).toContain('"record on Sui"');
 	});
+
+	it("drops the design's claims the notes correct (PROTOCOL-NOTES section 13)", () => {
+		const stale = [
+			/13 GiB/, // items 1: the browser limit is 1 GiB per upload
+			/4\.8x/, // item 2: encoding is about 4.49x plus 64 MB per blob
+			/publisher timeout/i, // item 10: it is the upload relay
+			/[Bb]atching with one signature/, // item 8: never below N + 1
+			/frees storage/, // item 16: storage returns to the wallet
+		];
+		expect(
+			files
+				.filter((file) => stale.some((claim) => claim.test(file.text)))
+				.map((file) => file.path),
+		).toEqual([]);
+	});
+
+	it("uses the notes' wording for limits, cost and signatures", () => {
+		const text = (suffix: string) =>
+			files.find((file) => file.path.endsWith(suffix))?.text ?? "";
+		// Item 1: the drop zone.
+		expect(text("panes/local-pane.tsx")).toContain(
+			"Folders keep their structure and upload as one quilt of up to 666 files.",
+		);
+		expect(text("panes/local-pane.tsx")).toContain("Up to 1 GiB per upload.");
+		const sheet = text("upload-sheet/upload-sheet.tsx");
+		// Items 2, 7, 8 and 14.
+		expect(sheet).toContain("Each blob carries 64 MB of fixed metadata.");
+		expect(sheet).toContain("Relay tip (SUI)");
+		expect(sheet).toContain("Network fees (SUI)");
+		expect(sheet).toContain(
+			"Your wallet asks once per item to register and once to certify the batch",
+		);
+		expect(sheet).toContain(
+			"Client-side. Only wallets you allow can decrypt. The blob id, file name and size stay public.",
+		);
+	});
+
+	it("names the register step between encode and upload (item 9)", () => {
+		const state = files.find((file) =>
+			file.path.endsWith("transfers/transfer-state.ts"),
+		);
+		const steps = /export type TransferStep =([^;]+);/.exec(state?.text ?? "");
+		expect(steps?.[1]?.match(/"(\w+)"/g)).toEqual([
+			'"encode"',
+			'"register"',
+			'"upload"',
+			'"certify"',
+			'"record"',
+		]);
+	});
 });

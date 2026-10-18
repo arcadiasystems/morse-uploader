@@ -9,8 +9,8 @@ export type BlobAttributes = Readonly<Record<string, string>>;
  * Every quilt carries `_walrusBlobType = "quilt"`: the TS SDK, the Rust
  * client and publishers all set it (PROTOCOL-NOTES section 7).
  */
-const BLOB_TYPE_ATTRIBUTE = "_walrusBlobType";
-const QUILT_BLOB_TYPE = "quilt";
+export const BLOB_TYPE_ATTRIBUTE = "_walrusBlobType";
+export const QUILT_BLOB_TYPE = "quilt";
 
 /**
  * Walrus has no encryption marker. Morse Uploader marks a Seal-encrypted blob
@@ -21,6 +21,13 @@ export const SEAL_ATTRIBUTE = "seal";
 
 /** The file name Morse Uploader writes at register. */
 export const NAME_ATTRIBUTE = "name";
+
+/**
+ * Aggregators serve this attribute as the Content-Type header on
+ * `by-object-id` reads (PROTOCOL-NOTES section 10). Morse Uploader writes it
+ * for public blobs, and as a patch tag in quilts.
+ */
+export const CONTENT_TYPE_ATTRIBUTE = "content-type";
 
 /**
  * Aggregators serve this attribute as the Content-Disposition header (docs

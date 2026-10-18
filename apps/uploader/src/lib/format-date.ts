@@ -22,3 +22,18 @@ export function formatDays(days: number): string {
 	if (days < 1) return "< 1 day";
 	return days === 1 ? "1 day" : `${days} days`;
 }
+
+/**
+ * A file's modified time as the design's local pane shows it: `today`,
+ * `yesterday`, otherwise a short date. Days are the viewer's calendar days.
+ */
+export function formatModified(ms: number, nowMs: number): string {
+	const day = (value: number) => {
+		const date = new Date(value);
+		return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+	};
+	const daysAgo = Math.round((day(nowMs) - day(ms)) / 86_400_000);
+	if (daysAgo === 0) return "today";
+	if (daysAgo === 1) return "yesterday";
+	return formatShortDate(ms, nowMs);
+}
