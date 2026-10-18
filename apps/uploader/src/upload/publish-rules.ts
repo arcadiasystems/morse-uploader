@@ -86,6 +86,26 @@ export function publishChoices(
 	);
 }
 
+/**
+ * A choice as the picker shows it: "Publication · collection", with the
+ * publication's short id added when two publications share a name.
+ */
+export function choiceLabel(
+	choice: PublishChoice,
+	choices: readonly PublishChoice[],
+): string {
+	const shared = choices.some(
+		(other) =>
+			other.publicationName === choice.publicationName &&
+			other.publicationId !== choice.publicationId,
+	);
+	const id = choice.publicationId;
+	const publication = shared
+		? `${choice.publicationName} (${id.slice(0, 6)}…${id.slice(-4)})`
+		: choice.publicationName;
+	return `${publication} · ${choice.collectionName}`;
+}
+
 /** A stable key for a choice, for the picker's options. */
 export function choiceKey(choice: PublishChoice): string {
 	return `${choice.publicationId}:${choice.collectionName}`;

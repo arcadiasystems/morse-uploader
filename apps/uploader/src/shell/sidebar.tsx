@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { EXPIRING_SOON_DAYS } from "@/blobs/blob-status";
 import type { ListedBlobs } from "@/blobs/list-blobs";
 import { Icon, type IconName } from "@/components/icon";
 import { formatBytes } from "@/lib/format-bytes";
@@ -13,6 +14,8 @@ interface SidebarProps {
 	connected: boolean;
 	/** The wallet's blobs, once read. */
 	listed: ListedBlobs | null;
+	/** Opens Extend all for the blobs expiring soon; `null` when nobody can sign. */
+	onExtendExpiring: (() => void) | null;
 }
 
 const WALRUS_VIEWS: readonly BlobView[] = [
@@ -31,6 +34,7 @@ export function Sidebar({
 	network,
 	connected,
 	listed,
+	onExtendExpiring,
 }: SidebarProps) {
 	const viewItem = (id: BlobView) => {
 		const { filter, icon, label } = BLOB_VIEWS[id];
@@ -77,7 +81,12 @@ export function Sidebar({
 					<ComingItem icon="batch" label="One-signature batch register" />
 				</ul>
 			</section>
-			<StorageCard network={network} connected={connected} listed={listed} />
+			<StorageCard
+				network={network}
+				connected={connected}
+				listed={listed}
+				onExtendExpiring={onExtendExpiring}
+			/>
 		</aside>
 	);
 }
@@ -90,10 +99,12 @@ function StorageCard({
 	network,
 	connected,
 	listed,
+	onExtendExpiring,
 }: {
 	network: NetworkConfig;
 	connected: boolean;
 	listed: ListedBlobs | null;
+	onExtendExpiring: (() => void) | null;
 }) {
 	const next = listed?.summary.nextToExpire ?? null;
 	const horizonMs = listed
@@ -130,6 +141,12 @@ function StorageCard({
 				{network.label}. You can pay up to {network.maxEpochsAhead} epochs
 				ahead.
 			</small>
+			{listed && listed.summary.counts.expiring > 0 && onExtendExpiring ? (
+				<button className="link" type="button" onClick={onExtendExpiring}>
+					Extend the {listed.summary.counts.expiring} expiring within{" "}
+					{EXPIRING_SOON_DAYS} days
+				</button>
+			) : null}
 		</div>
 	);
 }

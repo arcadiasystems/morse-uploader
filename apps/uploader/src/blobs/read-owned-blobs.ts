@@ -54,7 +54,7 @@ export async function readOwnedBlobs(
  * The attributes of each blob, in order. A blob without a `metadata` field
  * has no attributes; any other failed lookup fails the read.
  */
-async function readAttributes(
+export async function readAttributes(
 	client: NetworkClient,
 	blobObjectIds: readonly string[],
 	signal: AbortSignal,

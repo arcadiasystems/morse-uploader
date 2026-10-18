@@ -2,26 +2,30 @@ import { blobByObjectIdUrl } from "@/blobs/aggregator-urls";
 import type { BlobRow } from "@/blobs/blob-row";
 import { useClipboardCopy } from "@/lib/use-clipboard-copy";
 import type { NetworkConfig } from "@/network/networks";
+import type { DrawerSection } from "../drawer/blob-drawer";
 import type { ListItem } from "./list-items";
 
-/** Actions that sign transactions or need the blob drawer, which come in later phases. */
-const LATER_ACTIONS = [
-	"Extend",
-	"Share",
-	"Verify",
-	"Publish to Morse",
-] as const;
+/** Toolbar actions that open the blob drawer at their section, as the design orders them. */
+const DRAWER_ACTIONS: readonly { label: string; section: DrawerSection }[] = [
+	{ label: "Extend", section: "storage" },
+	{ label: "Share", section: "share" },
+	{ label: "Verify", section: "verify" },
+	{ label: "Publish to Morse", section: "publish" },
+];
 
 /**
- * The Walrus pane's toolbar. Only read-only actions work on a selection:
- * Download through the aggregator and copying the blob id.
+ * The Walrus pane's toolbar: Download through the aggregator and copying
+ * the blob id act at once; Extend, Share, Verify and Publish to Morse open
+ * the blob drawer at their section.
  */
 export function BlobActions({
 	selected,
 	network,
+	onOpen,
 }: {
 	selected: ListItem | null;
 	network: NetworkConfig;
+	onOpen: (section: DrawerSection) => void;
 }) {
 	const row = selected?.kind === "blob" ? selected.row : null;
 	return (
@@ -44,14 +48,15 @@ export function BlobActions({
 				key={row?.blob.objectId ?? "none"}
 				blobId={row?.blob.blobId ?? null}
 			/>
-			{LATER_ACTIONS.map((action) => (
+			{DRAWER_ACTIONS.map((action) => (
 				<button
-					key={action}
+					key={action.section}
 					className="btn btn-ghost xs"
 					type="button"
-					disabled
+					disabled={selected === null}
+					onClick={() => onOpen(action.section)}
 				>
-					{action}
+					{action.label}
 				</button>
 			))}
 		</>

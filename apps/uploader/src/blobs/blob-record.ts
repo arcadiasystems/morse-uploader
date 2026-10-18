@@ -18,4 +18,8 @@ export interface BlobRecord {
 	endEpoch: number;
 	isQuilt: boolean;
 	isEncrypted: boolean;
+	/** From the `content-type` attribute; `null` when the blob has none. */
+	contentType: string | null;
+	/** `encoding_type` on chain: 1 is RS2 (PROTOCOL-NOTES section 7). */
+	encodingType: number;
 }

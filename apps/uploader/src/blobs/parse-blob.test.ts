@@ -60,6 +60,8 @@ describe("parseBlob", () => {
 			endEpoch: 556,
 			isQuilt: true,
 			isEncrypted: false,
+			contentType: null,
+			encodingType: 1,
 		});
 	});
 
@@ -94,6 +96,15 @@ describe("parseBlob", () => {
 		});
 		expect(blob.name).toBe("hero.png");
 		expect(blob.isEncrypted).toBe(true);
+		expect(blob.contentType).toBeNull();
+	});
+
+	it("takes the media type from the content-type attribute", () => {
+		const blob = parseBlob(fromBase64(UNCERTIFIED.contents), {
+			"content-type": " image/png ",
+		});
+		expect(blob.contentType).toBe("image/png");
+		expect(blob.encodingType).toBe(1);
 	});
 
 	it("rejects bytes that are not a Blob", () => {
