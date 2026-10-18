@@ -18,8 +18,12 @@ export function LandingNav() {
 				<button type="button" className="btn coming" disabled>
 					Download for Mac <span className="soon">Coming</span>
 				</button>
+				{/* Beside the Mac download it reads "in browser"; on phones, where
+				    the download is hidden, it is the design's shorter label. */}
 				<Link className="btn solid" href={APP_PATH}>
-					Open in browser <span aria-hidden="true">↗</span>
+					<span className="wide-only">Open in browser</span>
+					<span className="narrow-only">Open uploader</span>
+					<span aria-hidden="true">↗</span>
 				</Link>
 			</div>
 		</nav>
