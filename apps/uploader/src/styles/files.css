@@ -583,6 +583,14 @@
 	.tr.note .msg {
 		padding-left: 36px;
 	}
+	/* While something is selected, the checkboxes come back for picking more. */
+	.tbl.selecting .tr {
+		grid-template-columns: 20px 24px minmax(0, 1fr) 80px 28px;
+	}
+	.tbl.selecting .tr .cbc,
+	.tbl.selecting .tr.h th:nth-child(1) {
+		display: block;
+	}
 	.tr .tw {
 		left: -10px;
 	}

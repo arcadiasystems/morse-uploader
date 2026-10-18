@@ -178,6 +178,10 @@
 
 /* Phones: the bar spans the width above the tab bar and scrolls sideways (dark.css). */
 @media (max-width: 860px) {
+	/* The last rows scroll clear of the bar. */
+	.content:has(.bulk) .view {
+		padding-bottom: calc(var(--tabbar) + 96px);
+	}
 	.bulk {
 		position: fixed;
 		left: 12px;

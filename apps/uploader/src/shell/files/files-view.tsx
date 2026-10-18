@@ -393,6 +393,8 @@ export function FilesView({
 					target={inspectorTarget(menuItem)}
 					anchor={menu.anchor}
 					network={network}
+					selected={selection.has(menu.key)}
+					onToggleSelected={() => check(menu.key)}
 					onOpen={(ask) => {
 						setMenu(null);
 						openDetails(menu.key, ask);

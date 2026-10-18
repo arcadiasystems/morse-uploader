@@ -25,19 +25,26 @@ const FILE_ASKS = ASKS.filter(
 /**
  * A row's overflow menu, anchored under its ⋯ button: open the inspector,
  * or start one of its actions (Extend opens the extend panel, Verify runs
- * the check), download through the aggregator, and copy the blob id.
+ * the check), select the blob for the bulk bar (how a phone, which hides
+ * the checkboxes, starts a selection), download through the aggregator,
+ * and copy the blob id.
  * Arrow keys move between items; Escape and Tab close it and return focus.
  */
 export function RowMenu({
 	target,
 	anchor,
 	network,
+	selected,
+	onToggleSelected,
 	onOpen,
 	onClose,
 }: {
 	target: InspectorTarget;
 	anchor: HTMLButtonElement;
 	network: NetworkConfig;
+	/** Whether the row's blob is selected; a quilt file is selected with its quilt. */
+	selected: boolean;
+	onToggleSelected: () => void;
 	onOpen: (ask: InspectorAsk | null) => void;
 	onClose: (restoreFocus: boolean) => void;
 }) {
@@ -109,6 +116,18 @@ export function RowMenu({
 					{item.label}
 				</button>
 			))}
+			{row ? (
+				<button
+					type="button"
+					role="menuitem"
+					onClick={() => {
+						onToggleSelected();
+						onClose(true);
+					}}
+				>
+					{selected ? "Unselect" : "Select"}
+				</button>
+			) : null}
 			{row && isDownloadable(row) ? (
 				<a
 					role="menuitem"

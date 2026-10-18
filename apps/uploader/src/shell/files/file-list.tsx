@@ -215,7 +215,8 @@ export function FileList({
 	const activeInWindow = activeIndex >= start && activeIndex < end;
 	return (
 		<table
-			className="tbl"
+			// While anything is selected, phones show the checkboxes too.
+			className={checked.size > 0 ? "tbl selecting" : "tbl"}
 			// biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: a table with role treegrid is the WAI-ARIA APG tree grid pattern.
 			role="treegrid"
 			aria-label={label}
