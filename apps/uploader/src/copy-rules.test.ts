@@ -56,10 +56,8 @@ describe("copy rules", () => {
 	});
 
 	it("says an expired blob keeps its record on Sui, as the notes confirm", () => {
-		const pane = files.find((file) =>
-			file.path.endsWith("blob-list/list-row.tsx"),
-		);
-		expect(pane?.text).toContain('"record on Sui"');
+		const row = files.find((file) => file.path.endsWith("files/file-row.tsx"));
+		expect(row?.text).toContain('"record stays on Sui"');
 	});
 
 	it("drops the design's claims the notes correct (PROTOCOL-NOTES section 13)", () => {
@@ -72,6 +70,14 @@ describe("copy rules", () => {
 			/\b\d+ storage nodes\b/, // item 11: the SDK reports no node count
 			/per year at today's price/, // items 5 and 6: periods are epochs within 53
 			/auto-extend from your wallet/i, // item 13: no background extend
+			// The v2 design reuses v1's samples; R1 drops what cannot be true.
+			/\+1 year/, // item 6: a year cannot be bought on Testnet
+			/GB·yr/, // item 6: prices are per epoch, not per year
+			/\b(798|306) days?\b|epoch 798/, // item 5: unreachable sample epochs
+			/extended this month/i, // chain keeps no extend history per blob
+			/via MCP/, // agents are not built
+			/Open Morse Press/, // no address to link to
+			/Drop anything, anywhere/, // R1 has one drop zone; drop anywhere is R3
 		];
 		expect(
 			files
@@ -83,11 +89,12 @@ describe("copy rules", () => {
 	it("uses the notes' wording for limits, cost and signatures", () => {
 		const text = (suffix: string) =>
 			files.find((file) => file.path.endsWith(suffix))?.text ?? "";
-		// Item 1: the drop zone.
-		expect(text("panes/local-pane.tsx")).toContain(
+		// Item 1: the Overview's drop zone. JSX wraps long copy over lines.
+		const drop = text("overview/drop-card.tsx").replace(/\s+/g, " ");
+		expect(drop).toContain(
 			"Folders keep their structure and upload as one quilt of up to 666 files.",
 		);
-		expect(text("panes/local-pane.tsx")).toContain("Up to 1 GiB per upload.");
+		expect(drop).toContain("Up to 1 GiB per upload.");
 		const sheet = text("upload-sheet/upload-sheet.tsx");
 		// Items 2, 7, 8 and 14.
 		expect(sheet).toContain("Each blob carries 64 MB of fixed metadata.");
@@ -127,6 +134,26 @@ describe("copy rules", () => {
 		expect(text("drawer/storage-section.tsx")).toContain(
 			"Paid until epoch {blob.endEpoch} starts",
 		);
+	});
+
+	it("words the Overview by epochs and says where its numbers come from", () => {
+		const text = (suffix: string) =>
+			(files.find((file) => file.path.endsWith(suffix))?.text ?? "").replace(
+				/\s+/g,
+				" ",
+			);
+		const overview = text("overview/overview.tsx");
+		// Item 5: storage is paid until an epoch starts; days are an estimate.
+		expect(overview).toContain("Every stored blob is paid until epoch");
+		expect(overview).toContain("starts, about");
+		// Prices are read live, per epoch, never per year.
+		expect(overview).toContain("WAL / GiB·epoch");
+		expect(overview).toContain("From the Walrus system object.");
+		expect(text("overview/expiry-timeline-card.tsx")).toContain(
+			"Dates are estimates from the epoch length.",
+		);
+		// Item 17 holds in the Files rows: an expired blob keeps its record.
+		expect(text("files/file-row.tsx")).toContain("record stays on Sui");
 	});
 
 	it("names the register step between encode and upload (item 9)", () => {

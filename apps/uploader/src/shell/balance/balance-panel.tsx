@@ -41,7 +41,7 @@ export function BalancePanel({
 				<div className="sec-hd">
 					<h4>Balances on {network.label}</h4>
 					<button
-						className="btn btn-ghost xs"
+						className="btn sm"
 						type="button"
 						disabled={refreshing}
 						onClick={funds.refresh}

@@ -90,8 +90,9 @@ test.describe("blob drawer on Testnet", () => {
 				submitted += 1;
 		});
 		await installTestWallet(page, [keypair]);
-		await page.goto("/app");
+		await page.goto("/app#files");
 		await connect(page, owner);
+		await page.keyboard.press("Escape");
 		await expect(page.getByRole("treegrid")).toBeVisible({ timeout: 90_000 });
 	});
 
@@ -108,17 +109,11 @@ test.describe("blob drawer on Testnet", () => {
 	}
 
 	async function refreshList(): Promise<void> {
-		// The drawer covers the pane's header, Refresh included, as the design draws it.
-		const panel = drawer(page);
-		if (await panel.isVisible())
-			await panel.getByRole("button", { name: "Close details" }).click();
-		await page
-			.locator(".pane.remote .hd")
-			.getByRole("button", { name: "Refresh" })
-			.click();
-		await expect(
-			page.locator(".pane.remote .hd").getByRole("button", { name: "Refresh" }),
-		).toBeVisible({ timeout: 60_000 });
+		const refresh = page
+			.getByRole("region", { name: "Files" })
+			.getByRole("button", { name: "Refresh" });
+		await refresh.click();
+		await expect(refresh).toBeEnabled({ timeout: 60_000 });
 	}
 
 	test("decrypts the Seal-encrypted blob for its owner", async () => {
@@ -691,13 +686,14 @@ test.describe("blob drawer at 390", () => {
 		const keypair = funded as Keypair;
 		await page.setViewportSize({ width: 390, height: 844 });
 		await installTestWallet(page, [keypair]);
-		await page.goto("/app");
+		await page.goto("/app#files");
 		await connect(page, keypair.toSuiAddress());
 		// The profile menu stays open after connecting and covers the list on a phone.
 		await page.keyboard.press("Escape");
 		await page
-			.locator(".pane.remote tbody tr.row")
+			.locator('table.tbl tbody tr[aria-level="1"]')
 			.first()
+			.locator("td.nm")
 			.click({ timeout: 90_000 });
 		const panel = drawer(page);
 		await expect(panel).toBeVisible();

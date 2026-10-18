@@ -1,0 +1,294 @@
+/* The Overview, from design/v2/app-overview.html: a 12-column grid of glass cards. */
+.ov {
+	display: grid;
+	grid-template-columns: repeat(12, minmax(0, 1fr));
+	gap: 14px;
+}
+.span-4 {
+	grid-column: span 4;
+}
+.span-5 {
+	grid-column: span 5;
+}
+.span-7 {
+	grid-column: span 7;
+}
+.span-8 {
+	grid-column: span 8;
+}
+.card {
+	border: 1px solid var(--line);
+	border-radius: 16px;
+	background: var(--panel);
+	padding: 18px 20px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	min-width: 0;
+}
+.card h4 {
+	font-family: var(--mono);
+	font-size: 10px;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--fg-4);
+	font-weight: 500;
+}
+.card .big {
+	font-family: var(--disp);
+	font-size: 38px;
+	font-weight: 700;
+	letter-spacing: -0.03em;
+	line-height: 1;
+	font-variant-numeric: tabular-nums;
+}
+.card .big i {
+	font-style: normal;
+	font-family: var(--mono);
+	font-size: 12px;
+	font-weight: 500;
+	letter-spacing: 0.1em;
+	color: var(--cyan);
+	margin-left: 6px;
+}
+.card p {
+	font-size: 12.5px;
+	color: var(--fg-3);
+}
+.card sub {
+	font-size: 0.75em;
+	line-height: 0;
+	vertical-align: -0.25em;
+}
+.card .fine {
+	font-size: 11.5px;
+	color: var(--fg-4);
+}
+.card .acts {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+.card .sp {
+	flex: 1;
+}
+.card.glass {
+	background: linear-gradient(
+		135deg,
+		rgba(179, 136, 255, 0.14),
+		rgba(125, 243, 232, 0.06)
+	);
+	border-color: rgba(255, 255, 255, 0.14);
+}
+/* The Overview before a wallet connects. */
+.card.hello {
+	gap: 12px;
+	justify-content: center;
+}
+.card.hello h2 {
+	font-family: var(--disp);
+	font-size: 28px;
+	font-weight: 700;
+	letter-spacing: -0.03em;
+}
+.card.hello p {
+	font-size: 13.5px;
+	color: var(--fg-2);
+	max-width: 56ch;
+}
+
+/* ---------- Drop zone ---------- */
+.dz {
+	border: 1.5px dashed var(--line-2);
+	border-radius: 16px;
+	padding: 34px 24px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	text-align: center;
+	color: var(--fg-3);
+	flex: 1;
+}
+.dz b {
+	font-family: var(--disp);
+	font-size: 20px;
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	color: var(--fg);
+}
+.dz .acts {
+	margin-top: 8px;
+	justify-content: center;
+}
+.dz.on {
+	border-color: rgba(125, 243, 232, 0.6);
+	background: rgba(125, 243, 232, 0.05);
+}
+
+/* ---------- Activity and publications ---------- */
+.act {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+}
+.act li {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	gap: 12px;
+	padding: 8px 0;
+	border-bottom: 1px solid var(--line);
+	font-size: 12.5px;
+	align-items: center;
+}
+.act li:last-child {
+	border-bottom: 0;
+}
+.act .t {
+	font-family: var(--mono);
+	font-size: 10.5px;
+	color: var(--fg-4);
+	white-space: nowrap;
+}
+.act a.t:hover {
+	color: var(--fg-2);
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+.act .w {
+	color: var(--fg-2);
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.act .w b {
+	color: var(--fg);
+	font-weight: 500;
+}
+
+/* ---------- Expiry timeline ---------- */
+.strip {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+.strip .bars {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(12, minmax(0, 1fr));
+	gap: 4px;
+	height: 118px;
+}
+/* Each month stacks its states from the floor: later, ending soon, not certified. */
+.strip .bars li {
+	position: relative;
+	display: flex;
+	flex-direction: column-reverse;
+	height: 100%;
+	box-shadow: inset 0 -2px 0 rgba(255, 255, 255, 0.06);
+}
+.strip .bars i {
+	display: block;
+	flex: 0 0 auto;
+}
+.strip .bars li > i:last-of-type {
+	border-radius: 4px 4px 0 0;
+}
+.strip .bars i.grey {
+	background: rgba(255, 255, 255, 0.14);
+}
+.strip .bars i.amber {
+	background: var(--warn);
+}
+.strip .bars i.red {
+	background: var(--err);
+}
+.strip .months {
+	display: grid;
+	grid-template-columns: repeat(12, minmax(0, 1fr));
+	gap: 4px;
+	font-family: var(--mono);
+	font-size: 9.5px;
+	color: var(--fg-4);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+.legend {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px 6px;
+}
+.legend .key {
+	width: 8px;
+	height: 8px;
+	display: inline-block;
+	margin-left: 6px;
+}
+.legend .key:first-child {
+	margin-left: 0;
+}
+.legend .key.red {
+	background: var(--err);
+}
+.legend .key.amber {
+	background: var(--warn);
+}
+.legend .key.grey {
+	background: rgba(255, 255, 255, 0.3);
+}
+
+/* ---------- Placeholders while chain reads run ---------- */
+.big.skel,
+.strip.skel,
+.act.skel {
+	border-radius: 10px;
+	background: var(--panel-2);
+}
+.big.skel {
+	width: 120px;
+	height: 38px;
+}
+.strip.skel {
+	height: 140px;
+}
+.act.skel {
+	height: 160px;
+}
+@media (prefers-reduced-motion: no-preference) {
+	.big.skel,
+	.strip.skel,
+	.act.skel {
+		animation: skel-pulse 1.4s var(--ease) infinite alternate;
+	}
+}
+@keyframes skel-pulse {
+	to {
+		opacity: 0.45;
+	}
+}
+
+@media (max-width: 860px) {
+	/* One column of cards, as the design's 390 render. */
+	.ov > * {
+		grid-column: 1 / -1;
+	}
+	.card.hello h2 {
+		font-size: 24px;
+	}
+	/* A long action wraps inside its card instead of running past it. */
+	.card .acts .btn {
+		max-width: 100%;
+		white-space: normal;
+		text-align: center;
+		line-height: 1.35;
+		padding-top: 7px;
+		padding-bottom: 7px;
+	}
+}

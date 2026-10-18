@@ -1,4 +1,4 @@
-/* Top bar popovers: the profile menu and the balance panel. Built from the design's tokens and controls. */
+/* Popovers: the profile menu, the balance panel and the More menu, as glass over the field. */
 .anchor {
 	position: relative;
 	display: flex;
@@ -12,14 +12,13 @@
 	width: 360px;
 	max-height: calc(100vh - var(--bar) - 24px);
 	overflow: auto;
-	background: var(--paper);
-	border: 1px solid var(--line);
-	border-radius: 14px;
-	box-shadow:
-		0 24px 60px rgba(18, 20, 24, 0.16),
-		0 2px 8px rgba(18, 20, 24, 0.06);
+	background: var(--glass-strong);
+	border: 1px solid var(--line-2);
+	border-radius: 16px;
+	backdrop-filter: blur(20px);
+	box-shadow: var(--shadow);
 	font-size: 13px;
-	color: var(--ink);
+	color: var(--fg);
 	white-space: normal;
 	text-align: left;
 }
@@ -39,10 +38,10 @@
 .pop h4,
 .pop .label {
 	font-family: var(--mono);
-	font-size: 10.5px;
-	letter-spacing: 0.14em;
+	font-size: 10px;
+	letter-spacing: 0.16em;
 	text-transform: uppercase;
-	color: var(--stone);
+	color: var(--fg-4);
 	font-weight: 500;
 }
 .pop .sec-hd {
@@ -53,15 +52,10 @@
 }
 .pop .note {
 	font-size: 12px;
-	color: var(--stone);
+	color: var(--fg-3);
 }
 .pop .problem {
 	font-size: 12px;
-	color: var(--warn);
-	background: var(--warn-bg);
-	border: 1px solid var(--warn-line);
-	border-radius: 8px;
-	padding: 8px 10px;
 }
 .pop > .problem {
 	margin: 0 14px 12px;
@@ -97,7 +91,7 @@
 	border-radius: 10px;
 }
 .prow.on {
-	background: var(--ultra-tint);
+	background: var(--panel-2);
 }
 .prow .pick {
 	flex: 1;
@@ -113,10 +107,7 @@
 	cursor: pointer;
 }
 .prow .pick:not([disabled]):hover {
-	background: var(--bone);
-}
-.prow.on .pick:not([disabled]):hover {
-	background: var(--ultra-tint-2);
+	background: var(--panel);
 }
 .prow .pick[disabled] {
 	cursor: progress;
@@ -136,18 +127,21 @@
 }
 .who code {
 	font-size: 11px;
-	color: var(--stone);
+	color: var(--fg-3);
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
-.prow .chip {
+.prow .tag {
 	padding: 2px 6px;
 	font-size: 9.5px;
 	letter-spacing: 0.1em;
 }
+.prow .tag b {
+	font-weight: 500;
+}
 .prow .tick {
-	color: var(--ultra);
+	color: var(--cyan);
 	flex: 0 0 auto;
 }
 .prow .rm {
@@ -157,18 +151,18 @@
 	border: 0;
 	border-radius: 8px;
 	background: transparent;
-	color: var(--stone);
+	color: var(--fg-3);
 	display: grid;
 	place-items: center;
 	cursor: pointer;
 }
 .prow .rm:not([disabled]):hover {
-	background: var(--bone);
-	color: var(--ink);
+	background: var(--panel);
+	color: var(--fg);
 }
 .pop .add {
 	align-self: flex-start;
-	color: var(--ultra);
+	color: var(--cyan);
 	padding: 0 6px;
 }
 .addp {
@@ -178,7 +172,7 @@
 	border: 1px solid var(--line);
 	border-radius: 12px;
 	padding: 12px;
-	background: var(--bone);
+	background: var(--panel);
 }
 .field {
 	display: flex;
@@ -191,11 +185,11 @@
 	border: 1px solid var(--line-2);
 	border-radius: 8px;
 	padding: 7px 10px;
-	background: var(--paper);
+	background: var(--bg-2);
 	font-size: 13px;
 }
 
-/* ---------- Network switch (the design's segmented control) ---------- */
+/* ---------- Network switch (a segmented control) ---------- */
 .seg {
 	border: 0;
 	margin: 0;
@@ -214,12 +208,13 @@
 	position: relative;
 	flex: 1;
 	border: 1px solid var(--line);
-	background: var(--paper);
+	background: var(--panel);
 	border-radius: 9px;
 	padding: 8px 4px;
 	font-size: 12.5px;
 	font-weight: 600;
 	text-align: center;
+	color: var(--fg-2);
 	cursor: pointer;
 }
 /* The radio covers its segment, transparent, so the whole segment is its click target. */
@@ -236,12 +231,12 @@
 	cursor: not-allowed;
 }
 .seg label.on {
-	background: var(--ink);
-	color: var(--bone);
-	border-color: var(--ink);
+	background: var(--cyan-tint);
+	color: var(--fg);
+	border-color: var(--cyan);
 }
 .seg label:has(input:focus-visible) {
-	outline: 2px solid var(--ultra);
+	outline: 2px solid var(--cyan);
 	outline-offset: 2px;
 }
 .seg:disabled label {
@@ -269,7 +264,7 @@
 	padding: 8px 10px;
 	border: 1px solid var(--line);
 	border-radius: 10px;
-	background: var(--paper);
+	background: var(--panel);
 	text-align: left;
 	cursor: pointer;
 }
@@ -278,12 +273,14 @@
 	font-weight: 600;
 }
 .wbtn span {
-	font-size: 12px;
-	font-weight: 600;
-	color: var(--ultra);
+	font-family: var(--mono);
+	font-size: 10.5px;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--cyan);
 }
 .wbtn:not([disabled]):hover {
-	border-color: var(--ink);
+	border-color: var(--line-3);
 }
 .wbtn[disabled] {
 	cursor: progress;
@@ -306,7 +303,7 @@
 	font-family: var(--mono);
 	font-size: 11px;
 	letter-spacing: 0.12em;
-	color: var(--stone);
+	color: var(--fg-3);
 }
 .amounts dd {
 	font-size: 15px;
@@ -319,7 +316,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
-	background: var(--warn-bg);
+	background: var(--warn-tint);
 	border: 1px solid var(--warn-line);
 	border-radius: 10px;
 	padding: 10px 12px;
@@ -329,45 +326,62 @@
 .callout b {
 	font-weight: 600;
 }
-.links a {
+.links a,
+.links .coming {
 	display: flex;
 	align-items: center;
 	gap: 10px;
 	padding: 8px 10px;
 	border: 1px solid var(--line);
 	border-radius: 10px;
-	background: var(--paper);
+	background: var(--panel);
 }
 .links a:hover {
-	border-color: var(--ink);
+	border-color: var(--line-3);
 }
-.links a > span:first-child {
+.links a > span:first-child,
+.links .coming > span:first-child {
 	flex: 1;
 	min-width: 0;
 	display: flex;
 	flex-direction: column;
 }
-.links a b {
+.links b {
 	font-weight: 600;
 	font-size: 13px;
 }
-.links a small {
+.links small {
 	font-size: 12px;
-	color: var(--stone);
+	color: var(--fg-3);
 }
 .links a svg {
-	color: var(--stone);
+	color: var(--fg-3);
 	flex: 0 0 auto;
+}
+/* A planned feature in the More menu: present, labelled, and not clickable. */
+.links .coming {
+	width: 100%;
+	text-align: left;
+	color: var(--fg-3);
+	cursor: not-allowed;
+}
+.links .coming b {
+	color: var(--fg-2);
 }
 .addr {
 	font-size: 11px;
 	word-break: break-all;
-	color: var(--body);
-	background: var(--bone);
+	color: var(--fg-2);
+	background: var(--bg-2);
 	border: 1px solid var(--line);
 	border-radius: 8px;
 	padding: 6px 8px;
 	user-select: all;
+}
+.pop sub {
+	font-size: 0.75em;
+	line-height: 0;
+	vertical-align: -0.25em;
 }
 
 @media (prefers-reduced-motion: no-preference) {

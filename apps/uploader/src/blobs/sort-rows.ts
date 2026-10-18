@@ -1,7 +1,7 @@
 import type { BlobRow } from "./blob-row";
-import type { BlobStatusKind } from "./blob-status";
 
-export type SortKey = "name" | "size" | "expiry" | "status";
+/** The Files columns a list sorts by; `uploaded` is the registered epoch. */
+export type SortKey = "name" | "size" | "uploaded" | "expiry";
 export type SortDirection = "ascending" | "descending";
 
 export interface RowSort {
@@ -9,24 +9,18 @@ export interface RowSort {
 	direction: SortDirection;
 }
 
-/** Longest-paid first, so expired records sink to the bottom as in the design. */
-export const DEFAULT_SORT: RowSort = { key: "expiry", direction: "descending" };
+/** Newest first, as the design's "sort · newest". */
+export const DEFAULT_SORT: RowSort = {
+	key: "uploaded",
+	direction: "descending",
+};
 
 /** The direction a column starts in when it is first picked. */
 const FIRST_DIRECTION: Record<SortKey, SortDirection> = {
 	name: "ascending",
 	size: "descending",
+	uploaded: "descending",
 	expiry: "ascending",
-	status: "ascending",
-};
-
-/** Ascending status order puts what needs attention first. */
-const STATUS_ORDER: Record<BlobStatusKind, number> = {
-	expiring: 0,
-	registered: 1,
-	expired: 2,
-	encrypted: 3,
-	certified: 4,
 };
 
 const collator = new Intl.Collator("en", {
@@ -66,10 +60,10 @@ function compareBy(key: SortKey, a: BlobRow, b: BlobRow): number {
 			return collator.compare(a.label, b.label);
 		case "size":
 			return compareBigInt(a.blob.size, b.blob.size);
+		case "uploaded":
+			return a.blob.registeredEpoch - b.blob.registeredEpoch;
 		case "expiry":
 			return a.blob.endEpoch - b.blob.endEpoch;
-		case "status":
-			return STATUS_ORDER[a.status.kind] - STATUS_ORDER[b.status.kind];
 	}
 }
 

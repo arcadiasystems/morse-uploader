@@ -32,7 +32,7 @@ export function WalletSection({
 					<code>{shortenAddress(session.account.address)}</code>
 				</span>
 				<button
-					className="btn btn-ghost xs"
+					className="btn sm"
 					type="button"
 					disabled={busy}
 					onClick={onDisconnect}

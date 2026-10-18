@@ -1,64 +1,91 @@
-/* App shell. Ported from design/uploader.css; additions are marked. */
+/* The app shell from design/v2: the rail, the top bar with its pills, and the view. */
 .app {
 	position: relative;
+	z-index: 1;
 	display: grid;
-	grid-template-rows: var(--bar) 1fr;
+	grid-template-columns: var(--rail) minmax(0, 1fr);
 	height: 100vh;
 	overflow: hidden;
 }
 
-/* ---------- Top bar ---------- */
-.topbar {
+/* ---------- Rail ---------- */
+.rail {
+	border-right: 1px solid var(--line);
 	display: flex;
+	flex-direction: column;
 	align-items: center;
-	gap: 14px;
-	padding: 0 14px;
-	border-bottom: 1px solid var(--line);
-	background: var(--paper);
-	min-width: 0;
+	padding: 14px 0;
+	gap: 6px;
+	background: rgba(7, 8, 11, 0.6);
+	min-height: 0;
 }
-.topbar .sep {
-	width: 1px;
-	height: 24px;
-	background: var(--line);
-	flex: 0 0 auto;
+.rail .lg {
+	margin-bottom: 14px;
 }
-.profile {
-	display: inline-flex;
-	align-items: center;
-	gap: 8px;
-	border: 1px solid var(--line);
-	border-radius: 999px;
-	padding: 4px 10px 4px 5px;
-	background: var(--bone);
-	font-size: 13px;
+.rail .ri {
+	position: relative;
+	width: 44px;
+	height: 44px;
+	border-radius: 12px;
+	border: 0;
+	background: transparent;
+	display: grid;
+	place-items: center;
+	color: var(--fg-3);
 	cursor: pointer;
-	min-width: 0;
-	white-space: nowrap;
-}
-.profile:hover {
-	border-color: var(--line-2);
-}
-.profile b {
-	font-weight: 600;
-	min-width: 0;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-.profile code {
-	font-size: 12px;
-	color: var(--stone);
-}
-.profile .caret {
-	color: var(--stone);
 	flex: 0 0 auto;
+}
+.rail .ri:not([disabled]):hover {
+	background: var(--panel);
+	color: var(--fg);
+}
+.rail .ri.on,
+.rail .ri[aria-expanded="true"] {
+	background: var(--panel-2);
+	color: var(--cyan);
+}
+.rail .ri .b {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: var(--violet);
+	box-shadow: 0 0 8px var(--violet);
+}
+/* A planned feature: dimmed, not clickable, and marked as coming. */
+.rail .ri.soon {
+	color: var(--fg-4);
+	cursor: not-allowed;
+	align-content: center;
+	gap: 2px;
+}
+.rail .ri.soon .mark {
+	font-family: var(--mono);
+	font-size: 7.5px;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--fg-4);
+	line-height: 1;
+}
+.rail .sp {
+	flex: 1;
+}
+.rail .me {
+	border: 0;
+	padding: 0;
+	background: transparent;
+	border-radius: 10px;
+	cursor: pointer;
+	margin-top: 6px;
 }
 .av {
 	width: 22px;
 	height: 22px;
 	border-radius: 7px;
-	background: var(--ultra);
-	color: #fff;
+	background: var(--grad);
+	color: var(--bg);
 	display: grid;
 	place-items: center;
 	font-family: var(--disp);
@@ -66,362 +93,218 @@
 	font-size: 11px;
 	flex: 0 0 auto;
 }
-/* Addition: the avatar before a wallet is connected. */
-.av.none {
-	background: var(--paper);
-	border: 1px dashed var(--line-2);
-	color: var(--stone);
+.rail .me .av {
+	width: 34px;
+	height: 34px;
+	border-radius: 10px;
+	font-size: 13px;
 }
-.topbar .search {
+/* The avatar before a wallet is connected. */
+.av.none {
+	background: transparent;
+	border: 1px dashed var(--line-2);
+	color: var(--fg-3);
+}
+/* Rail popovers open beside the rail, aligned to its foot. */
+.rail .pop.rail-pop {
+	top: auto;
+	bottom: 0;
+	left: calc(100% + 12px);
+}
+
+/* ---------- Main and top bar ---------- */
+.main {
+	display: grid;
+	grid-template-rows: var(--bar) minmax(0, 1fr);
+	min-width: 0;
+	min-height: 0;
+}
+.top {
 	display: flex;
 	align-items: center;
-	gap: 8px;
-	border: 1px solid var(--line);
-	border-radius: 999px;
-	padding: 0 12px;
-	height: 34px;
-	background: var(--bone);
-	color: var(--stone);
-	font-size: 13px;
-	flex: 1;
-	max-width: 420px;
+	gap: 14px;
+	padding: 0 22px;
+	border-bottom: 1px solid var(--line);
 	min-width: 0;
 }
-.topbar .search input {
+.top .title {
+	display: flex;
+	align-items: baseline;
+	gap: 10px;
+	min-width: 0;
+	white-space: nowrap;
+}
+.top h1 {
+	font-family: var(--disp);
+	font-weight: 700;
+	font-size: 16px;
+	letter-spacing: -0.02em;
+}
+.top .ctx {
+	font-family: var(--mono);
+	font-size: 10.5px;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--fg-3);
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.top .cmd {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	border: 1px solid var(--line);
+	border-radius: 999px;
+	height: 34px;
+	padding: 0 12px 0 14px;
+	color: var(--fg-3);
+	font-size: 13px;
+	flex: 1;
+	max-width: 380px;
+	min-width: 0;
+	background: var(--panel);
+}
+.top .cmd input {
 	flex: 1;
 	min-width: 0;
 	border: 0;
 	padding: 0;
 	background: transparent;
 	font-size: 13px;
-	color: var(--ink);
+	color: var(--fg);
 }
-.topbar .search input::placeholder {
-	color: var(--stone);
+.top .cmd input::placeholder {
+	color: var(--fg-3);
 	opacity: 1;
 }
-.topbar .search input:disabled {
+.top .cmd input:disabled {
 	cursor: not-allowed;
 }
-.topbar .search input:focus-visible {
+.top .cmd input:focus-visible {
 	outline: none;
 }
-.topbar .search:focus-within {
-	outline: 2px solid var(--ultra);
+.top .cmd:focus-within {
+	outline: 2px solid var(--cyan);
 	outline-offset: 2px;
 }
-.topbar .search .keys {
+.top .cmd .keys {
 	margin-left: auto;
 }
-.topbar .right {
+.top .r {
 	margin-left: auto;
 	display: flex;
 	align-items: center;
-	gap: 8px;
+	gap: 10px;
 	flex: 0 0 auto;
 }
-.bal {
+.top .upload svg {
+	flex: 0 0 auto;
+}
+.top .r .anchor {
+	flex: 0 0 auto;
+}
+
+/* The balances and network pill. */
+.net {
 	display: inline-flex;
 	align-items: center;
-	gap: 10px;
+	gap: 8px;
 	font-family: var(--mono);
 	font-variant-numeric: tabular-nums;
-	font-size: 12px;
+	font-size: 10.5px;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--fg-2);
 	border: 1px solid var(--line);
+	background: transparent;
 	border-radius: 999px;
-	padding: 0 12px;
 	height: 34px;
-	background: var(--bone);
-	cursor: pointer;
+	padding: 0 12px;
 	white-space: nowrap;
 }
-.bal:hover {
+button.net {
+	cursor: pointer;
+}
+button.net:hover {
 	border-color: var(--line-2);
 }
-.bal b {
+.net i {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: var(--cyan);
+	box-shadow: 0 0 10px var(--cyan);
+	flex: 0 0 auto;
+}
+.net b {
 	font-weight: 500;
-	color: var(--ink);
+	color: var(--fg);
 }
-.bal > span {
-	color: var(--stone);
+.net.low i {
+	background: var(--warn);
+	box-shadow: 0 0 10px var(--warn);
 }
-.bal.low b {
+.net.low b,
+.net.low .hint {
 	color: var(--warn);
 }
-/* Addition: the low state's "top up" reads as the action it is. */
-.bal.low > .hint {
-	color: var(--warn);
-	text-decoration: underline;
-	text-underline-offset: 2px;
-}
-.bal sub,
-.pop sub,
-.ft sub {
+.net sub {
 	font-size: 0.75em;
 	line-height: 0;
 	vertical-align: -0.25em;
 }
 
-/* ---------- Body and sidebar ---------- */
-.body {
-	display: grid;
-	grid-template-columns: var(--side) 1fr;
-	min-height: 0;
-}
-.side {
-	border-right: 1px solid var(--line);
-	background: var(--bone);
-	padding: 14px 10px;
-	display: flex;
-	flex-direction: column;
-	gap: 18px;
-	overflow: auto;
-}
-.side h4 {
+/* The transfers pill. */
+.tpill {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	border: 1px solid var(--line);
+	background: transparent;
+	border-radius: 999px;
+	height: 34px;
+	padding: 0 12px;
 	font-family: var(--mono);
 	font-size: 10.5px;
-	letter-spacing: 0.14em;
+	letter-spacing: 0.12em;
 	text-transform: uppercase;
-	color: var(--stone);
-	font-weight: 500;
-	padding: 0 8px;
-	margin-bottom: 6px;
-}
-.side ul {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-	display: flex;
-	flex-direction: column;
-	gap: 2px;
-}
-.side .item {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	width: 100%;
-	padding: 7px 10px;
-	border: 0;
-	border-radius: 9px;
-	background: transparent;
-	font-size: 13.5px;
-	color: var(--body);
-	text-align: left;
+	color: var(--fg-3);
+	white-space: nowrap;
 	cursor: pointer;
 }
-.side .item:not([disabled]):hover {
-	background: rgba(255, 255, 255, 0.6);
+.tpill.busy {
+	border-color: var(--violet-line);
+	background: var(--violet-tint);
+	color: var(--fg);
 }
-.side .item.on {
-	background: var(--paper);
-	color: var(--ink);
-	font-weight: 600;
-	box-shadow: 0 1px 0 var(--line);
+.tpill.failed {
+	border-color: var(--err-line);
+	background: var(--err-tint);
+	color: var(--err);
 }
-.side .item svg {
+.tpill .ring {
 	width: 16px;
 	height: 16px;
-	color: var(--stone);
+	border-radius: 50%;
 	flex: 0 0 auto;
-}
-.side .item.on svg {
-	color: var(--ultra);
-}
-.side .item .n {
-	margin-left: auto;
-	font-family: var(--mono);
-	font-variant-numeric: tabular-nums;
-	font-size: 11px;
-	color: var(--stone);
-	font-weight: 400;
-}
-/* Addition: planned features, disabled and marked Coming. */
-.side .item.soon {
-	color: var(--stone);
-	cursor: not-allowed;
-}
-.side .item .chip {
-	margin-left: auto;
-	padding: 2px 6px;
-	font-size: 9.5px;
-	letter-spacing: 0.1em;
-	flex: 0 0 auto;
-}
-.storage {
-	margin-top: auto;
-	border: 1px solid var(--line);
-	border-radius: 12px;
-	background: var(--paper);
-	padding: 12px;
-}
-.storage b {
-	display: block;
-	font-size: 12.5px;
-	font-weight: 600;
-}
-.storage .bar {
-	height: 6px;
-	border-radius: 999px;
-	background: var(--line);
-	margin: 8px 0 6px;
-	overflow: hidden;
-}
-.storage .bar i {
-	display: block;
-	height: 100%;
-	width: 0;
-	background: var(--ultra);
-}
-.storage small {
-	font-size: 11.5px;
-	color: var(--stone);
-	display: block;
-}
-.storage small + small {
-	margin-top: 4px;
 }
 
-/* ---------- Panes ---------- */
-.main {
-	position: relative;
+/* ---------- The view ---------- */
+.content {
 	display: grid;
-	grid-template-rows: 1fr var(--queue);
+	grid-template-columns: minmax(0, 1fr);
 	min-height: 0;
 	min-width: 0;
 }
-.panes {
+.view {
 	position: relative;
-	display: grid;
-	grid-template-columns: 1fr 1fr;
+	min-width: 0;
 	min-height: 0;
-	min-width: 0;
-}
-.pane {
-	display: flex;
-	flex-direction: column;
-	min-height: 0;
-	min-width: 0;
-	background: var(--paper);
-}
-.pane + .pane {
-	border-left: 1px solid var(--line);
-}
-.pane .hd {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	padding: 10px 14px;
-	border-bottom: 1px solid var(--line);
-	min-height: 48px;
-}
-.pane .hd h3 {
-	font-family: var(--disp);
-	font-size: 15px;
-	font-weight: 800;
-	letter-spacing: -0.02em;
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	white-space: nowrap;
-}
-.pane .hd h3 i {
-	width: 8px;
-	height: 8px;
-	border-radius: 50%;
-	background: var(--ok);
-}
-/* Addition: the dot shows whether the last chain read worked. */
-.pane .hd h3 i.wait {
-	background: var(--line-2);
-}
-.pane .hd h3 i.warn {
-	background: var(--warn);
-}
-.pane .hd .crumb {
-	display: flex;
-	align-items: center;
-	gap: 6px;
-	font-family: var(--mono);
-	font-size: 12px;
-	color: var(--stone);
-	min-width: 0;
-	overflow: hidden;
-	white-space: nowrap;
-}
-.pane .hd .crumb b {
-	color: var(--ink);
-	font-weight: 500;
-}
-.pane .hd .acts {
-	margin-left: auto;
-	display: flex;
-	gap: 6px;
-}
-.pane .tools {
-	position: relative;
-	display: flex;
-	gap: 6px;
-	padding: 8px 14px;
-	border-bottom: 1px solid var(--line);
-	align-items: center;
-	background: var(--bone);
-}
-.pane .tools .sp {
-	flex: 1;
-}
-.pane .tools .view {
-	margin: 0;
-	padding: 0;
-	min-width: 0;
-	display: inline-flex;
-	border: 1px solid var(--line);
-	border-radius: 8px;
-	overflow: hidden;
-	flex: 0 0 auto;
-}
-.pane .tools .view button {
-	border: 0;
-	background: var(--paper);
-	width: 30px;
-	height: 28px;
-	color: var(--stone);
-	display: grid;
-	place-items: center;
-}
-.pane .tools .view button.on {
-	background: var(--ink);
-	color: var(--bone);
-}
-.pane .tools .view button:disabled {
-	cursor: not-allowed;
-}
-.list {
-	flex: 1;
 	overflow: auto;
-	min-height: 0;
+	padding: 18px 22px 110px;
 }
-.drop {
-	margin: 14px;
-	border: 1.5px dashed var(--line-2);
-	border-radius: 14px;
-	padding: 26px;
-	text-align: center;
-	color: var(--stone);
-	font-size: 13.5px;
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-	align-items: center;
-}
-.drop b {
-	color: var(--ink);
-	font-family: var(--disp);
-	font-size: 16px;
-	display: inline-flex;
-	align-items: center;
-	gap: 8px;
-}
-/* Addition: the designed empty state for the Walrus pane. */
+
+/* A view or card with nothing to show yet: an icon tile, a title, one line, an action. */
 .empty {
 	display: flex;
 	flex-direction: column;
@@ -431,198 +314,143 @@
 	min-height: 100%;
 	padding: 32px 24px;
 	text-align: center;
-	color: var(--stone);
-	font-size: 13.5px;
+	color: var(--fg-3);
+	font-size: 13px;
 }
 .empty .tile {
 	width: 44px;
 	height: 44px;
 	border-radius: 12px;
 	border: 1px solid var(--line);
-	background: var(--bone);
-	color: var(--ultra);
+	background: var(--panel);
+	color: var(--cyan);
 	display: grid;
 	place-items: center;
 	margin-bottom: 4px;
 }
 .empty b {
-	color: var(--ink);
+	color: var(--fg);
 	font-family: var(--disp);
-	font-size: 16px;
+	font-size: 18px;
+	font-weight: 700;
+	letter-spacing: -0.02em;
 }
 .empty p {
-	max-width: 44ch;
+	max-width: 46ch;
 }
 .empty .btn {
 	margin-top: 8px;
 }
-.pane .ft {
-	display: flex;
-	align-items: center;
-	gap: 14px;
-	padding: 8px 14px;
-	border-top: 1px solid var(--line);
-	font-family: var(--mono);
-	font-variant-numeric: tabular-nums;
-	font-size: 11.5px;
-	color: var(--stone);
-	background: var(--bone);
-	white-space: nowrap;
-}
-.pane .ft b {
-	color: var(--ink);
-	font-weight: 500;
-}
-.pane .ft .sp {
-	flex: 1;
-}
 
-/* Addition: a problem stated where it happens: a drop, the upload sheet, the queue. */
-.drop .problem,
-.modal .problem,
-.qnote.problem {
-	color: var(--warn);
-	background: var(--warn-bg);
-	border: 1px solid var(--warn-line);
-	border-radius: 8px;
-	padding: 8px 10px;
-	font-size: 12.5px;
-}
-
-/* ---------- Transfer queue ---------- */
-.queue {
-	border-top: 1px solid var(--line);
-	background: var(--paper);
+/* ---------- Transfers slide-over ---------- */
+.tpanel {
+	position: fixed;
+	right: 0;
+	top: var(--bar);
+	bottom: 0;
+	width: 560px;
+	max-width: 100%;
+	background: var(--glass-strong);
+	border-left: 1px solid var(--line-2);
+	backdrop-filter: blur(20px);
+	box-shadow: -30px 0 80px rgba(0, 0, 0, 0.5);
 	display: flex;
 	flex-direction: column;
-	min-height: 0;
+	z-index: 30;
 }
-.queue .hd {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-	padding: 8px 14px;
-	border-bottom: 1px solid var(--line);
-	background: var(--bone);
+@media (prefers-reduced-motion: no-preference) {
+	.tpanel {
+		animation: slide-in 180ms var(--ease);
+	}
 }
-.queue .hd h3 {
-	font-family: var(--disp);
-	font-size: 14px;
-	font-weight: 800;
-	letter-spacing: -0.02em;
-}
-.queue .hd .tabs {
-	display: flex;
-	gap: 2px;
-	margin-left: 8px;
-}
-.queue .hd .tabs button {
-	font-size: 12.5px;
-	padding: 4px 10px;
-	border: 0;
-	border-radius: 999px;
-	background: transparent;
-	color: var(--stone);
-	cursor: pointer;
-}
-.queue .hd .tabs button.on {
-	background: var(--paper);
-	color: var(--ink);
-	font-weight: 600;
-}
-.queue .hd .sum {
-	margin-left: auto;
-	font-family: var(--mono);
-	font-size: 12px;
-	color: var(--stone);
-}
-.queue .hd .pause {
-	margin-left: 10px;
-}
-.qlist {
-	flex: 1;
-	overflow: auto;
-}
-.qempty {
-	padding: 22px;
-	text-align: center;
-	color: var(--stone);
-	font-size: 13px;
+@keyframes slide-in {
+	from {
+		opacity: 0;
+		transform: translateX(24px);
+	}
 }
 
-/* ---------- Mobile ---------- */
+/* ---------- Phones: the rail becomes a bottom tab bar ---------- */
 @media (max-width: 860px) {
-	:root {
-		--side: 0px;
-		--queue: 160px;
-	}
 	.app {
-		height: auto;
-		min-height: 100vh;
+		grid-template-columns: minmax(0, 1fr);
+		height: 100dvh;
 	}
-	/* Fix: the design's 390 render clips the upload button; tighten the bar instead. */
-	.topbar {
-		gap: 8px;
-		padding: 0 12px;
-	}
-	.topbar .search,
-	.topbar .sep,
-	.bal > span,
-	.profile code,
-	.topbar .hidem {
-		display: none;
-	}
-	.bal {
-		flex-direction: column;
-		align-items: flex-end;
-		justify-content: center;
+	.rail {
+		position: fixed;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		height: var(--tabbar);
+		flex-direction: row;
+		justify-content: space-around;
 		gap: 0;
+		padding: 0 6px;
+		border-right: 0;
+		border-top: 1px solid var(--line);
+		/* Opaque rather than blurred: a backdrop filter would make the bar the
+		   backdrop root of the menus that open from it, and they would show
+		   the list through. */
+		background: rgba(7, 8, 11, 0.97);
+		z-index: 45;
+	}
+	.rail .lg,
+	.rail .sp,
+	.rail .ri.soon {
+		display: none;
+	}
+	.rail .ri {
+		width: 40px;
+		height: 40px;
+	}
+	.rail .me {
+		margin-top: 0;
+	}
+	.rail .me .av {
+		width: 30px;
+		height: 30px;
+		border-radius: 9px;
+	}
+	/* Rail popovers rise above the tab bar, full width with 12px gutters. */
+	.rail .pop.rail-pop {
+		position: fixed;
+		top: auto;
+		left: 12px;
+		right: 12px;
+		bottom: calc(var(--tabbar) + 8px);
+		width: auto;
+		max-height: calc(100dvh - var(--bar) - var(--tabbar) - 24px);
+	}
+	.top {
+		gap: 8px;
+		padding: 0 14px;
+	}
+	.top .ctx,
+	.top .cmd,
+	.net .rest,
+	.tpill.idle,
+	.tpill .word {
+		display: none;
+	}
+	.top .r {
+		gap: 8px;
+	}
+	.tpill,
+	.net {
 		padding: 0 10px;
-		font-size: 11px;
-		line-height: 1.2;
 	}
-	.topbar .upload {
-		padding: 0 10px;
+	.top .upload {
+		padding: 0 11px;
 	}
-	.topbar .upload .lbl {
+	.top .upload .lbl {
 		display: none;
 	}
-	.body {
-		grid-template-columns: 1fr;
+	.view {
+		padding: 14px 14px calc(var(--tabbar) + 28px);
 	}
-	.side {
-		display: none;
-	}
-	/* The list scrolls inside the pane (and stays virtual) instead of growing the page. */
-	.main {
-		height: calc(100dvh - var(--bar));
-	}
-	.panes {
-		grid-template-columns: 1fr;
-	}
-	.pane.local {
-		display: none;
-	}
-	.pane.remote {
+	.tpanel {
+		width: 100%;
+		bottom: var(--tabbar);
 		border-left: 0;
-	}
-	.pane .hd .crumb {
-		display: none;
-	}
-	.pane .tools {
-		overflow-x: auto;
-		scrollbar-width: none;
-	}
-	.pane .tools .btn {
-		flex: 0 0 auto;
-	}
-	.pane .ft {
-		flex-wrap: wrap;
-		row-gap: 4px;
-	}
-	/* Fix: the design's queue summary wraps into a column at 390; phones show tabs only. */
-	.queue .hd .sum,
-	.queue .hd .pause {
-		display: none;
 	}
 }

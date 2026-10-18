@@ -1,96 +1,86 @@
-/* Minimal landing until the full landing page ships. Ported from design/uploader.css. */
+/* Minimal landing until the full landing page ships, in the dark tokens. */
 .land {
+	position: relative;
+	z-index: 1;
 	min-height: 100vh;
 	display: flex;
 	flex-direction: column;
 }
 .land .nav {
-	height: 64px;
+	height: 72px;
 	display: flex;
 	align-items: center;
 	gap: 14px;
-	padding: 0 28px;
-	border-bottom: 1px solid var(--line);
+	padding: 0 56px;
 }
 .land .nav .right {
 	margin-left: auto;
 	display: flex;
-	gap: 8px;
+	gap: 10px;
 	align-items: center;
 }
 .land .hero {
 	padding: 96px 28px 72px;
-	max-width: 1160px;
+	max-width: 980px;
 	margin: 0 auto;
 	width: 100%;
 	flex: 1;
-}
-.land .eyebrow {
-	font-family: var(--mono);
-	font-size: 11px;
-	letter-spacing: 0.14em;
-	text-transform: uppercase;
-	color: var(--stone);
-	display: inline-flex;
-	gap: 10px;
-	align-items: center;
-}
-.land .eyebrow i {
-	width: 6px;
-	height: 6px;
-	border-radius: 50%;
-	background: var(--ultra);
+	text-align: center;
 }
 .land h1 {
 	font-family: var(--disp);
-	font-size: clamp(40px, 4.8vw, 62px);
-	line-height: 0.98;
-	letter-spacing: -0.04em;
-	font-weight: 800;
+	font-size: clamp(44px, 6vw, 84px);
+	line-height: 1;
+	letter-spacing: -0.035em;
+	font-weight: 400;
 	margin-top: 14px;
-	max-width: 16ch;
 }
 .land h1 em {
 	font-style: normal;
-	color: var(--ultra);
+	background: var(--grad);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
 }
 .land .lead {
 	font-size: 18px;
-	color: var(--body);
-	margin-top: 18px;
-	max-width: 52ch;
+	line-height: 1.5;
+	color: var(--fg-2);
+	margin: 22px auto 0;
+	max-width: 600px;
 }
 .land .cta {
 	display: flex;
 	gap: 10px;
 	flex-wrap: wrap;
-	margin-top: 26px;
+	justify-content: center;
+	margin-top: 28px;
 }
 .foot {
 	border-top: 1px solid var(--line);
-	padding: 22px 28px;
-	font-size: 13px;
-	color: var(--stone);
+	padding: 22px 56px;
+	font-size: 12.5px;
+	color: var(--fg-3);
 	display: flex;
 	justify-content: space-between;
 	gap: 14px;
 	flex-wrap: wrap;
 }
 .foot a {
-	color: var(--ink);
+	color: var(--fg);
 	font-weight: 500;
 }
 .foot .sig {
 	font-family: var(--mono);
 	letter-spacing: 0.2em;
-	color: var(--ultra);
+	color: var(--cyan);
 }
 
 @media (max-width: 860px) {
 	.land .nav {
 		padding: 0 20px;
 	}
-	.land .nav .right .btn-text {
+	.land .nav .right .btn.text {
 		display: none;
 	}
 	.land .hero {

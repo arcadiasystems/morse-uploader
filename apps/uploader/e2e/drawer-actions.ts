@@ -24,33 +24,32 @@ export function drawer(page: Page): Locator {
 
 /**
  * Opens the drawer on a blob (or one file of a quilt) by searching its
- * object id and clicking its name. The name stays clear of the drawer,
- * which covers the right of the Walrus pane as the design draws it.
+ * object id and activating its row in Files. The drawer takes a column
+ * beside the list, so it never covers the row.
  */
 export async function openDrawer(
 	page: Page,
 	objectId: string,
 	patchIdentifier?: string,
 ): Promise<Locator> {
+	// Confirming an upload opens the transfers slide-over, which covers the
+	// details column; close it first, as a person would.
+	const transfers = page.getByRole("dialog", { name: "Transfers" });
+	if (await transfers.isVisible())
+		await transfers.getByRole("button", { name: "Close transfers" }).click();
 	const panel = drawer(page);
 	if (await panel.isVisible())
 		await panel.getByRole("button", { name: "Close details" }).click();
 	await page.getByRole("searchbox", { name: /Search blobs/ }).fill(objectId);
-	const row = page.locator(`.pane.remote tr[data-key="${objectId}"]`);
-	await row
-		.locator("td")
-		.nth(1)
-		.click({ position: { x: 12, y: 10 } });
+	const row = page.locator(`table.tbl tr[data-key="${objectId}"]`);
+	await row.locator("td.nm").click();
 	if (patchIdentifier !== undefined) {
 		await page.keyboard.press("ArrowRight");
 		const patch = page
-			.locator('.pane.remote tbody tr[aria-level="2"]')
-			.filter({ has: page.locator(".nm", { hasText: patchIdentifier }) })
+			.locator('table.tbl tbody tr[aria-level="2"]')
+			.filter({ has: page.locator("td.nm", { hasText: patchIdentifier }) })
 			.first();
-		await patch
-			.locator("td")
-			.nth(1)
-			.click({ position: { x: 12, y: 10 }, timeout: 90_000 });
+		await patch.locator("td.nm").click({ timeout: 90_000 });
 	}
 	await expect(panel).toBeVisible();
 	return panel;

@@ -450,7 +450,7 @@ export function UploadSheet({
 
 					<div className="acts">
 						<button
-							className="btn btn-ultra lg"
+							className="btn primary lg"
 							type="button"
 							disabled={!canUpload}
 							onClick={confirm}
@@ -459,7 +459,7 @@ export function UploadSheet({
 								? `Upload · sign ${quote.signatureTotal} ${quote.signatureTotal === 1 ? "time" : "times"}`
 								: "Upload"}
 						</button>
-						<button className="btn btn-text" type="button" onClick={onClose}>
+						<button className="btn text" type="button" onClick={onClose}>
 							Cancel
 						</button>
 						<small>{signHelp(quote?.signatures ?? null)}</small>
@@ -571,7 +571,7 @@ function PublishPicker({
 		return (
 			<p className="problem">
 				Could not read your Morse publications: {errorMessage(read.error)}{" "}
-				<button className="btn btn-text xs" type="button" onClick={onRetry}>
+				<button className="btn text sm" type="button" onClick={onRetry}>
 					Try again
 				</button>
 			</p>

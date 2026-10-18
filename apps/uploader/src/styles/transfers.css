@@ -1,19 +1,84 @@
-/* The transfer queue's rows. Ported from design/uploader.css `.q`; additions are marked. */
+/* The transfer queue in its slide-over, rows stacked as the design's transfers panel. */
+.queue {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	flex: 1;
+}
+.queue .hd {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 8px 12px;
+	padding: 16px 20px;
+	border-bottom: 1px solid var(--line);
+	min-width: 0;
+}
+.queue .hd h3 {
+	font-family: var(--disp);
+	font-size: 16px;
+	font-weight: 700;
+	letter-spacing: -0.02em;
+}
+.queue .hd .tabs {
+	display: flex;
+	gap: 4px;
+	margin-left: 8px;
+}
+.queue .hd .tabs button {
+	font-family: var(--mono);
+	font-size: 10.5px;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	padding: 5px 10px;
+	border: 0;
+	border-radius: 999px;
+	background: transparent;
+	color: var(--fg-3);
+	cursor: pointer;
+}
+.queue .hd .tabs button.on {
+	background: var(--panel-2);
+	color: var(--fg);
+}
 .queue .hd .tabs .n {
+	font-variant-numeric: tabular-nums;
+	margin-left: 6px;
+}
+.queue .hd .pause {
+	margin-left: auto;
+}
+.queue .hd .x {
+	border: 0;
+	background: transparent;
+	color: var(--fg-3);
+	cursor: pointer;
+	width: 28px;
+	height: 28px;
+	border-radius: 8px;
+	display: grid;
+	place-items: center;
+}
+.queue .hd .x:hover {
+	color: var(--fg);
+	background: var(--panel);
+}
+/* The batch summary runs under the tabs, as the design's summary strip. */
+.queue .hd .sum {
+	order: 10;
+	flex: 1 0 100%;
 	font-family: var(--mono);
 	font-variant-numeric: tabular-nums;
-	font-size: 11px;
-	margin-left: 4px;
-}
-.queue .hd .sum {
-	font-variant-numeric: tabular-nums;
+	font-size: 10.5px;
+	letter-spacing: 0.06em;
+	color: var(--fg-3);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	min-width: 0;
 }
 .queue .hd .sum b {
-	color: var(--ink);
+	color: var(--fg);
 	font-weight: 500;
 }
 .queue .hd .sum sub {
@@ -24,8 +89,18 @@
 .queue .hd .sum .paused {
 	color: var(--warn);
 }
-.queue .hd {
-	min-width: 0;
+.qlist {
+	flex: 1;
+	overflow: auto;
+}
+.qempty {
+	padding: 22px;
+	text-align: center;
+	color: var(--fg-3);
+	font-size: 13px;
+}
+.qnote {
+	margin: 12px 20px;
 }
 
 .qtable {
@@ -34,42 +109,56 @@
 	border-collapse: separate;
 	border-spacing: 0;
 }
-.qtable thead,
 .qtable tbody {
 	display: block;
 }
-.qtable th,
+/* The column names stay for screen readers; the stacked rows label themselves. */
+.qtable thead {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
 .qtable td {
 	padding: 0;
 	min-width: 0;
 	text-align: left;
-	font-weight: inherit;
 }
 .q {
 	display: grid;
-	grid-template-columns: 22px minmax(0, 1.2fr) minmax(0, 1fr) 120px 110px 96px;
-	gap: 10px;
+	grid-template-columns: 18px minmax(0, 1fr) auto;
+	grid-template-areas:
+		"ico nm id"
+		". steps steps"
+		". prog sp";
+	gap: 8px 10px;
 	align-items: center;
-	padding: 6px 14px;
+	padding: 12px 20px;
 	border-bottom: 1px solid var(--line);
-	font-size: 12.5px;
+	font-size: 13px;
 }
-.q.h {
-	font-family: var(--mono);
-	font-size: 10.5px;
-	letter-spacing: 0.12em;
-	text-transform: uppercase;
-	color: var(--stone);
-	position: sticky;
-	top: 0;
-	z-index: 1;
-	background: var(--paper);
+.q > :nth-child(1) {
+	grid-area: ico;
 }
-.q.h .sp-h {
-	text-align: right;
+.q > :nth-child(2) {
+	grid-area: nm;
+}
+.q > :nth-child(3) {
+	grid-area: steps;
+}
+.q > :nth-child(4) {
+	grid-area: prog;
+}
+.q > :nth-child(5) {
+	grid-area: id;
+}
+.q > :nth-child(6) {
+	grid-area: sp;
 }
 .q .ico {
-	color: var(--stone);
+	color: var(--fg-3);
 	display: grid;
 	place-items: center;
 }
@@ -82,75 +171,83 @@
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
-/* Addition: why an item stopped, and the blob object Finish certifies. */
+/* Why an item stopped, and the blob object Finish certifies. */
 .q .nm .detail {
 	display: block;
-	margin-top: 2px;
+	margin-top: 4px;
 	font-size: 11.5px;
-	color: var(--warn);
+	color: var(--err);
 	white-space: normal;
 	overflow-wrap: anywhere;
 }
 .q .nm .detail code {
 	font-size: 11px;
 }
-/* Addition: a done item's Morse records. */
+.q.retrying .nm .detail {
+	color: var(--warn);
+}
+/* A done item's Morse records. */
 .q .nm .records {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 2px 10px;
-	margin-top: 2px;
+	margin-top: 4px;
 	font-size: 11.5px;
-	color: var(--stone);
+	color: var(--fg-3);
 }
 .q .steps {
 	display: flex;
 	gap: 4px;
 	align-items: center;
 	font-family: var(--mono);
-	font-size: 10.5px;
-	color: var(--stone);
+	font-size: 10px;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--fg-4);
 	white-space: nowrap;
 	overflow: hidden;
 }
 .q .steps span {
-	padding: 2px 6px;
+	padding: 2px 7px;
 	border-radius: 999px;
 	border: 1px solid var(--line);
 }
 .q .steps span.done {
-	background: var(--ok-bg);
-	border-color: var(--ok-line);
-	color: var(--ok);
+	border-color: var(--cyan-line);
+	color: var(--cyan);
 }
 .q .steps span.now {
-	background: var(--ultra-tint);
-	border-color: var(--ultra-tint-2);
-	color: var(--ultra);
+	background: var(--violet-tint);
+	border-color: var(--violet-line);
+	color: var(--violet);
 }
-.q .steps span.retrying,
-.q .steps span.failed {
-	background: var(--warn-bg);
+.q .steps span.retrying {
+	background: var(--warn-tint);
 	border-color: var(--warn-line);
 	color: var(--warn);
 }
+.q .steps span.failed {
+	background: var(--err-tint);
+	border-color: var(--err-line);
+	color: var(--err);
+}
 .q .prog {
 	display: block;
-	height: 6px;
+	height: 4px;
 	border-radius: 999px;
-	background: var(--line);
+	background: rgba(255, 255, 255, 0.1);
 	overflow: hidden;
 }
 .q .prog i {
 	display: block;
 	height: 100%;
-	background: var(--ultra);
+	background: var(--grad);
 }
 .q .prog.done i {
-	background: var(--ok);
+	background: var(--cyan);
 }
 .q .prog.err i {
-	background: var(--warn);
+	background: var(--err);
 }
 @media (prefers-reduced-motion: no-preference) {
 	.q .prog i {
@@ -160,33 +257,36 @@
 .q .id {
 	font-family: var(--mono);
 	font-size: 11.5px;
-	color: var(--body);
+	color: var(--fg-3);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	text-align: right;
 }
 .q .id a {
+	color: var(--cyan);
 	text-decoration: underline;
 	text-underline-offset: 2px;
 }
 .q .sp {
 	font-family: var(--mono);
 	font-variant-numeric: tabular-nums;
-	font-size: 11.5px;
-	color: var(--stone);
+	font-size: 10px;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--fg-3);
 	white-space: nowrap;
 	text-align: right;
 }
-/* Addition: Retry and Finish read as the design's "Retry now" link, as real buttons. */
+/* Retry, Finish and Sign read as the design's "Retry now", as real buttons. */
 .q .link {
 	border: 0;
 	padding: 4px 0;
 	background: transparent;
 	font: inherit;
-	font-family: var(--sans);
-	font-size: 12px;
-	font-weight: 600;
-	color: var(--ultra);
+	letter-spacing: inherit;
+	text-transform: inherit;
+	color: var(--cyan);
 	cursor: pointer;
 }
 .q .acts {
@@ -195,31 +295,5 @@
 	justify-content: flex-end;
 }
 .q .link.quiet {
-	color: var(--stone);
-	font-weight: 500;
-}
-.qnote {
-	margin: 10px 14px;
-}
-
-@media (max-width: 860px) {
-	/* As the design: phones show name and progress only. */
-	.q {
-		grid-template-columns: 22px minmax(0, 1fr) 90px;
-	}
-	.q .steps,
-	.q .id,
-	.q .sp,
-	.q.h .steps-h,
-	.q.h .id-h,
-	.q.h .sp-h {
-		display: none;
-	}
-	/* Fix: a stopped item keeps its Retry or Finish on phones, on a line of its own. */
-	.q.failed .sp,
-	.q.retrying .sp {
-		display: block;
-		grid-column: 2 / -1;
-		text-align: left;
-	}
+	color: var(--fg-3);
 }

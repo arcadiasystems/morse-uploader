@@ -1,5 +1,5 @@
 import type { BlobRow } from "@/blobs/blob-row";
-import type { ListItem } from "../blob-list/list-items";
+import type { ListItem } from "../files/list-items";
 
 /** What the drawer shows: a blob (a plain blob or a whole quilt), or one file in a quilt. */
 export type DrawerTarget =

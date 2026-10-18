@@ -90,10 +90,10 @@ export function AddProfileForm({
 				</p>
 			) : null}
 			<div className="row-acts">
-				<button className="btn btn-ink xs" type="submit" disabled={busy}>
+				<button className="btn solid sm" type="submit" disabled={busy}>
 					Save profile
 				</button>
-				<button className="btn btn-text xs" type="button" onClick={onDone}>
+				<button className="btn text sm" type="button" onClick={onDone}>
 					Cancel
 				</button>
 			</div>

@@ -50,9 +50,7 @@ export function ProfileList({
 							</span>
 							<span
 								className={
-									profile.network === "mainnet"
-										? "chip net mainnet"
-										: "chip net"
+									profile.network === "mainnet" ? "tag green" : "tag cyan"
 								}
 							>
 								<i aria-hidden="true" />

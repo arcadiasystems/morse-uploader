@@ -19,18 +19,19 @@ export interface DoneItem {
 	entryId: number | undefined;
 }
 
-/** Opens the sheet: with files, through the picker behind Upload; without, for the selection. */
+/**
+ * Opens the sheet. With files, through the picker behind Upload; without,
+ * it waits for the sheet a pick already opened (a folder set on the
+ * folder picker goes straight to the sheet).
+ */
 export async function openSheet(
 	page: Page,
 	files?: { name: string; mimeType: string; buffer: Buffer }[],
 ): Promise<Locator> {
 	if (files) {
-		await clearSelection(page);
 		const chooser = page.waitForEvent("filechooser");
 		await page.getByRole("button", { name: "Upload", exact: true }).click();
 		await (await chooser).setFiles(files);
-	} else {
-		await page.getByRole("button", { name: "Upload", exact: true }).click();
 	}
 	const sheet = page.getByRole("dialog", {
 		name: /Upload \d+ items? to Walrus/,
@@ -40,19 +41,18 @@ export async function openSheet(
 }
 
 /**
- * Clears the local pane's selection, so Upload opens the picker or takes
- * only new files. Phones have no local pane; there it has nothing to clear.
+ * Opens the transfers slide-over, unless it is open, from the rail's
+ * Transfers item: phones hide the top bar's pill while nothing is in flight.
  */
-export async function clearSelection(page: Page): Promise<void> {
-	const local = page.getByRole("region", { name: "This computer" });
-	if (!(await local.isVisible())) return;
-	const selectAll = local.getByRole("button", { name: "Select all" });
-	// With part of the list selected, select everything first: then Select none clears it all.
-	if ((await selectAll.isVisible()) && (await selectAll.isEnabled()))
-		await selectAll.click();
-	const selectNone = local.getByRole("button", { name: "Select none" });
-	if (await selectNone.isVisible()) await selectNone.click();
-	await expect(local.locator(".ft")).toContainText("Nothing selected");
+export async function openTransfers(page: Page): Promise<Locator> {
+	const panel = page.getByRole("dialog", { name: "Transfers" });
+	if (!(await panel.isVisible()))
+		await page
+			.getByRole("navigation", { name: "Views" })
+			.getByRole("button", { name: /^Transfers/ })
+			.click();
+	await expect(panel).toBeVisible();
+	return panel;
 }
 
 /** Sets the period to `epochs` and reads the WAL the sheet predicts, in FROST. */
@@ -107,7 +107,8 @@ export async function waitForDone(
 	page: Page,
 	names: readonly string[],
 ): Promise<DoneItem[]> {
-	await page.getByRole("tab", { name: /Done/ }).click();
+	const panel = await openTransfers(page);
+	await panel.getByRole("tab", { name: /Done/ }).click();
 	const items: DoneItem[] = [];
 	for (const name of names) {
 		const row = queueRow(page, name);
