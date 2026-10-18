@@ -10,8 +10,11 @@ const RELAY_TIMEOUT_MS = 600_000;
 
 export interface WriteClientOptions {
 	network: NetworkId;
-	/** The most tip the SDK may send to the relay, in MIST: `sendTip: { max }`. */
-	tipMaxMist: number;
+	/**
+	 * The most tip the SDK may send to the relay, in MIST: `sendTip: { max }`.
+	 * `null` when the relay asks no tip.
+	 */
+	tipMaxMist: number | null;
 	/** Used for relay requests, so an upload can report its progress. */
 	fetch?: typeof globalThis.fetch;
 }
@@ -34,7 +37,7 @@ export function createWriteClient({
 		suiClient: new SuiGrpcClient({ network, baseUrl: config.grpcUrl }),
 		uploadRelay: {
 			host: config.uploadRelayUrl,
-			sendTip: { max: tipMaxMist },
+			...(tipMaxMist === null ? {} : { sendTip: { max: tipMaxMist } }),
 			timeout: RELAY_TIMEOUT_MS,
 			...(fetch ? { fetch } : {}),
 		},

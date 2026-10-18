@@ -1,5 +1,5 @@
 import { useCurrentClient } from "@mysten/dapp-kit-react";
-import type { KeyboardEvent } from "react";
+import { type KeyboardEvent, useState } from "react";
 import { blobByObjectIdUrl, quiltPatchUrl } from "@/blobs/aggregator-urls";
 import { CONTENT_TYPE_ATTRIBUTE } from "@/blobs/blob-attributes";
 import type { BlobRecord } from "@/blobs/blob-record";
@@ -17,11 +17,13 @@ import { deleteBlocker } from "@/manage/delete-rules";
 import { mediaTypeOf } from "@/manage/preview-plan";
 import { embedSnippet, shareLinks } from "@/manage/share";
 import type { AutoExtend } from "@/manage/use-auto-extend";
+import { explorerTxUrl } from "@/network/explorer-urls";
 import type { NetworkConfig } from "@/network/networks";
 import type { WalletActions } from "@/wallet/use-wallet-actions";
 import { DeleteSection } from "./delete-section";
 import { type DrawerTarget, targetRow } from "./drawer-target";
 import { EncryptedSection } from "./encrypted-section";
+import { FinishSection } from "./finish-section";
 import { PreviewSection } from "./preview-section";
 import { PublishSection, type PublishSubject } from "./publish-section";
 import { RecordSection } from "./record-section";
@@ -60,6 +62,8 @@ export function BlobDrawer({
 	const client = useCurrentClient();
 	const row = targetRow(target);
 	const objectId = row.blob.objectId;
+	// Kept here: Finish's own section goes once the blob reads as certified.
+	const [certifiedBy, setCertifiedBy] = useState<string | null>(null);
 	// Refreshed after each change, so the last record stays on screen meanwhile.
 	const { read: live, refresh: readAgain } = useChainRead(
 		`${network.id}:live:${objectId}`,
@@ -158,6 +162,20 @@ export function BlobDrawer({
 				</button>
 			</div>
 
+			{certifiedBy ? (
+				<section className="sec" aria-label="Finish">
+					<p className="note ok" role="status">
+						Certified. Storage nodes hold it and aggregators can serve it.{" "}
+						<a
+							href={explorerTxUrl(network, certifiedBy)}
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							View transaction
+						</a>
+					</p>
+				</section>
+			) : null}
 			{live.status === "error" ? (
 				<section className="sec" aria-label="Record status">
 					<p className="note warn" role="alert">
@@ -178,7 +196,19 @@ export function BlobDrawer({
 				</section>
 			) : (
 				<>
-					{blob.isEncrypted && !patch ? (
+					{!certified && !expired && !patch ? (
+						<FinishSection
+							network={network}
+							blob={blob}
+							expiresAtMs={status.expiresAtMs}
+							nowMs={nowMs}
+							actions={context.actions}
+							onFinished={(digest) => {
+								setCertifiedBy(digest);
+								changed();
+							}}
+						/>
+					) : blob.isEncrypted && !patch ? (
 						<EncryptedSection
 							network={network}
 							blob={blob}
@@ -198,8 +228,8 @@ export function BlobDrawer({
 						<section className="sec" aria-label="Preview">
 							<div className="thumb">
 								<span className="msg">
-									Aggregators serve a blob's bytes only once it is certified and
-									until its storage ends.
+									Its storage has ended, so aggregators may no longer serve its
+									bytes.
 								</span>
 							</div>
 						</section>
