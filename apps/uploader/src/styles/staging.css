@@ -457,6 +457,15 @@ body:has(aside.insp) .tray {
 	color: var(--fg-4);
 }
 
+/* A selection's bulk bar centres in the room the tray leaves beside it
+   (the tray is 420px wide, 22px from the edge), and scrolls when short. */
+@media (min-width: 861px) {
+	body:has(.tray:not(.beside)) .bulk {
+		left: calc((var(--list-width) - 442px) / 2);
+		max-width: calc(var(--list-width) - 474px);
+	}
+}
+
 /* ---------- Phones: the drop field, the tray and notes above the tab bar ---------- */
 @media (max-width: 860px) {
 	.dropall {
