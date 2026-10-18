@@ -1,4 +1,8 @@
 /* App shell. Ported from design/uploader.css; additions are marked. */
+:root {
+	--side: 232px;
+	--queue: 220px;
+}
 .app {
 	position: relative;
 	display: grid;
@@ -14,7 +18,7 @@
 	gap: 14px;
 	padding: 0 14px;
 	border-bottom: 1px solid var(--line);
-	background: var(--paper);
+	background: var(--bg-2);
 	min-width: 0;
 }
 .topbar .sep {
@@ -30,7 +34,7 @@
 	border: 1px solid var(--line);
 	border-radius: 999px;
 	padding: 4px 10px 4px 5px;
-	background: var(--bone);
+	background: var(--panel);
 	font-size: 13px;
 	cursor: pointer;
 	min-width: 0;
@@ -47,18 +51,18 @@
 }
 .profile code {
 	font-size: 12px;
-	color: var(--stone);
+	color: var(--fg-3);
 }
 .profile .caret {
-	color: var(--stone);
+	color: var(--fg-3);
 	flex: 0 0 auto;
 }
 .av {
 	width: 22px;
 	height: 22px;
 	border-radius: 7px;
-	background: var(--ultra);
-	color: #fff;
+	background: var(--grad);
+	color: var(--bg);
 	display: grid;
 	place-items: center;
 	font-family: var(--disp);
@@ -68,9 +72,9 @@
 }
 /* Addition: the avatar before a wallet is connected. */
 .av.none {
-	background: var(--paper);
+	background: var(--bg-2);
 	border: 1px dashed var(--line-2);
-	color: var(--stone);
+	color: var(--fg-3);
 }
 .topbar .search {
 	display: flex;
@@ -80,8 +84,8 @@
 	border-radius: 999px;
 	padding: 0 12px;
 	height: 34px;
-	background: var(--bone);
-	color: var(--stone);
+	background: var(--panel);
+	color: var(--fg-3);
 	font-size: 13px;
 	flex: 1;
 	max-width: 420px;
@@ -94,10 +98,10 @@
 	padding: 0;
 	background: transparent;
 	font-size: 13px;
-	color: var(--ink);
+	color: var(--fg);
 }
 .topbar .search input::placeholder {
-	color: var(--stone);
+	color: var(--fg-3);
 	opacity: 1;
 }
 .topbar .search input:disabled {
@@ -107,7 +111,7 @@
 	outline: none;
 }
 .topbar .search:focus-within {
-	outline: 2px solid var(--ultra);
+	outline: 2px solid var(--cyan);
 	outline-offset: 2px;
 }
 .topbar .search .keys {
@@ -131,7 +135,7 @@
 	border-radius: 999px;
 	padding: 0 12px;
 	height: 34px;
-	background: var(--bone);
+	background: var(--panel);
 	cursor: pointer;
 	white-space: nowrap;
 }
@@ -140,10 +144,10 @@
 }
 .bal b {
 	font-weight: 500;
-	color: var(--ink);
+	color: var(--fg);
 }
 .bal > span {
-	color: var(--stone);
+	color: var(--fg-3);
 }
 .bal.low b {
 	color: var(--warn);
@@ -170,7 +174,7 @@
 }
 .side {
 	border-right: 1px solid var(--line);
-	background: var(--bone);
+	background: var(--panel);
 	padding: 14px 10px;
 	display: flex;
 	flex-direction: column;
@@ -182,7 +186,7 @@
 	font-size: 10.5px;
 	letter-spacing: 0.14em;
 	text-transform: uppercase;
-	color: var(--stone);
+	color: var(--fg-3);
 	font-weight: 500;
 	padding: 0 8px;
 	margin-bottom: 6px;
@@ -205,39 +209,39 @@
 	border-radius: 9px;
 	background: transparent;
 	font-size: 13.5px;
-	color: var(--body);
+	color: var(--fg-2);
 	text-align: left;
 	cursor: pointer;
 }
 .side .item:not([disabled]):hover {
-	background: rgba(255, 255, 255, 0.6);
+	background: var(--panel);
 }
 .side .item.on {
-	background: var(--paper);
-	color: var(--ink);
+	background: var(--bg-2);
+	color: var(--fg);
 	font-weight: 600;
 	box-shadow: 0 1px 0 var(--line);
 }
 .side .item svg {
 	width: 16px;
 	height: 16px;
-	color: var(--stone);
+	color: var(--fg-3);
 	flex: 0 0 auto;
 }
 .side .item.on svg {
-	color: var(--ultra);
+	color: var(--cyan);
 }
 .side .item .n {
 	margin-left: auto;
 	font-family: var(--mono);
 	font-variant-numeric: tabular-nums;
 	font-size: 11px;
-	color: var(--stone);
+	color: var(--fg-3);
 	font-weight: 400;
 }
 /* Addition: planned features, disabled and marked Coming. */
 .side .item.soon {
-	color: var(--stone);
+	color: var(--fg-3);
 	cursor: not-allowed;
 }
 .side .item .chip {
@@ -251,7 +255,7 @@
 	margin-top: auto;
 	border: 1px solid var(--line);
 	border-radius: 12px;
-	background: var(--paper);
+	background: var(--bg-2);
 	padding: 12px;
 }
 .storage b {
@@ -270,11 +274,11 @@
 	display: block;
 	height: 100%;
 	width: 0;
-	background: var(--ultra);
+	background: var(--cyan);
 }
 .storage small {
 	font-size: 11.5px;
-	color: var(--stone);
+	color: var(--fg-3);
 	display: block;
 }
 .storage small + small {
@@ -301,7 +305,7 @@
 	flex-direction: column;
 	min-height: 0;
 	min-width: 0;
-	background: var(--paper);
+	background: var(--bg-2);
 }
 .pane + .pane {
 	border-left: 1px solid var(--line);
@@ -343,13 +347,13 @@
 	gap: 6px;
 	font-family: var(--mono);
 	font-size: 12px;
-	color: var(--stone);
+	color: var(--fg-3);
 	min-width: 0;
 	overflow: hidden;
 	white-space: nowrap;
 }
 .pane .hd .crumb b {
-	color: var(--ink);
+	color: var(--fg);
 	font-weight: 500;
 }
 .pane .hd .acts {
@@ -364,7 +368,7 @@
 	padding: 8px 14px;
 	border-bottom: 1px solid var(--line);
 	align-items: center;
-	background: var(--bone);
+	background: var(--panel);
 }
 .pane .tools .sp {
 	flex: 1;
@@ -381,16 +385,16 @@
 }
 .pane .tools .view button {
 	border: 0;
-	background: var(--paper);
+	background: var(--bg-2);
 	width: 30px;
 	height: 28px;
-	color: var(--stone);
+	color: var(--fg-3);
 	display: grid;
 	place-items: center;
 }
 .pane .tools .view button.on {
-	background: var(--ink);
-	color: var(--bone);
+	background: var(--fg);
+	color: var(--panel);
 }
 .pane .tools .view button:disabled {
 	cursor: not-allowed;
@@ -406,7 +410,7 @@
 	border-radius: 14px;
 	padding: 26px;
 	text-align: center;
-	color: var(--stone);
+	color: var(--fg-3);
 	font-size: 13.5px;
 	display: flex;
 	flex-direction: column;
@@ -414,7 +418,7 @@
 	align-items: center;
 }
 .drop b {
-	color: var(--ink);
+	color: var(--fg);
 	font-family: var(--disp);
 	font-size: 16px;
 	display: inline-flex;
@@ -431,7 +435,7 @@
 	min-height: 100%;
 	padding: 32px 24px;
 	text-align: center;
-	color: var(--stone);
+	color: var(--fg-3);
 	font-size: 13.5px;
 }
 .empty .tile {
@@ -439,14 +443,14 @@
 	height: 44px;
 	border-radius: 12px;
 	border: 1px solid var(--line);
-	background: var(--bone);
-	color: var(--ultra);
+	background: var(--panel);
+	color: var(--cyan);
 	display: grid;
 	place-items: center;
 	margin-bottom: 4px;
 }
 .empty b {
-	color: var(--ink);
+	color: var(--fg);
 	font-family: var(--disp);
 	font-size: 16px;
 }
@@ -465,12 +469,12 @@
 	font-family: var(--mono);
 	font-variant-numeric: tabular-nums;
 	font-size: 11.5px;
-	color: var(--stone);
-	background: var(--bone);
+	color: var(--fg-3);
+	background: var(--panel);
 	white-space: nowrap;
 }
 .pane .ft b {
-	color: var(--ink);
+	color: var(--fg);
 	font-weight: 500;
 }
 .pane .ft .sp {
@@ -482,7 +486,7 @@
 .modal .problem,
 .qnote.problem {
 	color: var(--warn);
-	background: var(--warn-bg);
+	background: var(--warn-tint);
 	border: 1px solid var(--warn-line);
 	border-radius: 8px;
 	padding: 8px 10px;
@@ -492,7 +496,7 @@
 /* ---------- Transfer queue ---------- */
 .queue {
 	border-top: 1px solid var(--line);
-	background: var(--paper);
+	background: var(--bg-2);
 	display: flex;
 	flex-direction: column;
 	min-height: 0;
@@ -503,7 +507,7 @@
 	gap: 12px;
 	padding: 8px 14px;
 	border-bottom: 1px solid var(--line);
-	background: var(--bone);
+	background: var(--panel);
 }
 .queue .hd h3 {
 	font-family: var(--disp);
@@ -522,19 +526,19 @@
 	border: 0;
 	border-radius: 999px;
 	background: transparent;
-	color: var(--stone);
+	color: var(--fg-3);
 	cursor: pointer;
 }
 .queue .hd .tabs button.on {
-	background: var(--paper);
-	color: var(--ink);
+	background: var(--bg-2);
+	color: var(--fg);
 	font-weight: 600;
 }
 .queue .hd .sum {
 	margin-left: auto;
 	font-family: var(--mono);
 	font-size: 12px;
-	color: var(--stone);
+	color: var(--fg-3);
 }
 .queue .hd .pause {
 	margin-left: 10px;
@@ -546,7 +550,7 @@
 .qempty {
 	padding: 22px;
 	text-align: center;
-	color: var(--stone);
+	color: var(--fg-3);
 	font-size: 13px;
 }
 
@@ -625,4 +629,19 @@
 	.queue .hd .pause {
 		display: none;
 	}
+}
+
+/* The sidebar storage card's and the pane footer's Extend all links. */
+.storage .link,
+.pane .ft .link {
+	border: 0;
+	background: transparent;
+	padding: 0;
+	font: inherit;
+	color: var(--cyan);
+	font-weight: 600;
+	cursor: pointer;
+	text-align: left;
+	text-decoration: underline;
+	text-underline-offset: 2px;
 }

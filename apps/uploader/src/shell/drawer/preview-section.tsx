@@ -53,7 +53,7 @@ function PreviewActions({ source }: { source: PreviewSource }) {
 		<>
 			<div className="acts">
 				<button
-					className="btn btn-ink xs"
+					className="btn solid sm"
 					type="button"
 					disabled={download.kind === "saving"}
 					onClick={onDownload}
@@ -61,14 +61,14 @@ function PreviewActions({ source }: { source: PreviewSource }) {
 					{download.kind === "saving" ? "Downloading…" : "Download"}
 				</button>
 				<button
-					className="btn btn-soft xs"
+					className="btn sm"
 					type="button"
 					onClick={() => copy(source.url)}
 				>
 					{copyState === "copied" ? "Link copied" : "Copy link"}
 				</button>
 				<a
-					className="btn btn-soft xs"
+					className="btn sm"
 					href={source.url}
 					target="_blank"
 					rel="noopener noreferrer"

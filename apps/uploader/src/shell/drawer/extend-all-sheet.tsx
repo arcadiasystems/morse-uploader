@@ -322,7 +322,7 @@ export function ExtendAllSheet({
 					) : null}
 					<div className="acts">
 						<button
-							className="btn btn-ultra"
+							className="btn primary"
 							type="button"
 							disabled={
 								count === 0 ||
@@ -338,7 +338,7 @@ export function ExtendAllSheet({
 								? "Confirm in your wallet…"
 								: `Extend ${count === 1 ? "1 blob" : `${count} blobs`} · sign once`}
 						</button>
-						<button className="btn btn-soft" type="button" onClick={onClose}>
+						<button className="btn" type="button" onClick={onClose}>
 							{signing.kind === "done" ? "Close" : "Cancel"}
 						</button>
 					</div>

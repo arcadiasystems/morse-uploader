@@ -1,14 +1,13 @@
-/* The blob drawer. Ported from design/uploader.css; additions are marked. */
+/* The blob drawer, drawn as the design's inspector glass until R2 builds the inspector. */
 .drawer {
-	/* Fixed instead of the design's absolute: same box, and the drawer can live in the Walrus pane. */
 	position: fixed;
 	right: 0;
 	top: var(--bar);
 	bottom: 0;
-	width: 380px;
-	background: var(--paper);
+	width: var(--insp);
+	background: var(--glass);
+	backdrop-filter: blur(16px);
 	border-left: 1px solid var(--line);
-	box-shadow: -20px 0 50px rgba(18, 20, 24, 0.08);
 	display: flex;
 	flex-direction: column;
 	overflow: auto;
@@ -20,47 +19,52 @@
 	flex: 0 0 auto;
 }
 .drawer .hd {
-	padding: 16px 18px;
+	padding: 18px 20px;
 	border-bottom: 1px solid var(--line);
 	display: flex;
 	gap: 12px;
 	align-items: flex-start;
 }
 .drawer .hd .ico {
-	width: 40px;
-	height: 40px;
-	border-radius: 10px;
-	background: var(--bone);
+	width: 42px;
+	height: 42px;
+	border-radius: 12px;
+	background: var(--panel-2);
 	display: grid;
 	place-items: center;
-	color: var(--ultra);
+	color: var(--fg-3);
 	flex: 0 0 auto;
 }
+.drawer .hd .ico.dir {
+	color: var(--violet);
+}
 .drawer .hd .ico.enc {
-	color: var(--ink);
+	color: var(--pink);
 }
 .drawer .hd > div {
 	min-width: 0;
 }
 .drawer .hd h3 {
 	font-family: var(--disp);
-	font-size: 17px;
-	font-weight: 800;
+	font-size: 16px;
+	font-weight: 700;
 	letter-spacing: -0.02em;
 	word-break: break-all;
 }
 .drawer .hd small {
 	font-family: var(--mono);
-	font-size: 11.5px;
-	color: var(--stone);
+	font-size: 10.5px;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--fg-3);
 	display: block;
-	margin-top: 2px;
+	margin-top: 4px;
 }
 .drawer .hd .x {
 	margin-left: auto;
 	border: 0;
 	background: transparent;
-	color: var(--stone);
+	color: var(--fg-3);
 	cursor: pointer;
 	width: 28px;
 	height: 28px;
@@ -70,11 +74,11 @@
 	flex: 0 0 auto;
 }
 .drawer .hd .x:hover {
-	color: var(--ink);
-	background: var(--bone);
+	color: var(--fg);
+	background: var(--panel);
 }
 .drawer .sec {
-	padding: 14px 18px;
+	padding: 14px 20px;
 	border-bottom: 1px solid var(--line);
 	display: flex;
 	flex-direction: column;
@@ -86,41 +90,44 @@
 }
 .drawer .sec h4 {
 	font-family: var(--mono);
-	font-size: 10.5px;
-	letter-spacing: 0.14em;
+	font-size: 10px;
+	letter-spacing: 0.16em;
 	text-transform: uppercase;
-	color: var(--stone);
+	color: var(--fg-4);
 	font-weight: 500;
 }
 .drawer dl {
 	display: grid;
 	grid-template-columns: auto minmax(0, 1fr);
 	gap: 7px 12px;
-	font-size: 12.5px;
+	font-size: 12px;
 }
 .drawer dt {
-	color: var(--stone);
+	color: var(--fg-3);
 }
 .drawer dd {
 	font-family: var(--mono);
-	font-size: 12px;
-	/* Fix: the design's break-all splits words; ids still wrap anywhere. */
+	font-size: 11.5px;
+	color: var(--fg-2);
+	/* Ids wrap anywhere; words wrap at their boundaries. */
 	overflow-wrap: anywhere;
 }
 .drawer dd a {
+	color: var(--cyan);
 	text-decoration: underline;
 	text-underline-offset: 2px;
 }
 .drawer dd .cp {
-	font-family: var(--sans);
+	font-family: var(--mono);
 	font-size: 11px;
-	color: var(--ultra);
-	font-weight: 600;
+	color: var(--cyan);
 	margin-left: 6px;
 	cursor: pointer;
 	border: 0;
 	background: transparent;
 	padding: 0;
+	text-decoration: underline;
+	text-underline-offset: 2px;
 }
 .drawer .acts {
 	display: flex;
@@ -131,36 +138,39 @@
 	display: flex;
 	gap: 10px;
 	align-items: center;
-	background: var(--ok-bg);
+	background: var(--ok-tint);
 	border: 1px solid var(--ok-line);
 	border-radius: 10px;
 	padding: 10px 12px;
-	font-size: 12.5px;
-	color: #0b4d3a;
+	font-size: 12px;
+	color: var(--fg-2);
 }
 .drawer .ver i {
 	width: 8px;
 	height: 8px;
 	border-radius: 50%;
 	background: var(--ok);
+	box-shadow: 0 0 10px var(--ok);
 	flex: 0 0 auto;
 }
-/* Addition: a failed check and a note in the same box, in amber. */
+/* A failed check and a note in the same box, in amber. */
 .drawer .ver.warn {
-	background: var(--warn-bg);
+	background: var(--warn-tint);
 	border-color: var(--warn-line);
 	color: var(--warn);
 }
 .drawer .ver.warn i {
 	background: var(--warn);
+	box-shadow: 0 0 10px var(--warn);
 }
 .drawer .ver.wait {
-	background: var(--bone);
+	background: var(--panel);
 	border-color: var(--line);
-	color: var(--body);
+	color: var(--fg-2);
 }
 .drawer .ver.wait i {
-	background: var(--line-2);
+	background: var(--fg-4);
+	box-shadow: none;
 }
 .drawer .exp {
 	display: flex;
@@ -170,13 +180,13 @@
 .drawer .exp .bar {
 	height: 6px;
 	border-radius: 999px;
-	background: var(--line);
+	background: rgba(255, 255, 255, 0.1);
 	overflow: hidden;
 }
 .drawer .exp .bar i {
 	display: block;
 	height: 100%;
-	background: var(--ok);
+	background: var(--grad);
 }
 .drawer .exp .bar.warn i {
 	background: var(--warn);
@@ -184,23 +194,23 @@
 .drawer .exp small,
 .drawer .hint {
 	font-size: 12px;
-	color: var(--stone);
+	color: var(--fg-3);
 }
 .drawer .thumb {
 	border: 1px solid var(--line);
 	border-radius: 10px;
-	background: var(--bone);
+	background: var(--panel);
 	min-height: 120px;
 	display: grid;
 	place-items: center;
-	color: var(--stone);
+	color: var(--fg-3);
 	font-family: var(--mono);
 	font-size: 12px;
 	overflow: hidden;
 	text-align: center;
 	padding: 0;
 }
-/* Addition: the real preview inside the design's thumb. */
+/* The real preview inside the thumb. */
 .drawer .thumb img {
 	display: block;
 	max-width: 100%;
@@ -216,11 +226,11 @@
 	font-family: var(--mono);
 	font-size: 11.5px;
 	line-height: 1.5;
-	color: var(--ink);
+	color: var(--fg-2);
 	text-align: left;
 	white-space: pre-wrap;
 	overflow-wrap: anywhere;
-	background: var(--paper);
+	background: var(--bg-2);
 }
 .drawer .thumb .msg {
 	padding: 16px;
@@ -232,7 +242,8 @@
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
-	font-size: 12.5px;
+	font-size: 12px;
+	color: var(--fg-2);
 }
 .drawer .pub select,
 .drawer .pub input[type="text"],
@@ -240,35 +251,36 @@
 	width: 100%;
 	border: 1px solid var(--line-2);
 	border-radius: 8px;
-	padding: 7px 10px;
-	background: var(--paper);
+	padding: 8px 10px;
+	background: var(--panel);
+	color: var(--fg);
 	font-size: 13px;
 }
 .drawer .danger {
-	color: var(--warn);
+	color: var(--err);
 }
 
-/* ---------- Additions ---------- */
 /* A short note under an action: why it is off, or what happened. */
 .drawer .note {
 	font-size: 12px;
-	color: var(--stone);
+	color: var(--fg-3);
 }
 .drawer .note.warn {
 	color: var(--warn);
-	background: var(--warn-bg);
+	background: var(--warn-tint);
 	border: 1px solid var(--warn-line);
 	border-radius: 10px;
 	padding: 8px 10px;
 }
 .drawer .note.ok {
-	color: #0b4d3a;
-	background: var(--ok-bg);
+	color: var(--fg-2);
+	background: var(--ok-tint);
 	border: 1px solid var(--ok-line);
 	border-radius: 10px;
 	padding: 8px 10px;
 }
 .drawer .note a {
+	color: var(--cyan);
 	text-decoration: underline;
 	text-underline-offset: 2px;
 }
@@ -279,15 +291,15 @@
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
-	background: var(--bone);
+	background: var(--panel);
 }
 .drawer .panel.danger-zone {
-	border-color: var(--warn-line);
-	background: var(--warn-bg);
+	border-color: var(--err-line);
+	background: var(--err-tint);
 }
 .drawer .panel p {
 	font-size: 12.5px;
-	color: var(--body);
+	color: var(--fg-2);
 }
 .drawer .stepper {
 	display: flex;
@@ -295,13 +307,14 @@
 	gap: 6px;
 	flex-wrap: wrap;
 	font-size: 12.5px;
+	color: var(--fg-2);
 }
 .drawer .stepper input {
 	width: 64px;
 	border: 1px solid var(--line-2);
 	border-radius: 8px;
 	padding: 4px 8px;
-	background: var(--paper);
+	background: var(--bg-2);
 	font-family: var(--mono);
 	font-variant-numeric: tabular-nums;
 	font-size: 12.5px;
@@ -323,7 +336,7 @@
 }
 .drawer .copy-field > label {
 	font-size: 12px;
-	color: var(--stone);
+	color: var(--fg-3);
 }
 .drawer .copy-field .line {
 	display: flex;
@@ -337,10 +350,10 @@
 	border: 1px solid var(--line);
 	border-radius: 8px;
 	padding: 5px 8px;
-	background: var(--bone);
+	background: var(--bg-2);
 	font-family: var(--mono);
 	font-size: 11.5px;
-	color: var(--ink);
+	color: var(--fg-2);
 	resize: none;
 }
 .drawer .members {
@@ -352,51 +365,32 @@
 	gap: 4px;
 	font-family: var(--mono);
 	font-size: 12px;
+	color: var(--fg-2);
 }
 .drawer .lock {
 	display: flex;
 	gap: 10px;
 	align-items: flex-start;
 	font-size: 12.5px;
-	color: var(--body);
+	color: var(--fg-2);
 }
 .drawer .lock svg {
 	flex: 0 0 auto;
-	color: var(--ink);
+	color: var(--pink);
 	margin-top: 1px;
 }
 .drawer input[type="file"] {
 	font-size: 12px;
 	max-width: 100%;
 }
-
-/* The sidebar storage card's Extend all link. */
-.storage .link {
-	border: 0;
-	background: transparent;
-	padding: 0;
-	font-size: 12px;
-	color: var(--ultra);
-	font-weight: 600;
-	cursor: pointer;
-	text-align: left;
-	line-height: 1.35;
+.drawer sub {
+	font-size: 0.75em;
+	line-height: 0;
+	vertical-align: -0.25em;
 }
 
-/* The Walrus pane footer's Extend all link for blobs expiring soon. */
-.pane .ft .link {
-	border: 0;
-	background: transparent;
-	padding: 0;
-	font: inherit;
-	color: var(--ultra);
-	font-weight: 600;
-	cursor: pointer;
-	text-decoration: underline;
-	text-underline-offset: 2px;
-}
 @media (max-width: 860px) {
-	/* The design's 390 render: a full-width sheet under the top bar. */
+	/* A full-width sheet under the top bar on phones. */
 	.drawer {
 		width: 100%;
 		border-left: 0;

@@ -126,7 +126,7 @@ export function ListRow({
 							Could not read this quilt's patches: {errorMessage(item.error)}
 						</span>
 						<button
-							className="btn btn-soft xs"
+							className="btn sm"
 							type="button"
 							onClick={() => onRetryPatches(item.quilt.blob.blobId)}
 						>
@@ -269,15 +269,15 @@ function ExpiryCell({
 const CHIPS: Readonly<
 	Record<BlobStatusKind, { className: string; title: string }>
 > = {
-	certified: { className: "chip ok", title: "Certified" },
-	encrypted: { className: "chip ink", title: "Encrypted with Seal" },
-	expiring: { className: "chip warn", title: "Paid storage ends soon" },
+	certified: { className: "tag cyan", title: "Certified" },
+	encrypted: { className: "tag violet", title: "Encrypted with Seal" },
+	expiring: { className: "tag amber", title: "Paid storage ends soon" },
 	registered: {
-		className: "chip ultra",
+		className: "tag violet",
 		title: "Registered but never certified: the bytes are not confirmed stored",
 	},
 	expired: {
-		className: "chip soon",
+		className: "tag red",
 		title:
 			"Paid storage has ended. The Blob object stays in your wallet as its record on Sui",
 	},

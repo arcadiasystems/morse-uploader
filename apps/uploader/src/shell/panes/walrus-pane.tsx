@@ -157,7 +157,7 @@ export function WalrusPane({
 				icon="wallet"
 				title="Connect a wallet"
 				action={
-					<button className="btn btn-ink" type="button" onClick={onConnect}>
+					<button className="btn solid" type="button" onClick={onConnect}>
 						Connect wallet
 					</button>
 				}
@@ -172,7 +172,7 @@ export function WalrusPane({
 				icon="alert"
 				title="Could not read your blobs"
 				action={
-					<button className="btn btn-ink" type="button" onClick={refresh}>
+					<button className="btn solid" type="button" onClick={refresh}>
 						Try again
 					</button>
 				}
@@ -226,7 +226,7 @@ export function WalrusPane({
 				</span>
 				<div className="acts">
 					<button
-						className="btn btn-soft xs"
+						className="btn sm"
 						type="button"
 						disabled={address === null || listing.status === "loading"}
 						aria-busy={busy}
@@ -291,7 +291,7 @@ function NothingListed({
 				icon="search"
 				title={`No blobs match “${query}”`}
 				action={
-					<button className="btn btn-soft" type="button" onClick={onClearQuery}>
+					<button className="btn" type="button" onClick={onClearQuery}>
 						Clear search
 					</button>
 				}

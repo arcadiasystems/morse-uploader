@@ -185,7 +185,7 @@ function AttachForm({
 						<span className="note warn">{nameProblem}</span>
 					) : null}
 					<button
-						className="btn btn-ultra xs"
+						className="btn primary sm"
 						type="button"
 						style={{ alignSelf: "flex-start" }}
 						disabled={

@@ -119,7 +119,7 @@ export function ProfileMenu({ popover }: { popover: Popover }) {
 						) : null}
 						{session && !adding ? (
 							<button
-								className="btn btn-text xs add"
+								className="btn text sm add"
 								type="button"
 								onClick={() => setAdding(true)}
 							>

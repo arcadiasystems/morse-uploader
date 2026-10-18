@@ -140,7 +140,7 @@ export function VerifySection({
 			{reason.kind === "ok" ? (
 				<div className="acts">
 					<button
-						className="btn btn-soft xs"
+						className="btn sm"
 						type="button"
 						disabled={running}
 						aria-busy={running}

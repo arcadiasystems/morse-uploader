@@ -5,7 +5,7 @@ export function NetworkChip({ network }: { network: NetworkConfig }) {
 	return (
 		<span
 			className={
-				network.id === "mainnet" ? "chip net mainnet hidem" : "chip net hidem"
+				network.id === "mainnet" ? "tag green hidem" : "tag cyan hidem"
 			}
 		>
 			<i aria-hidden="true" />

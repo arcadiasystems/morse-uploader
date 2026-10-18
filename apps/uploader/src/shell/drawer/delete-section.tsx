@@ -60,7 +60,7 @@ export function DeleteSection({
 			{reason !== null || actions === null ? (
 				<>
 					<div className="acts">
-						<button className="btn btn-text xs danger" type="button" disabled>
+						<button className="btn text sm danger" type="button" disabled>
 							{label}
 						</button>
 					</div>
@@ -83,7 +83,7 @@ export function DeleteSection({
 				<div className="acts">
 					<button
 						ref={opener}
-						className="btn btn-text xs danger"
+						className="btn text sm danger"
 						type="button"
 						onClick={() => setOpen(true)}
 					>
@@ -196,7 +196,7 @@ function ConfirmDelete({
 			</p>
 			<div className="acts">
 				<button
-					className="btn btn-ink xs"
+					className="btn solid sm"
 					type="button"
 					disabled={simulation.status !== "ready" || signing.kind === "signing"}
 					aria-busy={signing.kind === "signing"}
@@ -206,12 +206,7 @@ function ConfirmDelete({
 						? "Confirm in your wallet…"
 						: "Delete for good · 1 tx"}
 				</button>
-				<button
-					ref={keep}
-					className="btn btn-soft xs"
-					type="button"
-					onClick={onCancel}
-				>
+				<button ref={keep} className="btn sm" type="button" onClick={onCancel}>
 					Keep it
 				</button>
 			</div>

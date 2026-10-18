@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-/** The Morse Uploader wordmark, linking home. */
+/** The Trace mark and the Morse Uploader wordmark, linking home. */
 export function Brand() {
 	return (
 		<Link className="brand" href="/" aria-label="Morse Uploader home">
@@ -15,8 +15,7 @@ export function Brand() {
 				/>
 			</svg>
 			<span className="wm" aria-hidden="true">
-				<span>morse</span>
-				<em>uploader</em>
+				morse <em>uploader</em>
 			</span>
 		</Link>
 	);

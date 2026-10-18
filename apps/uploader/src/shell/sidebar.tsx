@@ -176,7 +176,7 @@ function ComingItem({ icon, label }: { icon: IconName; label: string }) {
 			<button type="button" className="item soon" disabled>
 				<Icon name={icon} />
 				{label}
-				<span className="chip soon">Coming</span>
+				<span className="tag soon">Coming</span>
 			</button>
 		</li>
 	);

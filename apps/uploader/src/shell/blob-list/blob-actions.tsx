@@ -32,7 +32,7 @@ export function BlobActions({
 		<>
 			{row && isDownloadable(row) ? (
 				<a
-					className="btn btn-ghost xs"
+					className="btn sm"
 					href={blobByObjectIdUrl(network.aggregatorUrl, row.blob.objectId)}
 					target="_blank"
 					rel="noopener noreferrer"
@@ -40,7 +40,7 @@ export function BlobActions({
 					Download
 				</a>
 			) : (
-				<button className="btn btn-ghost xs" type="button" disabled>
+				<button className="btn sm" type="button" disabled>
 					Download
 				</button>
 			)}
@@ -51,7 +51,7 @@ export function BlobActions({
 			{DRAWER_ACTIONS.map((action) => (
 				<button
 					key={action.section}
-					className="btn btn-ghost xs"
+					className="btn sm"
 					type="button"
 					disabled={selected === null}
 					onClick={() => onOpen(action.section)}
@@ -79,7 +79,7 @@ function CopyBlobIdButton({ blobId }: { blobId: string | null }) {
 	return (
 		<>
 			<button
-				className="btn btn-ghost xs"
+				className="btn sm"
 				type="button"
 				disabled={blobId === null}
 				onClick={() => {

@@ -1,31 +1,50 @@
-/* Morse Uploader. Bone and Ultramarine, app density. Ported from design/uploader.css. */
+/* Morse Uploader, concept A "dark room". Tokens ported from design/v2/dark.css. */
 :root {
-	--bone: #f2efe8;
-	--paper: #ffffff;
-	--ink: #121418;
-	--ink-2: #1b1d24;
-	--ink-line: #2a2c33;
-	--ultra: #2b3be0;
-	--ultra-lift: #7d8bff;
-	--ultra-tint: #eef0ff;
-	--ultra-tint-2: #dce0ff;
-	--stone: #5f6168;
-	--body: #45474e;
-	--line: #dad6cc;
-	--line-2: #bdb8ac;
-	--warn: #8a5a00;
-	--warn-bg: #fff6e0;
-	--warn-line: #f0d48a;
-	--ok: #0f7a5c;
-	--ok-bg: #eaf6f0;
-	--ok-line: #a9dcc5;
+	color-scheme: dark;
+	--bg: #07080b;
+	--bg-2: #0c0d12;
+	/* Glass: white at 4 to 8 percent over the field, with hairline borders. */
+	--panel: rgba(255, 255, 255, 0.045);
+	--panel-2: rgba(255, 255, 255, 0.08);
+	--line: rgba(255, 255, 255, 0.09);
+	--line-2: rgba(255, 255, 255, 0.16);
+	--line-3: rgba(255, 255, 255, 0.4);
+	--fg: #f4f2ec;
+	--fg-2: #c9cbd2;
+	--fg-3: #8a8d97;
+	--fg-4: #5c5f69;
+	/* Status: cyan certified, violet encrypted or in progress, amber expiring,
+	   red failed or expired, green verified. */
+	--cyan: #7df3e8;
+	--violet: #b388ff;
+	--pink: #f6a8e6;
+	--warn: #f0c66a;
+	--ok: #7df3a3;
+	--err: #ff8a8a;
+	--cyan-line: rgba(125, 243, 232, 0.3);
+	--cyan-tint: rgba(125, 243, 232, 0.08);
+	--violet-line: rgba(179, 136, 255, 0.4);
+	--violet-tint: rgba(179, 136, 255, 0.08);
+	--warn-line: rgba(240, 198, 106, 0.35);
+	--warn-tint: rgba(240, 198, 106, 0.07);
+	--ok-line: rgba(125, 243, 163, 0.3);
+	--ok-tint: rgba(125, 243, 163, 0.06);
+	--err-line: rgba(255, 138, 138, 0.35);
+	--err-tint: rgba(255, 138, 138, 0.07);
+	/* The violet-to-cyan refraction, only for the primary action and progress. */
+	--grad: linear-gradient(90deg, #b388ff, #7df3e8 60%, #f6a8e6);
+	/* Floating surfaces: the inspector, sheets, popovers and slide-overs. */
+	--glass: rgba(12, 13, 18, 0.7);
+	--glass-strong: rgba(12, 13, 18, 0.94);
+	--shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
 	/* The font families come from next/font in the root layout. */
 	--disp: var(--font-display), system-ui, sans-serif;
 	--sans: var(--font-sans), system-ui, sans-serif;
 	--mono: var(--font-mono), ui-monospace, SFMono-Regular, monospace;
-	--side: 232px;
-	--queue: 220px;
-	--bar: 52px;
+	--rail: 64px;
+	--insp: 360px;
+	--bar: 56px;
+	--tabbar: 60px;
 	--ease: cubic-bezier(0.2, 0, 0, 1);
 }
 * {
@@ -37,10 +56,10 @@ body {
 }
 body {
 	margin: 0;
-	background: var(--bone);
-	color: var(--ink);
+	background: var(--bg);
+	color: var(--fg);
 	font-family: var(--sans);
-	font-size: 14px;
+	font-size: 13.5px;
 	line-height: 1.45;
 	-webkit-font-smoothing: antialiased;
 }
@@ -61,7 +80,8 @@ dd {
 }
 button,
 input,
-select {
+select,
+textarea {
 	font: inherit;
 	color: inherit;
 }
@@ -72,17 +92,38 @@ kbd {
 svg {
 	display: block;
 }
+/* Numbers line up in columns wherever they are set in mono. */
 .mono {
 	font-family: var(--mono);
 	font-variant-numeric: tabular-nums;
 }
 .muted {
-	color: var(--stone);
+	color: var(--fg-3);
+}
+/* The design's mono uppercase label. */
+.label {
+	font-family: var(--mono);
+	font-size: 10px;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--fg-4);
+	font-weight: 500;
+}
+/* A label with the design's `//` prefix, for eyebrows. The prefix is not read out. */
+.eyebrow {
+	font-family: var(--mono);
+	font-size: 11px;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--cyan);
+}
+.eyebrow::before {
+	content: "//\00a0" / "";
 }
 
 /* Keyboard focus is always visible; pointer clicks do not draw the ring. */
 :focus-visible {
-	outline: 2px solid var(--ultra);
+	outline: 2px solid var(--cyan);
 	outline-offset: 2px;
 }
 .sr-only {
@@ -97,129 +138,164 @@ svg {
 	border: 0;
 }
 
+/* Background glows behind the glass, as the design places them. */
+.glow {
+	position: fixed;
+	border-radius: 50%;
+	filter: blur(110px);
+	opacity: 0.42;
+	pointer-events: none;
+	z-index: 0;
+}
+.glow.violet {
+	width: 640px;
+	height: 480px;
+	left: -200px;
+	top: -120px;
+	background: #5b3fd8;
+}
+.glow.teal {
+	width: 560px;
+	height: 480px;
+	right: -160px;
+	bottom: -200px;
+	background: #1ba79b;
+}
+
+/* ---------- Buttons: outline by default, as the design's `.btn` ---------- */
 .btn {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	gap: 8px;
 	border-radius: 999px;
-	font-weight: 600;
-	font-size: 13.5px;
+	border: 1px solid var(--line-2);
+	background: transparent;
+	color: var(--fg);
+	font-family: var(--mono);
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
 	min-height: 36px;
-	padding: 0 14px;
-	border: 0;
+	padding: 0 16px;
 	cursor: pointer;
-	font-family: var(--sans);
 	white-space: nowrap;
 }
-.btn-ultra {
-	background: var(--ultra);
-	color: #fff;
+.btn:not([disabled]):hover {
+	border-color: var(--line-3);
 }
-.btn-ink {
-	background: var(--ink);
-	color: var(--bone);
+/* Filled bone, for the strongest secondary action (Download). */
+.btn.solid {
+	background: var(--fg);
+	color: var(--bg);
+	border-color: var(--fg);
 }
-.btn-soft {
-	background: var(--paper);
-	border: 1px solid var(--line);
-	color: var(--ink);
+/* The gradient: the one primary action of a surface. */
+.btn.primary {
+	background: var(--grad);
+	color: var(--bg);
+	border-color: transparent;
+	font-weight: 600;
 }
-.btn-ghost {
-	background: transparent;
-	border: 1px solid var(--line-2);
-	color: var(--ink);
+.btn.primary:not([disabled]):hover {
+	border-color: transparent;
+	filter: brightness(1.08);
 }
-.btn-text {
-	background: transparent;
-	color: var(--ink);
+/* A borderless action inside running text or a dense row. */
+.btn.text {
+	border-color: transparent;
 	padding: 0 8px;
+	color: var(--fg-2);
+}
+.btn.text:not([disabled]):hover {
+	border-color: transparent;
+	color: var(--fg);
+}
+.btn.danger {
+	color: var(--err);
+}
+.btn.sm {
+	min-height: 30px;
+	padding: 0 12px;
+	font-size: 10.5px;
 }
 .btn.lg {
 	min-height: 48px;
-	font-size: 15px;
-	padding: 0 22px;
-}
-.btn.xs {
-	min-height: 28px;
-	font-size: 12.5px;
-	padding: 0 10px;
+	padding: 0 24px;
+	font-size: 12px;
 }
 .btn[disabled] {
-	opacity: 0.45;
+	opacity: 0.4;
 	cursor: not-allowed;
 }
-.btn-soft:not([disabled]):hover,
-.btn-ghost:not([disabled]):hover {
-	border-color: var(--ink);
-}
-.btn-ultra:not([disabled]):hover {
-	background: #2230c4;
-}
 
-.chip {
+/* ---------- Tags: the design's status pills ---------- */
+.tag {
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
 	font-family: var(--mono);
-	font-size: 10.5px;
-	letter-spacing: 0.12em;
+	font-size: 10px;
+	letter-spacing: 0.14em;
 	text-transform: uppercase;
-	border-radius: 999px;
 	padding: 4px 8px;
+	border-radius: 999px;
+	border: 1px solid var(--line);
+	color: var(--fg-2);
 	white-space: nowrap;
 }
-.chip i {
+.tag i {
 	width: 6px;
 	height: 6px;
 	border-radius: 50%;
 	background: currentColor;
+	box-shadow: 0 0 8px currentColor;
 }
-.chip.net {
-	border: 1px solid var(--line-2);
-	background: var(--paper);
-	color: var(--body);
-}
-.chip.net b {
-	color: var(--ultra);
-	font-weight: 500;
-}
-.chip.net i {
-	background: var(--ultra);
-}
-.chip.net.mainnet b {
+.tag.green {
 	color: var(--ok);
+	border-color: var(--ok-line);
 }
-.chip.net.mainnet i {
-	background: var(--ok);
+.tag.cyan {
+	color: var(--cyan);
+	border-color: var(--cyan-line);
 }
-.chip.soon {
-	border: 1px dashed var(--line-2);
-	color: var(--stone);
+.tag.violet {
+	color: var(--violet);
+	border-color: var(--violet-line);
 }
-.chip.ok {
-	background: var(--ok-bg);
-	color: var(--ok);
-}
-.chip.warn {
-	background: var(--warn-bg);
+.tag.amber {
 	color: var(--warn);
+	border-color: var(--warn-line);
 }
-.chip.ultra {
-	background: var(--ultra-tint);
-	color: var(--ultra);
+.tag.red {
+	color: var(--err);
+	border-color: var(--err-line);
 }
-.chip.ink {
-	background: var(--ink);
-	color: var(--bone);
+.tag.dim {
+	color: var(--fg-4);
+}
+/* A feature that is planned but not built. */
+.tag.soon {
+	border-style: dashed;
+	color: var(--fg-3);
 }
 kbd {
-	font-size: 11px;
+	font-size: 10.5px;
 	border: 1px solid var(--line-2);
 	border-radius: 5px;
-	padding: 1px 5px;
-	background: var(--paper);
-	color: var(--stone);
+	padding: 1px 6px;
+	color: var(--fg-3);
+}
+
+/* A problem stated where it happens: a pick, a sheet, a menu, the queue. */
+.problem {
+	color: var(--warn);
+	background: var(--warn-tint);
+	border: 1px solid var(--warn-line);
+	border-radius: 10px;
+	padding: 8px 10px;
+	font-size: 12.5px;
 }
 
 /* Motion is opt-in: only viewers who have not asked for reduced motion get transitions. */
@@ -227,30 +303,31 @@ kbd {
 	.btn {
 		transition:
 			background-color 120ms var(--ease),
-			border-color 120ms var(--ease);
+			border-color 120ms var(--ease),
+			color 120ms var(--ease),
+			filter 120ms var(--ease);
 	}
 }
 
+/* ---------- The Trace mark ---------- */
 .brand {
 	display: inline-flex;
 	align-items: center;
-	gap: 8px;
+	gap: 10px;
 	font-family: var(--disp);
-	font-weight: 800;
+	font-weight: 700;
 	border-radius: 8px;
+	color: var(--fg);
 }
 .brand svg {
 	width: 26px;
 	height: 26px;
 }
 .brand .wm {
-	display: flex;
-	flex-direction: column;
-	line-height: 0.92;
-	letter-spacing: -0.035em;
-	font-size: 13.5px;
+	font-size: 19px;
+	letter-spacing: -0.02em;
 }
 .brand .wm em {
 	font-style: normal;
-	color: var(--ultra);
+	color: var(--cyan);
 }

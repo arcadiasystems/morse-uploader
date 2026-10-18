@@ -71,17 +71,13 @@ export function LocalPane({ local, pickers, onAdd, nowMs }: LocalPaneProps) {
 			{empty ? (
 				<span className="drop-acts">
 					<button
-						className="btn btn-ink xs"
+						className="btn solid sm"
 						type="button"
 						onClick={pickers.openFolder}
 					>
 						Open folder
 					</button>
-					<button
-						className="btn btn-soft xs"
-						type="button"
-						onClick={pickers.openFiles}
-					>
+					<button className="btn sm" type="button" onClick={pickers.openFiles}>
 						Add files
 					</button>
 				</span>
@@ -110,26 +106,18 @@ export function LocalPane({ local, pickers, onAdd, nowMs }: LocalPaneProps) {
 						: `${groupThousands(String(files.length))} files`}
 				</span>
 				<div className="acts">
-					<button
-						className="btn btn-soft xs"
-						type="button"
-						onClick={pickers.openFolder}
-					>
+					<button className="btn sm" type="button" onClick={pickers.openFolder}>
 						Open folder
 					</button>
 				</div>
 			</div>
 			<div className="tools">
-				<button
-					className="btn btn-ghost xs"
-					type="button"
-					onClick={pickers.openFiles}
-				>
+				<button className="btn sm" type="button" onClick={pickers.openFiles}>
 					Add files
 				</button>
 				{chosen.length === files.length && !empty ? (
 					<button
-						className="btn btn-ghost xs"
+						className="btn sm"
 						type="button"
 						onClick={local.clearSelection}
 					>
@@ -137,7 +125,7 @@ export function LocalPane({ local, pickers, onAdd, nowMs }: LocalPaneProps) {
 					</button>
 				) : (
 					<button
-						className="btn btn-ghost xs"
+						className="btn sm"
 						type="button"
 						disabled={empty}
 						onClick={local.selectAll}
@@ -146,7 +134,7 @@ export function LocalPane({ local, pickers, onAdd, nowMs }: LocalPaneProps) {
 					</button>
 				)}
 				<button
-					className="btn btn-ghost xs"
+					className="btn sm"
 					type="button"
 					disabled={chosen.length === 0}
 					onClick={local.removeSelected}

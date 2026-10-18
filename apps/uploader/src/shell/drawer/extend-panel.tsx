@@ -154,7 +154,7 @@ export function ExtendPanel({
 				/>
 				<span>{epochs === 1 ? "epoch" : "epochs"}</span>
 				<button
-					className="btn btn-ghost xs"
+					className="btn sm"
 					type="button"
 					aria-pressed={epochs === headroom}
 					onClick={() => choose(headroom)}
@@ -238,7 +238,7 @@ export function ExtendPanel({
 			) : null}
 			<div className="acts">
 				<button
-					className="btn btn-soft xs"
+					className="btn sm"
 					type="button"
 					disabled={
 						frost === null ||

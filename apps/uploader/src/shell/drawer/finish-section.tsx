@@ -155,7 +155,7 @@ export function FinishSection({
 				<>
 					<div className="acts">
 						<button
-							className="btn btn-ultra xs"
+							className="btn primary sm"
 							type="button"
 							disabled={busy}
 							aria-busy={busy}

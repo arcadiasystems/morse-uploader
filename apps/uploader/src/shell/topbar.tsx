@@ -54,7 +54,7 @@ export function Topbar({
 					/>
 				) : null}
 				<button
-					className="btn btn-ultra upload"
+					className="btn primary upload"
 					type="button"
 					disabled={address === null}
 					title={address === null ? "Connect a wallet to upload" : undefined}

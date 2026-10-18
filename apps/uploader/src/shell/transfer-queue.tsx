@@ -112,7 +112,7 @@ export function TransfersPane({
 				</div>
 				<Summary items={state.items} paused={state.paused} />
 				<button
-					className="btn btn-ghost xs pause"
+					className="btn sm pause"
 					type="button"
 					disabled={!pending && !state.paused}
 					aria-pressed={state.paused}
