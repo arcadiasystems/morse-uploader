@@ -8,10 +8,18 @@ import {
 } from "./chain";
 
 /**
- * Upload sheet, queue and chain helpers shared by the Testnet specs that
- * write: the upload flow (phase 3) and the inspector (R2).
+ * Staging tray, transfers and chain helpers shared by the Testnet specs
+ * that write: uploads (phase 3, now through the tray), the transfers
+ * slide-over (R3) and the inspector (R2).
  */
 const NETWORK = "testnet";
+
+/** A file to stage, as Playwright's file chooser takes it. */
+export interface StageFile {
+	name: string;
+	mimeType: string;
+	buffer: Buffer;
+}
 
 export interface DoneItem {
 	blobId: string;
@@ -19,53 +27,71 @@ export interface DoneItem {
 	entryId: number | undefined;
 }
 
-/**
- * Opens the sheet. With files, through the picker behind Upload; without,
- * it waits for the sheet a pick already opened (a folder set on the
- * folder picker goes straight to the sheet).
- */
-export async function openSheet(
+/** The staging tray, once something is staged. */
+export function stagingTray(page: Page): Locator {
+	return page.getByRole("region", { name: "Staged for upload" });
+}
+
+/** Stages files through the picker behind the top bar's Upload button. */
+export async function stageFiles(
 	page: Page,
-	files?: { name: string; mimeType: string; buffer: Buffer }[],
+	files: readonly StageFile[],
 ): Promise<Locator> {
-	if (files) {
-		const chooser = page.waitForEvent("filechooser");
-		await page.getByRole("button", { name: "Upload", exact: true }).click();
-		await (await chooser).setFiles(files);
-	}
-	const sheet = page.getByRole("dialog", {
-		name: /Upload \d+ items? to Walrus/,
+	const chooser = page.waitForEvent("filechooser");
+	await page.getByRole("button", { name: "Upload", exact: true }).click();
+	await (await chooser).setFiles([...files]);
+	return pricedTray(page);
+}
+
+/** Stages a folder from disk through the folder picker, as the Overview's Choose folder does. */
+export async function stageFolder(
+	page: Page,
+	folder: string,
+): Promise<Locator> {
+	await page.locator('input[data-picker="folder"]').setInputFiles(folder);
+	return pricedTray(page);
+}
+
+/** The tray once its prices and Seal settings are read, so its settings show what they are. */
+async function pricedTray(page: Page): Promise<Locator> {
+	const tray = stagingTray(page);
+	await expect(
+		tray.getByRole("button", { name: /^Sign and send · \d+ signatures?$/ }),
+	).toBeVisible({ timeout: 60_000 });
+	return tray;
+}
+
+/** A staged item's row in the tray, by the name it shows ("site/" for a folder). */
+export function trayItem(tray: Locator, label: string): Locator {
+	return tray.locator("li[data-staged]").filter({
+		has: tray.page().locator(".name", { hasText: label }),
 	});
-	await expect(sheet).toBeVisible();
-	return sheet;
 }
 
-/**
- * Opens the transfers slide-over, unless it is open, from the rail's
- * Transfers item: phones hide the top bar's pill while nothing is in flight.
- */
-export async function openTransfers(page: Page): Promise<Locator> {
-	const panel = page.getByRole("dialog", { name: "Transfers" });
-	if (!(await panel.isVisible()))
-		await page
-			.getByRole("navigation", { name: "Views" })
-			.getByRole("button", { name: /^Transfers/ })
-			.click();
-	await expect(panel).toBeVisible();
-	return panel;
+/** Opens one of the tray's four settings, unless it is open. */
+export async function openSetting(
+	tray: Locator,
+	label: "Keep for" | "Encryption" | "Folders" | "Also publish",
+): Promise<void> {
+	const tile = tray.locator("button.set").filter({ hasText: label });
+	if ((await tile.getAttribute("aria-expanded")) !== "true") await tile.click();
+	await expect(tile).toHaveAttribute("aria-expanded", "true");
 }
 
-/** Sets the period to `epochs` and reads the WAL the sheet predicts, in FROST. */
+/** Sets Keep for to `epochs` and reads the WAL the tray predicts, in FROST. */
 export async function predictedWal(
-	sheet: Locator,
+	tray: Locator,
 	epochs: number,
 ): Promise<bigint> {
-	await sheet.getByRole("spinbutton").fill(String(epochs));
-	await expect(sheet.getByText(`Storage, ${epochs} epoch`)).toBeVisible();
-	await expect(sheet.getByText(/≈/).first()).toBeVisible({ timeout: 60_000 });
+	await openSetting(tray, "Keep for");
+	await tray.getByRole("spinbutton").fill(String(epochs));
+	await expect(tray.getByText(`Storage, ${epochs} epoch`)).toBeVisible();
+	await expect(tray.locator(".cost dd", { hasText: "≈" })).toBeVisible({
+		timeout: 60_000,
+	});
 	const amount = async (label: RegExp) =>
 		toFrost(
-			await sheet
+			await tray
 				.locator(".cost dt", { hasText: label })
 				.locator("xpath=following-sibling::dd")
 				.evaluate(
@@ -84,22 +110,43 @@ export function toFrost(text: string): bigint {
 	);
 }
 
-export async function confirm(
-	sheet: Locator,
+/**
+ * Presses Sign and send once it shows `signatures`. The prices are read
+ * again first; once the batch is queued the tray empties and the
+ * transfers slide-over opens.
+ */
+export async function signAndSend(
+	page: Page,
 	signatures: number,
 ): Promise<void> {
-	const upload = sheet.getByRole("button", {
-		name: `Upload · sign ${signatures} times`,
+	const tray = stagingTray(page);
+	const send = tray.getByRole("button", {
+		name: `Sign and send · ${signatures} ${signatures === 1 ? "signature" : "signatures"}`,
 	});
-	await expect(upload).toBeEnabled({ timeout: 60_000 });
-	await upload.click();
-	await expect(sheet).toBeHidden();
+	await expect(send).toBeEnabled({ timeout: 60_000 });
+	await send.click();
+	await expect(tray).toBeHidden({ timeout: 30_000 });
+	await expect(page.getByRole("dialog", { name: "Transfers" })).toBeVisible();
 }
 
-export function queueRow(page: Page, name: string): Locator {
-	return page
-		.locator("tr.q", { has: page.locator(".label", { hasText: name }) })
-		.last();
+/**
+ * Opens the transfers slide-over, unless it is open, from the rail's
+ * Transfers item: phones hide the top bar's pill while nothing is in flight.
+ */
+export async function openTransfers(page: Page): Promise<Locator> {
+	const panel = page.getByRole("dialog", { name: "Transfers" });
+	if (!(await panel.isVisible()))
+		await page
+			.getByRole("navigation", { name: "Views" })
+			.getByRole("button", { name: /^Transfers/ })
+			.click();
+	await expect(panel).toBeVisible();
+	return panel;
+}
+
+/** A transfer's row in the slide-over, by its name attribute (a path, or a folder's name). */
+export function transferRow(page: Page, name: string): Locator {
+	return page.locator(`li.tx[data-name="${name}"]`).last();
 }
 
 /** Waits until each named item is done, from the Done tab, and reads what it shows. */
@@ -111,8 +158,8 @@ export async function waitForDone(
 	await panel.getByRole("tab", { name: /Done/ }).click();
 	const items: DoneItem[] = [];
 	for (const name of names) {
-		const row = queueRow(page, name);
-		await expect(row).toHaveClass(/done/, { timeout: 240_000 });
+		const row = transferRow(page, name);
+		await expect(row).toHaveClass(/\bdone\b/, { timeout: 240_000 });
 		const blobId = await row.locator(".id [title]").getAttribute("title");
 		if (!blobId) throw new Error(`${name} shows no blob id.`);
 		const entry = await row
@@ -188,7 +235,7 @@ export async function spendTracker(owner: string, wal: string): Promise<Spend> {
 }
 
 /**
- * The WAL the uploads spent equals what the sheet predicted. The tolerance
+ * The WAL the uploads spent equals what the tray predicted. The tolerance
  * is 1%, for a price vote landing between the quote and the register; in
  * practice the two are equal to the FROST.
  */
@@ -221,4 +268,25 @@ export async function overflow(page: Page): Promise<{ fits: boolean }> {
 	return page.evaluate(() => ({
 		fits: document.documentElement.scrollWidth === window.innerWidth,
 	}));
+}
+
+/**
+ * Counts the transactions the page submits, so a test can tell that
+ * nothing was signed and sent while it waited. Requests go on unchanged.
+ */
+export async function countSubmissions(page: Page): Promise<() => number> {
+	let count = 0;
+	await page.route(
+		"**/sui.rpc.v2.TransactionExecutionService/ExecuteTransaction",
+		(route) => {
+			count += 1;
+			return route.continue();
+		},
+	);
+	return () => count;
+}
+
+/** A screenshot kept with the test's output, for the visual review. */
+export async function keepShot(page: Page, name: string): Promise<void> {
+	await page.screenshot({ path: test.info().outputPath(`${name}.png`) });
 }

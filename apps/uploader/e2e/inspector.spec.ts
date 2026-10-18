@@ -38,12 +38,13 @@ import {
 import { installTestWallet, KEY_ENV, keypairFromEnv } from "./test-wallet";
 import {
 	chainBlob,
-	confirm,
 	expectWalSpent,
-	openSheet,
+	openSetting,
 	predictedWal,
 	type Spend,
+	signAndSend,
 	spendTracker,
+	stageFiles,
 	toFrost,
 	waitForDone,
 } from "./upload-actions";
@@ -659,12 +660,13 @@ test.describe("inspector on Testnet", () => {
 	test("previews a tiny permanent image and blocks its delete and publish", async () => {
 		const png = tinyPng(RUN);
 		const spend = await spendTracker(owner, wal);
-		const sheet = await openSheet(page, [
+		const tray = await stageFiles(page, [
 			{ name: "inspector-pixels.png", mimeType: "image/png", buffer: png },
 		]);
-		await sheet.getByRole("switch", { name: /^Deletable/ }).uncheck();
-		const predicted = await predictedWal(sheet, 1);
-		await confirm(sheet, 2);
+		await openSetting(tray, "Keep for");
+		await tray.getByRole("switch", { name: /^Deletable/ }).uncheck();
+		const predicted = await predictedWal(tray, 1);
+		await signAndSend(page, 2);
 		const [item] = await waitForDone(page, ["inspector-pixels.png"]);
 		const blob = await chainBlob(owner, item?.blobId);
 		expect(blob.deletable).toBe(false);

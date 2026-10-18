@@ -176,6 +176,46 @@ describe("copy rules", () => {
 		]);
 	});
 
+	it("words drop anywhere, the tray and the transfers slide-over by the notes (items 4, 8, 9 and 10)", () => {
+		const text = (suffix: string) =>
+			(files.find((file) => file.path.endsWith(suffix))?.text ?? "").replace(
+				/\s+/g,
+				" ",
+			);
+		// The drop state as the design words it: drops stage, nothing uploads.
+		const overlay = text("drop/drop-overlay.tsx");
+		expect(overlay).toContain("Drop to stage");
+		expect(overlay).toContain(
+			"Folders keep their paths and become quilts. Nothing uploads until you sign.",
+		);
+		// One button with the real signature count, and prices from chain.
+		const tray = text("staging/staging-tray.tsx");
+		// The label is a template: "Sign and send · " then the computed count.
+		expect(tray).toContain("`Sign and send · $");
+		expect(tray).toContain("Price read from the Walrus system object");
+		// Item 4: Testnet offers what fits in 53 one-day epochs, Max included.
+		const periods = text("upload/periods.ts");
+		expect(periods).toContain('{ id: "7d", label: "7 days", days: 7 }');
+		expect(periods).toContain('{ id: "max", label: "Max", days: null }');
+		// Item 9: five segments, the register step between encode and upload.
+		expect(text("transfers/transfer-view.ts")).toContain(
+			'"encode", "register", "upload", "certify", "record", ] as const',
+		);
+		// Item 10: the relay times out, not a publisher.
+		expect(text("transfers/transfer-queue.ts")).toContain(
+			"The upload relay timed out.",
+		);
+		// Items 6 and 8: no year on Testnet, no single-signature batching.
+		expect(
+			files
+				.filter((file) => /(^|\/)(staging|drop|transfers)\//.test(file.path))
+				.filter((file) =>
+					/\bsign once\b|one signature for (all|everything)/i.test(file.text),
+				)
+				.map((file) => file.path),
+		).toEqual([]);
+	});
+
 	it("words the bulk bar and the palette by the notes (items 6, 11, 12 and 16)", () => {
 		const text = (suffix: string) =>
 			(files.find((file) => file.path.endsWith(suffix))?.text ?? "").replace(

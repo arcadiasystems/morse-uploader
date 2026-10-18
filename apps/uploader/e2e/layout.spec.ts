@@ -121,9 +121,9 @@ test.describe("layout without a wallet", () => {
 		await expect(overview.getByText("WAL / GiB·epoch")).toBeVisible({
 			timeout: 60_000,
 		});
-		// The drop zone needs a wallet to upload into.
+		// The drop zone needs a wallet to stage into.
 		await expect(
-			page.getByRole("region", { name: "Drop files to upload" }),
+			page.getByRole("region", { name: "Add files to upload" }),
 		).toHaveCount(0);
 		await expect(
 			page.getByRole("button", { name: "Upload", exact: true }),
