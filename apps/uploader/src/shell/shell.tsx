@@ -137,10 +137,17 @@ export function Shell() {
 		onProblem: setDropProblem,
 	});
 
-	function send(batch: TransferBatch) {
-		transfers.queue.enqueue(batch);
-		// The queue holds the files now; the tray empties and keeps its settings.
+	/**
+	 * Queues a batch from Sign and send. The tray empties (keeping its
+	 * settings) and that is saved before anything is queued: a reload in
+	 * between brings back a tray that was not sent, never one that was, so
+	 * nothing can be sent twice. A save that fails is the tray's notice and
+	 * does not hold the upload back.
+	 */
+	async function send(batch: TransferBatch) {
 		tray.model.clear();
+		await tray.model.flush();
+		transfers.queue.enqueue(batch);
 		transfersPanel.open();
 	}
 
@@ -363,7 +370,8 @@ export function Shell() {
 					tray={tray}
 					balances={funds.balances}
 					besidePanel={transfersPanel.isOpen}
-					onSend={send}
+					// `send` never rejects: flush reports a failed save as the tray's notice.
+					onSend={(batch) => void send(batch)}
 				/>
 			) : null}
 			<TransfersPanel panel={transfersPanel} transfers={transfers} />
