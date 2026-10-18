@@ -38,6 +38,8 @@ export function blobRecord(overrides: Partial<BlobRecord> = {}): BlobRecord {
 		endEpoch: 603,
 		isQuilt: false,
 		isEncrypted: false,
+		contentType: null,
+		encodingType: 1,
 		...overrides,
 	};
 }

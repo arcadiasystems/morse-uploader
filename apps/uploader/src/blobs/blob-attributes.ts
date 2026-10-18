@@ -39,6 +39,13 @@ export function isQuilt(attributes: BlobAttributes): boolean {
 	return attributes[BLOB_TYPE_ATTRIBUTE] === QUILT_BLOB_TYPE;
 }
 
+/** The blob's media type from its `content-type` attribute, or `null`. */
+export function contentTypeFromAttributes(
+	attributes: BlobAttributes,
+): string | null {
+	return attributes[CONTENT_TYPE_ATTRIBUTE]?.trim() || null;
+}
+
 export function isSealEncrypted(attributes: BlobAttributes): boolean {
 	return (attributes[SEAL_ATTRIBUTE] ?? "").trim() !== "";
 }

@@ -1,6 +1,7 @@
 import { blobIdFromInt } from "@mysten/walrus";
 import {
 	type BlobAttributes,
+	contentTypeFromAttributes,
 	isQuilt,
 	isSealEncrypted,
 	nameFromAttributes,
@@ -31,6 +32,8 @@ export function parseBlob(
 		endEpoch: blob.storage.end_epoch,
 		isQuilt: isQuilt(attributes),
 		isEncrypted: isSealEncrypted(attributes),
+		contentType: contentTypeFromAttributes(attributes),
+		encodingType: blob.encoding_type,
 	};
 }
 

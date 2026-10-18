@@ -229,6 +229,7 @@ export function WalrusPane({
 				<BlobDrawer
 					key={selected.key}
 					target={drawerTarget(selected)}
+					network={network}
 					listed={listed}
 					onClose={closeDrawer}
 				/>

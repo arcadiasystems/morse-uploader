@@ -67,6 +67,8 @@ export interface NetworkConfig {
 	 * about 2,200 to storage nodes. Answers with CORS `*`.
 	 */
 	uploadRelayUrl: string;
+	/** Suiscan for this network: objects at `/object/{id}`, transactions at `/tx/{digest}`. */
+	explorerUrl: string;
 	walCoinType: WalCoinTypeSource;
 	/** Fixed system parameters (network reference, "Network parameters"). */
 	epochDays: number;
@@ -90,6 +92,7 @@ export const NETWORKS: Readonly<Record<NetworkId, NetworkConfig>> = {
 		grpcUrl: "https://fullnode.testnet.sui.io:443",
 		aggregatorUrl: "https://aggregator.walrus-testnet.walrus.space",
 		uploadRelayUrl: "https://upload-relay.testnet.walrus.space",
+		explorerUrl: "https://suiscan.xyz/testnet",
 		walCoinType: { kind: "chain" },
 		epochDays: 1,
 		maxEpochsAhead: 53,
@@ -132,6 +135,7 @@ export const NETWORKS: Readonly<Record<NetworkId, NetworkConfig>> = {
 		grpcUrl: "https://fullnode.mainnet.sui.io:443",
 		aggregatorUrl: "https://aggregator.walrus-mainnet.walrus.space",
 		uploadRelayUrl: "https://upload-relay.mainnet.walrus.space",
+		explorerUrl: "https://suiscan.xyz/mainnet",
 		walCoinType: {
 			kind: "fixed",
 			coinType:
