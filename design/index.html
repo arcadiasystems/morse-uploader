@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Morse Uploader · Morse Uploader</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="uploader.css">
+</head>
+<body>
+<div class="land">
+<nav class="nav"><a class="brand" href="index.html"><svg aria-hidden="true" viewBox="0 0 100 100"><path d="M8 72 V30 H36 V72 H64 V30 H92 V72" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="wm"><span>morse</span><em>uploader</em></span></a><span class="chip net"><i aria-hidden="true" style="background:#2B3BE0"></i><b>Testnet</b></span><div class="right"><a class="btn btn-text" href="https://docs.morsecms.xyz">Docs</a><a class="btn btn-soft" href="#">Download for Mac <span class="chip soon" style="margin-left:4px">soon</span></a><a class="btn btn-ultra" href="app.html">Open in browser</a></div></nav>
+<section class="hero">
+  <div>
+    <span class="eyebrow"><i aria-hidden="true"></i>FileZilla for Walrus</span>
+    <h1>Your files on Walrus. <em>Your keys, your epochs, your records.</em></h1>
+    <p class="lead">A two-pane transfer client for Walrus: drag folders in, watch each blob encode, upload and certify, see the cost before you sign, and manage every blob your wallet owns. No account, no API key, no custodian.</p>
+    <div class="cta"><a class="btn btn-ultra lg" href="app.html">Open Morse Uploader</a><a class="btn btn-ghost lg" href="#compare">How it differs from Walrus Console</a></div>
+    <div class="trust"><span><b>Wallet is the login</b></span><span><b>13 GiB</b> per blob</span><span><b>Quilts</b> for folders</span><span><b>Seal</b> for private files</span><span><b>Free</b> on testnet</span></div>
+  </div>
+  <div class="shot"><img src="app-desktop.png" alt="Morse Uploader with local and Walrus panes and a transfer queue"></div>
+</section>
+<section class="feats">
+  <div class="feat"><span class="chip ultra">Transfer</span><b>Two panes, one queue</b><p>Local on the left, your Walrus blobs on the right, transfers at the bottom with encode, upload, certify and record as separate steps you can see.</p></div>
+  <div class="feat"><span class="chip ultra">Folders</span><b>Folders become quilts</b><p>Drop a folder and it uploads as one quilt with paths intact. Or one blob per file when you need separate lifetimes.</p></div>
+  <div class="feat"><span class="chip ultra">Money</span><b>Cost before you sign</b><p>Encoded size, storage per period, write fee and gas, read from the chain at that moment. Expiry tracked per blob with one-click extend.</p></div>
+  <div class="feat"><span class="chip ultra">Trust</span><b>Verify, share, publish</b><p>Re-check any blob against storage nodes, share aggregator or Walrus Site links, or attach a blob to a Morse publication as an entry with a record.</p></div>
+</section>
+<section class="cmp" id="compare">
+  <h2>Console is a hosted drive. Uploader is a client.</h2>
+  <table><thead><tr><th></th><th>Walrus Console</th><th>Morse Uploader</th></tr></thead><tbody>
+    <tr><td>Login</td><td>Google or Apple account</td><td class="y">Any Sui wallet, no account</td></tr>
+    <tr><td>Who holds the keys</td><td>Console manages WAL and payment for you</td><td class="y">You. Every transaction is signed by your wallet</td></tr>
+    <tr><td>Limits</td><td>5 GB per space, 5 folders, 100 MiB per upload</td><td class="y">Walrus limits only: 13 GiB per blob, as many as you pay for</td></tr>
+    <tr><td>Folders</td><td>Encrypted private folders</td><td class="y">Quilts with paths, public or Seal-encrypted, your choice per folder</td></tr>
+    <tr><td>Epochs and expiry</td><td>Managed and auto-extended by Console</td><td class="y">Visible per blob, extend by hand or auto-extend from your wallet with a WAL cap</td></tr>
+    <tr><td>Verification</td><td>Upload status polling</td><td class="y">Re-verify any blob against storage nodes, any time</td></tr>
+    <tr><td>Publishing</td><td>Not in scope</td><td class="y">Attach blobs to Morse publications, deploy Walrus Sites</td></tr>
+    <tr><td>Agents</td><td>MCP server with API keys</td><td class="y">MCP server with a wallet-scoped capability you can revoke</td></tr>
+    <tr><td>Where it runs</td><td>Hosted</td><td class="y">Browser now, desktop app next, open source</td></tr>
+  </tbody></table>
+</section>
+<footer class="foot"><span>Morse Uploader is an open source client for Walrus by <a href="https://www.morsecms.xyz">Morse</a>.</span><span class="sig" aria-hidden="true">-- --- .-. ... .</span></footer>
+</div></body></html>

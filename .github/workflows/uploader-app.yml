@@ -1,0 +1,49 @@
+name: uploader-app
+
+# The Uploader app in apps/uploader has its own toolchain and lockfile, so it
+# gets its own workflow; the library's ci.yml does not build it.
+on:
+  pull_request:
+    paths:
+      - "apps/uploader/**"
+      - ".github/workflows/uploader-app.yml"
+  push:
+    branches: [main, uploader-v2]
+    paths:
+      - "apps/uploader/**"
+      - ".github/workflows/uploader-app.yml"
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: apps/uploader
+
+jobs:
+  app:
+    name: lint, typecheck, unit, build, e2e
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          # Same bun as Vercel's build image, so CI installs the lockfile the
+          # way the preview does. bun 1.4 also reads this lockfile format.
+          bun-version: 1.3.14
+      - name: Install
+        run: bun install --frozen-lockfile
+      - name: Lint
+        run: bun run lint
+      - name: Typecheck
+        run: bun run typecheck
+      - name: Unit tests
+        run: bun run test
+      - name: Build the static export
+        run: bun run build
+      - name: Install Chromium
+        run: bunx playwright install --with-deps --only-shell chromium
+      # The wallet tests need E2E_SUI_PRIVATE_KEY, which CI does not have;
+      # they skip and the layout tests still run against the static export.
+      - name: E2E
+        run: bun run e2e

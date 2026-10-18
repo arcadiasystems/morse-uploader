@@ -1,0 +1,395 @@
+/* Top bar popovers: the profile menu and the balance panel. Built from the design's tokens and controls. */
+.anchor {
+	position: relative;
+	display: flex;
+	min-width: 0;
+}
+.pop {
+	position: absolute;
+	top: calc(100% + 8px);
+	left: 0;
+	z-index: 40;
+	width: 360px;
+	max-height: calc(100vh - var(--bar) - 24px);
+	overflow: auto;
+	background: var(--paper);
+	border: 1px solid var(--line);
+	border-radius: 14px;
+	box-shadow:
+		0 24px 60px rgba(18, 20, 24, 0.16),
+		0 2px 8px rgba(18, 20, 24, 0.06);
+	font-size: 13px;
+	color: var(--ink);
+	white-space: normal;
+	text-align: left;
+}
+.pop.end {
+	left: auto;
+	right: 0;
+}
+.pop .sec {
+	padding: 12px 14px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+.pop .sec + .sec {
+	border-top: 1px solid var(--line);
+}
+.pop h4,
+.pop .label {
+	font-family: var(--mono);
+	font-size: 10.5px;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--stone);
+	font-weight: 500;
+}
+.pop .sec-hd {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+.pop .note {
+	font-size: 12px;
+	color: var(--stone);
+}
+.pop .problem {
+	font-size: 12px;
+	color: var(--warn);
+	background: var(--warn-bg);
+	border: 1px solid var(--warn-line);
+	border-radius: 8px;
+	padding: 8px 10px;
+}
+.pop > .problem {
+	margin: 0 14px 12px;
+}
+.pop .row-acts {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	flex-wrap: wrap;
+}
+.plist,
+.wlist,
+.links {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+}
+.plist {
+	gap: 2px;
+}
+.wlist,
+.links {
+	gap: 6px;
+}
+
+/* ---------- Profiles ---------- */
+.prow {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	border-radius: 10px;
+}
+.prow.on {
+	background: var(--ultra-tint);
+}
+.prow .pick {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 7px 8px;
+	border: 0;
+	border-radius: 10px;
+	background: transparent;
+	text-align: left;
+	cursor: pointer;
+}
+.prow .pick:not([disabled]):hover {
+	background: var(--bone);
+}
+.prow.on .pick:not([disabled]):hover {
+	background: var(--ultra-tint-2);
+}
+.prow .pick[disabled] {
+	cursor: progress;
+}
+.who {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+.who b {
+	font-weight: 600;
+	font-size: 13px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.who code {
+	font-size: 11px;
+	color: var(--stone);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.prow .chip {
+	padding: 2px 6px;
+	font-size: 9.5px;
+	letter-spacing: 0.1em;
+}
+.prow .tick {
+	color: var(--ultra);
+	flex: 0 0 auto;
+}
+.prow .rm {
+	flex: 0 0 auto;
+	width: 28px;
+	height: 28px;
+	border: 0;
+	border-radius: 8px;
+	background: transparent;
+	color: var(--stone);
+	display: grid;
+	place-items: center;
+	cursor: pointer;
+}
+.prow .rm:not([disabled]):hover {
+	background: var(--bone);
+	color: var(--ink);
+}
+.pop .add {
+	align-self: flex-start;
+	color: var(--ultra);
+	padding: 0 6px;
+}
+.addp {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	border: 1px solid var(--line);
+	border-radius: 12px;
+	padding: 12px;
+	background: var(--bone);
+}
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+.field input,
+.field select {
+	width: 100%;
+	border: 1px solid var(--line-2);
+	border-radius: 8px;
+	padding: 7px 10px;
+	background: var(--paper);
+	font-size: 13px;
+}
+
+/* ---------- Network switch (the design's segmented control) ---------- */
+.seg {
+	border: 0;
+	margin: 0;
+	padding: 0;
+	min-width: 0;
+}
+.seg legend {
+	padding: 0;
+	margin-bottom: 8px;
+}
+.seg .opts {
+	display: flex;
+	gap: 6px;
+}
+.seg label {
+	position: relative;
+	flex: 1;
+	border: 1px solid var(--line);
+	background: var(--paper);
+	border-radius: 9px;
+	padding: 8px 4px;
+	font-size: 12.5px;
+	font-weight: 600;
+	text-align: center;
+	cursor: pointer;
+}
+/* The radio covers its segment, transparent, so the whole segment is its click target. */
+.seg input {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	opacity: 0;
+	cursor: pointer;
+}
+.seg:disabled input {
+	cursor: not-allowed;
+}
+.seg label.on {
+	background: var(--ink);
+	color: var(--bone);
+	border-color: var(--ink);
+}
+.seg label:has(input:focus-visible) {
+	outline: 2px solid var(--ultra);
+	outline-offset: 2px;
+}
+.seg:disabled label {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+/* ---------- Wallet ---------- */
+.wal {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+.wicon {
+	width: 20px;
+	height: 20px;
+	border-radius: 5px;
+	flex: 0 0 auto;
+}
+.wbtn {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 10px;
+	border: 1px solid var(--line);
+	border-radius: 10px;
+	background: var(--paper);
+	text-align: left;
+	cursor: pointer;
+}
+.wbtn b {
+	flex: 1;
+	font-weight: 600;
+}
+.wbtn span {
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--ultra);
+}
+.wbtn:not([disabled]):hover {
+	border-color: var(--ink);
+}
+.wbtn[disabled] {
+	cursor: progress;
+	opacity: 0.6;
+}
+
+/* ---------- Balances and top up ---------- */
+.amounts {
+	display: grid;
+	gap: 6px;
+	margin: 0;
+}
+.amounts div {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 12px;
+}
+.amounts dt {
+	font-family: var(--mono);
+	font-size: 11px;
+	letter-spacing: 0.12em;
+	color: var(--stone);
+}
+.amounts dd {
+	font-size: 15px;
+	font-weight: 500;
+}
+.amounts .low dd {
+	color: var(--warn);
+}
+.callout.warn {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	background: var(--warn-bg);
+	border: 1px solid var(--warn-line);
+	border-radius: 10px;
+	padding: 10px 12px;
+	color: var(--warn);
+	font-size: 12.5px;
+}
+.callout b {
+	font-weight: 600;
+}
+.links a {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 10px;
+	border: 1px solid var(--line);
+	border-radius: 10px;
+	background: var(--paper);
+}
+.links a:hover {
+	border-color: var(--ink);
+}
+.links a > span:first-child {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+.links a b {
+	font-weight: 600;
+	font-size: 13px;
+}
+.links a small {
+	font-size: 12px;
+	color: var(--stone);
+}
+.links a svg {
+	color: var(--stone);
+	flex: 0 0 auto;
+}
+.addr {
+	font-size: 11px;
+	word-break: break-all;
+	color: var(--body);
+	background: var(--bone);
+	border: 1px solid var(--line);
+	border-radius: 8px;
+	padding: 6px 8px;
+	user-select: all;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.pop {
+		animation: pop-in 140ms var(--ease);
+	}
+}
+@keyframes pop-in {
+	from {
+		opacity: 0;
+		transform: translateY(-4px);
+	}
+}
+
+@media (max-width: 860px) {
+	/* On phones the popovers span the screen under the top bar, with 16px gutters. */
+	.pop,
+	.pop.end {
+		position: fixed;
+		top: calc(var(--bar) + 8px);
+		left: 16px;
+		right: 16px;
+		width: auto;
+	}
+}
