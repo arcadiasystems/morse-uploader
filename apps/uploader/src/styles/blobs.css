@@ -1,0 +1,234 @@
+/* The Walrus pane's blob list. Rows are design/uploader.css `.row`; additions are marked. */
+
+/* The list is a table with role treegrid, laid out as the design's grid rows. */
+.blist {
+	display: block;
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0;
+}
+.blist thead,
+.blist tbody {
+	display: block;
+}
+.blist thead {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+}
+.blist th,
+.blist td {
+	padding: 0;
+	min-width: 0;
+	text-align: left;
+	font-weight: inherit;
+}
+.row {
+	position: relative;
+	display: grid;
+	grid-template-columns: 22px minmax(0, 1fr) 96px 96px 96px;
+	gap: 10px;
+	align-items: center;
+	padding: 0 14px;
+	border-bottom: 1px solid var(--line);
+	font-size: 13px;
+	cursor: default;
+}
+.row.h {
+	height: 32px;
+	background: var(--paper);
+	font-family: var(--mono);
+	font-size: 10.5px;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--stone);
+}
+.blist tbody .row:hover {
+	background: var(--bone);
+}
+.blist tbody .row.sel {
+	background: var(--ultra-tint);
+}
+.row.dep {
+	opacity: 0.72;
+}
+
+/* Addition: keyboard focus lands on the grid; the selected row carries the ring. */
+.blist:focus-visible {
+	outline: 2px solid var(--ultra);
+	outline-offset: -2px;
+}
+.blist:focus-visible:has(tbody .sel) {
+	outline: none;
+}
+.blist:focus-visible tbody .sel {
+	outline: 2px solid var(--ultra);
+	outline-offset: -2px;
+}
+
+.row .ico {
+	width: 22px;
+	height: 22px;
+	border-radius: 6px;
+	display: grid;
+	place-items: center;
+	color: var(--stone);
+}
+.row .ico.dir {
+	color: var(--ultra);
+}
+.row .ico.enc {
+	color: var(--ink);
+}
+/* Addition: the disclosure triangle sits in the row's left padding, so columns match the design. */
+.row .tw {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	width: 14px;
+	display: grid;
+	place-items: center;
+	color: var(--stone);
+	cursor: pointer;
+}
+.row[aria-expanded="true"] .tw svg {
+	transform: rotate(90deg);
+}
+.row .nm {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.row .nm small {
+	display: block;
+	font-family: var(--mono);
+	font-size: 11px;
+	color: var(--stone);
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.row .sz,
+.row .ex {
+	font-family: var(--mono);
+	font-variant-numeric: tabular-nums;
+	font-size: 12px;
+	color: var(--body);
+	white-space: nowrap;
+}
+.row .st {
+	display: flex;
+	justify-content: flex-end;
+}
+.row .st .chip {
+	padding: 3px 7px;
+	font-size: 10px;
+}
+
+/* Addition: placeholder rows during the first read. */
+.row.skel {
+	height: 50px;
+}
+.row.skel i {
+	display: block;
+	height: 10px;
+	border-radius: 999px;
+	background: var(--line);
+}
+.row.skel i:first-child {
+	height: 22px;
+	border-radius: 6px;
+}
+.row.skel i:nth-child(2) {
+	width: 60%;
+}
+@media (prefers-reduced-motion: no-preference) {
+	.row.skel i {
+		animation: skel-pulse 1.4s var(--ease) infinite alternate;
+	}
+}
+@keyframes skel-pulse {
+	from {
+		opacity: 1;
+	}
+	to {
+		opacity: 0.45;
+	}
+}
+
+/* Addition: the design's Modified column holds the expiry date and a bar of paid time left. */
+.row .ex {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+}
+.row .ex .bar {
+	display: block;
+	height: 3px;
+	border-radius: 999px;
+	background: var(--line);
+	overflow: hidden;
+}
+.row .ex .bar i {
+	display: block;
+	height: 100%;
+	background: var(--ok);
+}
+.row.expiring .ex .bar i {
+	background: var(--warn);
+}
+.row.registered .ex .bar i {
+	background: var(--line-2);
+}
+
+/* Addition: a quilt's patches, one level in. */
+.row.patch {
+	font-size: 12.5px;
+}
+.row.patch .nm {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	color: var(--body);
+}
+.row.patch .nm svg {
+	flex: 0 0 auto;
+	color: var(--stone);
+}
+.row.patch .nm span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.row.note .msg {
+	grid-column: 2 / -1;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+	color: var(--stone);
+	font-size: 12.5px;
+}
+.row.note .problem-text {
+	color: var(--warn);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Addition: the footer's right side shows the selected row's record. */
+.pane .ft .info {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+@media (max-width: 860px) {
+	/* As the design: phones show name and size only. */
+	.row {
+		grid-template-columns: 22px minmax(0, 1fr) 80px;
+	}
+	.row .ex,
+	.row .st {
+		display: none;
+	}
+}

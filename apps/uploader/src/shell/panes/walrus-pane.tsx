@@ -1,7 +1,19 @@
+import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { hasReadablePatches } from "@/blobs/blob-row";
+import { matchesFilter } from "@/blobs/filter-rows";
+import type { ListedBlobs } from "@/blobs/list-blobs";
+import type { BlobListing } from "@/blobs/use-blob-listing";
+import { useQuiltPatches } from "@/blobs/use-quilt-patches";
 import type { WalrusPrices } from "@/funds/types";
+import { errorMessage } from "@/lib/error-message";
 import { shortenAddress } from "@/lib/shorten-address";
 import type { ChainRead } from "@/lib/use-chain-read";
 import type { NetworkConfig } from "@/network/networks";
+import { BlobActions } from "../blob-list/blob-actions";
+import { BlobFooter } from "../blob-list/blob-footer";
+import { BlobList } from "../blob-list/blob-list";
+import { buildListItems } from "../blob-list/list-items";
+import { ListSkeleton } from "../blob-list/list-skeleton";
 import { BLOB_VIEWS, type BlobView } from "../blob-views";
 import { EmptyState } from "../empty-state";
 import { PriceFooter } from "./price-footer";
@@ -11,40 +23,147 @@ interface WalrusPaneProps {
 	network: NetworkConfig;
 	address: string | null;
 	view: BlobView;
+	listing: ChainRead<BlobListing>;
+	/** The listing with statuses computed, once it is read. */
+	listed: ListedBlobs | null;
+	onRefresh: () => void;
 	prices: ChainRead<WalrusPrices>;
 	onConnect: () => void;
 }
 
-const BLOB_ACTIONS = [
-	"Download",
-	"Extend",
-	"Share",
-	"Verify",
-	"Publish to Morse",
-] as const;
-
 /**
- * The wallet's blobs on the current network. Actions need a selection, so
- * they stay disabled until the list has blobs to pick.
+ * The wallet's blobs on the current network, read from chain. Selection and
+ * open quilts belong to one wallet and network; the shell remounts the pane
+ * when either changes.
  */
 export function WalrusPane({
 	network,
 	address,
 	view,
+	listing,
+	listed,
+	onRefresh,
 	prices,
 	onConnect,
 }: WalrusPaneProps) {
-	const chainState =
-		prices.status === "ready"
-			? "ok"
-			: prices.status === "error"
-				? "warn"
-				: "wait";
+	const { store, patches } = useQuiltPatches();
+	const [selectedKey, setSelectedKey] = useState<string | null>(null);
+	const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
+	const { filter } = BLOB_VIEWS[view];
+
+	const rows = useMemo(
+		() =>
+			listed && filter
+				? listed.rows.filter((row) => matchesFilter(row, filter))
+				: [],
+		[listed, filter],
+	);
+	const items = useMemo(
+		() => buildListItems(rows, expanded, patches),
+		[rows, expanded, patches],
+	);
+	const selected = items.find((item) => item.key === selectedKey) ?? null;
+
+	// Patch counts show on quilt rows, so every readable quilt's index is read
+	// once the list arrives; the store skips quilts it has already read.
+	useEffect(() => {
+		for (const row of listed?.rows ?? []) {
+			if (hasReadablePatches(row)) store.readCount(row.blob.blobId);
+		}
+	}, [listed, store]);
+
+	function toggleQuilt(objectId: string) {
+		const quilt = listed?.rows.find((row) => row.blob.objectId === objectId);
+		if (!quilt) return;
+		const next = new Set(expanded);
+		if (next.delete(objectId)) {
+			// Collapsing hides the quilt's patches; keep the selection on the quilt.
+			if (selectedKey?.startsWith(`${objectId}:`)) setSelectedKey(objectId);
+		} else {
+			next.add(objectId);
+			store.readIdentifiers(quilt.blob.blobId);
+		}
+		setExpanded(next);
+	}
+
+	function refresh() {
+		onRefresh();
+		for (const [blobId, quilt] of patches) {
+			if (
+				quilt.count.status === "error" ||
+				quilt.identifiers.status === "error"
+			)
+				store.retry(blobId);
+		}
+	}
+
+	const busy =
+		listing.status === "loading" ||
+		(listing.status === "ready" && listing.refreshing);
+	const readState = address === null ? prices.status : listing.status;
+	const dot =
+		readState === "ready" ? "ok" : readState === "error" ? "warn" : "wait";
+
+	let content: ReactNode;
+	if (address === null) {
+		content = (
+			<EmptyState
+				icon="wallet"
+				title="Connect a wallet"
+				action={
+					<button className="btn btn-ink" type="button" onClick={onConnect}>
+						Connect wallet
+					</button>
+				}
+			>
+				Your blobs on {network.walrusLabel} appear here. Morse Uploader never
+				holds your keys; your wallet signs every transaction.
+			</EmptyState>
+		);
+	} else if (listing.status === "error") {
+		content = (
+			<EmptyState
+				icon="alert"
+				title="Could not read your blobs"
+				action={
+					<button className="btn btn-ink" type="button" onClick={refresh}>
+						Try again
+					</button>
+				}
+			>
+				{errorMessage(listing.error)}
+			</EmptyState>
+		);
+	} else if (listed === null) {
+		content = <ListSkeleton networkLabel={network.walrusLabel} />;
+	} else if (filter === null || rows.length === 0) {
+		content = (
+			<NothingListed
+				view={view}
+				hasBlobs={listed.rows.length > 0}
+				networkLabel={network.walrusLabel}
+			/>
+		);
+	} else {
+		content = (
+			<BlobList
+				label={`${BLOB_VIEWS[view].label} on ${network.walrusLabel}`}
+				items={items}
+				patches={patches}
+				selectedKey={selectedKey}
+				onSelect={setSelectedKey}
+				onToggle={toggleQuilt}
+				onRetryPatches={store.retry}
+				nowMs={listed.nowMs}
+			/>
+		);
+	}
+
 	return (
 		<section className="pane remote" aria-labelledby="pane-walrus-title">
 			<div className="hd">
 				<h3 id="pane-walrus-title">
-					<i className={chainState} aria-hidden="true" />
+					<i className={dot} aria-hidden="true" />
 					{network.walrusLabel}
 				</h3>
 				<span className="crumb">
@@ -52,50 +171,54 @@ export function WalrusPane({
 					<b>{BLOB_VIEWS[view].label}</b>
 				</span>
 				<div className="acts">
-					<button className="btn btn-soft xs" type="button" disabled>
-						Refresh
+					<button
+						className="btn btn-soft xs"
+						type="button"
+						disabled={address === null || listing.status === "loading"}
+						aria-busy={busy}
+						onClick={refresh}
+					>
+						{busy ? "Refreshing…" : "Refresh"}
 					</button>
 				</div>
 			</div>
 			<div className="tools">
-				{BLOB_ACTIONS.map((action) => (
-					<button
-						key={action}
-						className="btn btn-ghost xs"
-						type="button"
-						disabled
-					>
-						{action}
-					</button>
-				))}
+				<BlobActions selected={selected} network={network} />
 				<span className="sp" />
 				<ViewToggle />
 			</div>
-			<div className="list">
-				{address ? (
-					<EmptyState
-						icon={BLOB_VIEWS[view].icon}
-						title="Your blobs appear here"
-					>
-						{BLOB_VIEWS[view].empty} on {network.walrusLabel}, with status and
-						expiry.
-					</EmptyState>
-				) : (
-					<EmptyState
-						icon="wallet"
-						title="Connect a wallet"
-						action={
-							<button className="btn btn-ink" type="button" onClick={onConnect}>
-								Connect wallet
-							</button>
-						}
-					>
-						Your blobs on {network.walrusLabel} appear here. Morse Uploader
-						never holds your keys; your wallet signs every transaction.
-					</EmptyState>
-				)}
-			</div>
-			<PriceFooter prices={prices} />
+			{content}
+			{listed ? (
+				<BlobFooter summary={listed.summary} selected={selected} />
+			) : (
+				<PriceFooter prices={prices} />
+			)}
 		</section>
+	);
+}
+
+/** Why the list is empty: no blobs at all, or none in this view. */
+function NothingListed({
+	view,
+	hasBlobs,
+	networkLabel,
+}: {
+	view: BlobView;
+	hasBlobs: boolean;
+	networkLabel: string;
+}) {
+	const config = BLOB_VIEWS[view];
+	if (!hasBlobs && view === "all") {
+		return (
+			<EmptyState icon="folder" title={`No blobs on ${networkLabel}`}>
+				This wallet owns no Walrus blobs on {networkLabel}. Blobs it uploads
+				appear here, with their status and expiry.
+			</EmptyState>
+		);
+	}
+	return (
+		<EmptyState icon={config.icon} title={config.emptyTitle}>
+			{config.empty}
+		</EmptyState>
 	);
 }

@@ -197,6 +197,22 @@ svg {
 	border: 1px dashed var(--line-2);
 	color: var(--stone);
 }
+.chip.ok {
+	background: var(--ok-bg);
+	color: var(--ok);
+}
+.chip.warn {
+	background: var(--warn-bg);
+	color: var(--warn);
+}
+.chip.ultra {
+	background: var(--ultra-tint);
+	color: var(--ultra);
+}
+.chip.ink {
+	background: var(--ink);
+	color: var(--bone);
+}
 kbd {
 	font-size: 11px;
 	border: 1px solid var(--line-2);

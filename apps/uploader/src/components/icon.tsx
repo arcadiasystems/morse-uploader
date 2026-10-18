@@ -118,6 +118,40 @@ const ICONS = {
 		),
 	},
 	refresh: { body: <path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7" /> },
+	file: {
+		body: (
+			<>
+				<path d="M6 3h8l4 4v14H6z" />
+				<path d="M14 3v4h4" />
+			</>
+		),
+	},
+	image: {
+		body: (
+			<>
+				<rect x="3" y="5" width="18" height="14" rx="2" />
+				<path d="m3 16 5-5 4 4 3-3 6 6" />
+				<circle cx="16" cy="9" r="1.5" />
+			</>
+		),
+	},
+	archive: {
+		body: (
+			<>
+				<rect x="3" y="4" width="18" height="5" rx="1" />
+				<path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4" />
+			</>
+		),
+	},
+	alert: {
+		body: (
+			<>
+				<path d="M12 3 2 20h20z" />
+				<path d="M12 10v4M12 17h.01" />
+			</>
+		),
+	},
+	chevron: { body: <path d="m9 6 6 6-6 6" />, strokeWidth: 2.4 },
 } satisfies Record<string, IconShape>;
 
 export type IconName = keyof typeof ICONS;
