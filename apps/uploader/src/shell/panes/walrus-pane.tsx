@@ -16,7 +16,11 @@ import { BlobList } from "../blob-list/blob-list";
 import { buildListItems } from "../blob-list/list-items";
 import { ListSkeleton } from "../blob-list/list-skeleton";
 import { BLOB_VIEWS, type BlobView } from "../blob-views";
-import { BlobDrawer, type DrawerContext } from "../drawer/blob-drawer";
+import {
+	BlobDrawer,
+	type DrawerContext,
+	type DrawerSection,
+} from "../drawer/blob-drawer";
 import { drawerTarget } from "../drawer/drawer-target";
 import { EmptyState } from "../empty-state";
 import { PriceFooter } from "./price-footer";
@@ -67,6 +71,10 @@ export function WalrusPane({
 	const [selectedKey, setSelectedKey] = useState<string | null>(null);
 	// Selecting a row opens the drawer; closing it keeps the selection.
 	const [drawerOpen, setDrawerOpen] = useState(false);
+	const [focus, setFocus] = useState<{
+		section: DrawerSection;
+		request: number;
+	} | null>(null);
 	const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
 	const { filter } = BLOB_VIEWS[view];
 
@@ -86,6 +94,15 @@ export function WalrusPane({
 	function select(key: string | null) {
 		setSelectedKey(key);
 		setDrawerOpen(key !== null);
+		setFocus(null);
+	}
+
+	function openDrawer(section: DrawerSection) {
+		setDrawerOpen(true);
+		setFocus((current) => ({
+			section,
+			request: (current?.request ?? 0) + 1,
+		}));
 	}
 
 	function closeDrawer() {
@@ -220,7 +237,11 @@ export function WalrusPane({
 				</div>
 			</div>
 			<div className="tools">
-				<BlobActions selected={selected} network={network} />
+				<BlobActions
+					selected={selected}
+					network={network}
+					onOpen={openDrawer}
+				/>
 				<span className="sp" />
 				<ViewToggle />
 			</div>
@@ -241,6 +262,7 @@ export function WalrusPane({
 					network={network}
 					listed={listed}
 					context={drawer}
+					focus={focus}
 					onClose={closeDrawer}
 				/>
 			) : null}

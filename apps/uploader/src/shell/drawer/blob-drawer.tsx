@@ -1,5 +1,5 @@
 import { useCurrentClient } from "@mysten/dapp-kit-react";
-import { type KeyboardEvent, useState } from "react";
+import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { blobByObjectIdUrl, quiltPatchUrl } from "@/blobs/aggregator-urls";
 import { CONTENT_TYPE_ATTRIBUTE } from "@/blobs/blob-attributes";
 import type { BlobRecord } from "@/blobs/blob-record";
@@ -31,6 +31,9 @@ import { ShareSection } from "./share-section";
 import { StorageSection } from "./storage-section";
 import { VerifySection } from "./verify-section";
 
+/** Sections the Walrus pane's toolbar can open the drawer at. */
+export type DrawerSection = "verify" | "storage" | "publish" | "share";
+
 /** What the drawer needs from the shell: signing, balances, auto-extend and a way to re-read. */
 export interface DrawerContext {
 	actions: WalletActions | null;
@@ -51,15 +54,18 @@ export function BlobDrawer({
 	network,
 	listed,
 	context,
+	focus,
 	onClose,
 }: {
 	target: DrawerTarget;
 	network: NetworkConfig;
 	listed: ListedBlobs;
 	context: DrawerContext;
+	focus: { section: DrawerSection; request: number } | null;
 	onClose: () => void;
 }) {
 	const client = useCurrentClient();
+	const panel = useRef<HTMLElement>(null);
 	const row = targetRow(target);
 	const objectId = row.blob.objectId;
 	// Kept here: Finish's own section goes once the blob reads as certified.
@@ -89,6 +95,13 @@ export function BlobDrawer({
 			return entry;
 		},
 	).read;
+
+	useEffect(() => {
+		if (focus === null) return;
+		panel.current
+			?.querySelector(`#drawer-${focus.section}`)
+			?.scrollIntoView({ block: "start" });
+	}, [focus]);
 
 	const gone = live.status === "ready" && live.data === null;
 	const blob: BlobRecord =
@@ -137,6 +150,7 @@ export function BlobDrawer({
 	return (
 		<aside
 			className="drawer"
+			ref={panel}
 			aria-label={`Details of ${name}`}
 			onKeyDown={onKeyDown}
 		>
