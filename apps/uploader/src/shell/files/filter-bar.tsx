@@ -3,6 +3,7 @@ import type { RowSort } from "@/blobs/sort-rows";
 import { Icon } from "@/components/icon";
 import { routeHash } from "../app-route";
 import { FILE_FILTER_CONFIG } from "./file-filters";
+import { FilterField } from "./filter-field";
 
 export type FilesLayout = "list" | "grid";
 
@@ -21,14 +22,18 @@ const SORTS: readonly (RowSort & { label: string })[] = [
 const sortValue = (sort: RowSort) => `${sort.key}:${sort.direction}`;
 
 /**
- * The filter chips with their counts, sort, refresh and the list or grid
- * toggle, and on Expiring, Extend everything expiring. A count that cannot
- * be real is left off, with the reason in the chip's description.
+ * The filter chips with their counts, the filter box, sort, refresh and
+ * the list or grid toggle, and on Expiring, Extend everything expiring. A
+ * count that cannot be real is left off, with the reason in the chip's
+ * description.
  */
 export function FilterBar({
 	filter,
 	counts,
 	countNotes,
+	query,
+	onQueryChange,
+	queryDisabled,
 	sort,
 	onSort,
 	layout,
@@ -41,6 +46,9 @@ export function FilterBar({
 	counts: Readonly<Record<BlobFilter, number | null>>;
 	/** Why a count is missing, by filter. */
 	countNotes: Readonly<Partial<Record<BlobFilter, string | undefined>>>;
+	query: string;
+	onQueryChange: (query: string) => void;
+	queryDisabled: boolean;
 	sort: RowSort;
 	onSort: (sort: RowSort) => void;
 	layout: FilesLayout;
@@ -82,6 +90,11 @@ export function FilterBar({
 					Extend everything expiring
 				</button>
 			) : null}
+			<FilterField
+				query={query}
+				onQueryChange={onQueryChange}
+				disabled={queryDisabled}
+			/>
 			<label className="sortby">
 				<span aria-hidden="true">sort ·</span>
 				<span className="sr-only">Sort by</span>

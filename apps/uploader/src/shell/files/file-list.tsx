@@ -37,6 +37,8 @@ interface FileListProps {
 	onRetryPatches: (blobId: string) => void;
 	/** The element that scrolls the list: the view. */
 	scroller: RefObject<HTMLElement | null>;
+	/** A row to scroll into view, from a jump; `request` grows with each. */
+	reveal: { key: string; request: number } | null;
 	nowMs: number;
 }
 
@@ -68,6 +70,7 @@ export function FileList({
 	onToggle,
 	onRetryPatches,
 	scroller,
+	reveal,
 	nowMs,
 }: FileListProps) {
 	const ids = useId();
@@ -94,6 +97,20 @@ export function FileList({
 		else if (rowBottom > view.scrollTop + view.clientHeight)
 			view.scrollTop = rowBottom - view.clientHeight;
 	}, [activeIndex, tops, items, scroller]);
+
+	// A jump scrolls its row to the middle of the view and focuses the grid.
+	const revealed = useRef(0);
+	useLayoutEffect(() => {
+		if (reveal === null || reveal.request === revealed.current) return;
+		const index = items.findIndex((item) => item.key === reveal.key);
+		const view = scroller.current;
+		const top = tops[index];
+		if (!view || top === undefined) return;
+		revealed.current = reveal.request;
+		const rowTop = offsetIn(body.current, view) + top;
+		view.scrollTop = Math.max(0, rowTop - view.clientHeight / 2);
+		body.current?.closest<HTMLElement>("table")?.focus({ preventScroll: true });
+	}, [reveal, items, tops, scroller]);
 
 	function move(index: number) {
 		const item = items[Math.max(0, Math.min(items.length - 1, index))];

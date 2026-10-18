@@ -1,0 +1,118 @@
+/* The command palette, from design/v2/app-palette.html: one field over the app. */
+.pal-layer {
+	position: fixed;
+	inset: 0;
+	z-index: 70;
+}
+.pal {
+	position: absolute;
+	left: 50%;
+	top: calc(var(--bar) + 34px);
+	transform: translateX(-50%);
+	width: 640px;
+	max-width: calc(100% - 24px);
+	max-height: calc(100dvh - var(--bar) - 68px);
+	display: flex;
+	flex-direction: column;
+	background: rgba(12, 13, 18, 0.95);
+	border: 1px solid var(--line-2);
+	border-radius: 16px;
+	box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
+	backdrop-filter: blur(20px);
+	overflow: hidden;
+}
+.pal .in {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 14px 16px;
+	border-bottom: 1px solid var(--line);
+	font-size: 15px;
+	color: var(--fg-3);
+	flex: 0 0 auto;
+}
+.pal .in input {
+	flex: 1;
+	min-width: 0;
+	border: 0;
+	padding: 0;
+	background: transparent;
+	color: var(--fg);
+	font-size: 15px;
+}
+.pal .in input::placeholder {
+	color: var(--fg-4);
+	opacity: 1;
+}
+.pal .in input:focus-visible {
+	outline: none;
+}
+.pal .results {
+	overflow: auto;
+	overscroll-behavior: contain;
+}
+.pal .grp {
+	padding: 8px;
+}
+.pal .grp h5 {
+	font-family: var(--mono);
+	font-size: 9.5px;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--fg-4);
+	padding: 6px 10px;
+	margin: 0;
+	font-weight: 500;
+}
+.pal .it {
+	display: grid;
+	grid-template-columns: 22px minmax(0, 1fr) auto;
+	gap: 10px;
+	align-items: center;
+	padding: 8px 10px;
+	border-radius: 8px;
+	font-size: 13px;
+	color: var(--fg);
+	cursor: pointer;
+}
+.pal .it.on {
+	background: var(--panel-2);
+}
+.pal .it .mk {
+	font-family: var(--mono);
+	font-size: 11px;
+	color: var(--fg-3);
+}
+.pal .it.on .mk {
+	color: var(--cyan);
+}
+.pal .it .tt {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+.pal .it small {
+	font-family: var(--mono);
+	font-variant-numeric: tabular-nums;
+	font-size: 10.5px;
+	color: var(--fg-4);
+}
+.pal .it kbd {
+	font-size: 10px;
+	white-space: nowrap;
+}
+.pal .none {
+	padding: 18px 18px 20px;
+	font-size: 13px;
+	color: var(--fg-3);
+}
+@media (prefers-reduced-motion: no-preference) {
+	.pal {
+		animation: pal-in 140ms var(--ease);
+	}
+}
+@keyframes pal-in {
+	from {
+		opacity: 0;
+		transform: translate(-50%, -6px);
+	}
+}

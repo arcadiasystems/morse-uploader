@@ -149,7 +149,11 @@ export function StorageSection({
 					<AutoExtendPanel
 						network={network}
 						autoExtend={autoExtend}
-						covers={blocker === null || blocker.kind === "at-limit"}
+						covers={
+							blocker === null || blocker.kind === "at-limit"
+								? "this-blob"
+								: "not-this-blob"
+						}
 					/>
 				</div>
 			) : null}

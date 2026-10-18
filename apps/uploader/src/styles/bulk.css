@@ -194,3 +194,12 @@
 		}
 	}
 }
+
+/* A one-column sheet, such as Auto-extend opened from the palette. */
+.modal.narrow {
+	width: 480px;
+	grid-template-columns: minmax(0, 1fr);
+}
+.modal.narrow .l {
+	border-right: 0;
+}

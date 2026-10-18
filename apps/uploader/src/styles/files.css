@@ -48,6 +48,44 @@
 .filters .sp {
 	flex: 1;
 }
+/* The always-visible filter box: narrows the list by name, blob id or object id. */
+.ffield {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	height: 32px;
+	width: 220px;
+	padding: 0 12px;
+	border: 1px solid var(--line);
+	border-radius: 999px;
+	background: var(--panel);
+	color: var(--fg-3);
+	font-size: 12.5px;
+}
+.ffield:focus-within {
+	border-color: var(--cyan-line);
+	outline: 2px solid var(--cyan);
+	outline-offset: 2px;
+}
+.ffield input {
+	flex: 1;
+	min-width: 0;
+	border: 0;
+	padding: 0;
+	background: transparent;
+	color: var(--fg);
+	font-size: 12.5px;
+}
+.ffield input::placeholder {
+	color: var(--fg-3);
+	opacity: 1;
+}
+.ffield input:focus-visible {
+	outline: none;
+}
+.ffield input:disabled {
+	cursor: not-allowed;
+}
 .filters .sortby {
 	display: inline-flex;
 	align-items: center;
@@ -521,6 +559,10 @@
 	}
 	.filters .sortby {
 		margin-right: auto;
+	}
+	.ffield {
+		order: 1;
+		width: 100%;
 	}
 	/* Rows keep the name, size and the overflow menu. */
 	.tr {

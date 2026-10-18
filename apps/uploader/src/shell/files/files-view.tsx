@@ -42,7 +42,7 @@ interface FilesViewProps {
 	address: string | null;
 	filter: BlobFilter;
 	query: string;
-	onClearQuery: () => void;
+	onQueryChange: (query: string) => void;
 	sort: RowSort;
 	onSort: (sort: RowSort) => void;
 	onSortBy: (key: SortKey) => void;
@@ -64,6 +64,15 @@ interface FilesViewProps {
 	onSelectionChange: (change: (current: Selection) => Selection) => void;
 	/** Opens a bulk action's sheet for the selection. */
 	onBulk: (sheet: BulkSheetKind) => void;
+	/** A blob to select and show, from the command palette; `request` grows with each jump. */
+	jump: FilesJump | null;
+}
+
+/** A jump to a blob: select it, open the inspector (optionally at an action) and scroll to it. */
+export interface FilesJump {
+	objectId: string;
+	ask: InspectorAsk | null;
+	request: number;
 }
 
 /**
@@ -79,7 +88,7 @@ export function FilesView({
 	address,
 	filter,
 	query,
-	onClearQuery,
+	onQueryChange,
 	sort,
 	onSort,
 	onSortBy,
@@ -96,6 +105,7 @@ export function FilesView({
 	selection,
 	onSelectionChange,
 	onBulk,
+	jump,
 }: FilesViewProps) {
 	const { store, patches } = useQuiltPatches();
 	const view = useRef<HTMLElement>(null);
@@ -103,6 +113,11 @@ export function FilesView({
 	// Activating a row opens the inspector; closing it keeps the row active.
 	const [inspectorOpen, setInspectorOpen] = useState(false);
 	const [request, setRequest] = useState<InspectorRequest | null>(null);
+	// The row to scroll into view: set by a jump, read by the list.
+	const [reveal, setReveal] = useState<{
+		key: string;
+		request: number;
+	} | null>(null);
 	const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
 	const [menu, setMenu] = useState<{
 		key: string;
@@ -155,6 +170,22 @@ export function FilesView({
 		setMenu(null);
 		if (restoreFocus) anchor?.focus();
 	}
+
+	// A jump from the palette selects the blob, opens the inspector and
+	// scrolls the list to it; each request is handled once.
+	const handledJump = useRef(0);
+	useEffect(() => {
+		if (jump === null || jump.request === handledJump.current) return;
+		handledJump.current = jump.request;
+		setActiveKey(jump.objectId);
+		setInspectorOpen(true);
+		setRequest((current) =>
+			jump.ask === null
+				? null
+				: { ...jump.ask, request: (current?.request ?? 0) + 1 },
+		);
+		setReveal({ key: jump.objectId, request: jump.request });
+	}, [jump]);
 
 	function check(objectId: string) {
 		onSelectionChange((current) => toggleSelected(current, objectId));
@@ -264,7 +295,7 @@ export function FilesView({
 				query={query.trim()}
 				note={counts[filter] === null ? (countNotes[filter] ?? null) : null}
 				networkLabel={network.walrusLabel}
-				onClearQuery={onClearQuery}
+				onClearQuery={() => onQueryChange("")}
 			/>
 		);
 	} else if (layout === "grid") {
@@ -277,6 +308,7 @@ export function FilesView({
 				checked={selection}
 				onCheck={check}
 				onMenu={(key, anchor) => setMenu({ key, anchor })}
+				reveal={reveal}
 			/>
 		);
 	} else {
@@ -296,6 +328,7 @@ export function FilesView({
 				onToggle={toggleQuilt}
 				onRetryPatches={store.retry}
 				scroller={view}
+				reveal={reveal}
 				nowMs={listed.nowMs}
 			/>
 		);
@@ -309,6 +342,9 @@ export function FilesView({
 					filter={filter}
 					counts={counts}
 					countNotes={countNotes}
+					query={query}
+					onQueryChange={onQueryChange}
+					queryDisabled={listed === null || listed.rows.length === 0}
 					sort={sort}
 					onSort={onSort}
 					layout={layout}

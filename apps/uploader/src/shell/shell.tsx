@@ -1,12 +1,13 @@
 import { useCurrentNetwork } from "@mysten/dapp-kit-react";
 import { normalizeSuiAddress } from "@mysten/sui/utils";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useActivity } from "@/activity/use-activity";
 import type { BlobRow } from "@/blobs/blob-row";
 import {
 	type BlobFilter,
 	type MorseMarks,
 	matchesFilter,
+	matchesSearch,
 } from "@/blobs/filter-rows";
 import { type ListedBlobs, listBlobs } from "@/blobs/list-blobs";
 import { publishedObjectIds, sharedObjectIds } from "@/blobs/morse-marks";
@@ -34,6 +35,7 @@ import {
 	type WalletActions,
 } from "@/wallet/use-wallet-actions";
 import { useAppRoute } from "./app-route";
+import { AutoExtendSheet } from "./auto-extend-sheet";
 import type { BulkSheetKind } from "./bulk/bulk-bar";
 import { BulkDeleteSheet } from "./bulk/bulk-delete-sheet";
 import { BulkExtendSheet, type ExtendScope } from "./bulk/bulk-extend-sheet";
@@ -41,7 +43,7 @@ import { BulkPublishSheet } from "./bulk/bulk-publish-sheet";
 import { BulkShareSheet } from "./bulk/bulk-share-sheet";
 import { BulkVerifySheet } from "./bulk/bulk-verify-sheet";
 import { useFilePickers } from "./file-pickers";
-import { FilesView } from "./files/files-view";
+import { type FilesJump, FilesView } from "./files/files-view";
 import type { FilesLayout } from "./files/filter-bar";
 import {
 	EMPTY_SELECTION,
@@ -51,6 +53,10 @@ import {
 } from "./files/selection";
 import type { InspectorContext } from "./inspector/inspector";
 import { Overview } from "./overview/overview";
+import { CommandPalette } from "./palette/command-palette";
+import { paletteCommands } from "./palette/palette-commands";
+import type { BlobMatch } from "./palette/palette-match";
+import { type GoTarget, useShortcuts } from "./palette/shortcuts";
 import { Rail } from "./rail/rail";
 import { Topbar } from "./topbar";
 import { TransfersPanel } from "./transfers/transfers-panel";
@@ -107,6 +113,11 @@ export function Shell() {
 		| { kind: "extend"; scope: ExtendScope }
 		| null
 	>(null);
+	const [paletteOpen, setPaletteOpen] = useState(false);
+	const [autoExtendOpen, setAutoExtendOpen] = useState(false);
+	const [jump, setJump] = useState<FilesJump | null>(null);
+	// Set when Go to Expiry timeline needs the Overview to scroll to its card.
+	const [timelineRequested, setTimelineRequested] = useState(false);
 	// The selection belongs to one wallet and network.
 	const selectionScope = `${network.id}:${address ?? ""}`;
 	const [selectionOf, setSelectionOf] = useState<{
@@ -198,12 +209,58 @@ export function Shell() {
 		shared: markNote(morse.shared, "your access policies"),
 	};
 
-	function search(next: string) {
-		setQuery(next);
-		// Results list in Files; searching from the Overview goes there.
-		if (route.view === "overview" && next.trim() !== "")
-			navigate({ view: "files", filter: "all" });
+	function go(target: GoTarget) {
+		switch (target) {
+			case "overview":
+				navigate({ view: "overview" });
+				return;
+			case "timeline":
+				navigate({ view: "overview" });
+				setTimelineRequested(true);
+				return;
+			case "files":
+				navigate({ view: "files", filter: "all" });
+				return;
+			case "expiring":
+				navigate({ view: "files", filter: "expiring" });
+				return;
+			case "transfers":
+				transfersPanel.open();
+				return;
+		}
 	}
+
+	function extendSelected() {
+		if (selection.size > 0 && actions)
+			setBulk({ kind: "extend", scope: "selected" });
+	}
+
+	// A jump shows the blob in Files: the filter and the search give way if they hide it.
+	function jumpTo({ row, reason }: BlobMatch) {
+		if (route.view !== "files" || !matchesFilter(row, filter, marks))
+			navigate({ view: "files", filter: "all" });
+		if (!matchesSearch(row, query)) setQuery("");
+		setJump((current) => ({
+			objectId: row.blob.objectId,
+			ask:
+				reason === "expiring" ? { section: "storage", action: "extend" } : null,
+			request: (current?.request ?? 0) + 1,
+		}));
+	}
+
+	useShortcuts({
+		onPalette: () => setPaletteOpen((open) => !open),
+		onGo: go,
+		onExtendSelected: extendSelected,
+	});
+
+	useEffect(() => {
+		if (!timelineRequested || route.view !== "overview") return;
+		document
+			.getElementById("expiry-timeline")
+			?.scrollIntoView({ block: "start" });
+		setTimelineRequested(false);
+	}, [timelineRequested, route.view]);
 
 	return (
 		<>
@@ -224,9 +281,8 @@ export function Shell() {
 						address={address}
 						funds={funds}
 						balanceMenu={balanceMenu}
-						query={query}
-						onQueryChange={search}
-						searchDisabled={address === null}
+						onPalette={() => setPaletteOpen(true)}
+						paletteOpen={paletteOpen}
 						transfers={transfersSummary}
 						transfersPanel={transfersPanel}
 						onUpload={pickers.openFiles}
@@ -262,7 +318,7 @@ export function Shell() {
 							address={address}
 							filter={filter}
 							query={query}
-							onClearQuery={() => setQuery("")}
+							onQueryChange={setQuery}
 							sort={sort}
 							onSort={setSort}
 							onSortBy={(key) => setSort((current) => nextSort(current, key))}
@@ -285,6 +341,7 @@ export function Shell() {
 									kind === "extend" ? { kind, scope: "selected" } : { kind },
 								)
 							}
+							jump={jump}
 						/>
 					)}
 				</div>
@@ -316,6 +373,51 @@ export function Shell() {
 					balances={funds.balances}
 					onClose={() => setBulk(null)}
 					onChanged={refreshChain}
+				/>
+			) : null}
+			{paletteOpen ? (
+				<CommandPalette
+					commands={paletteCommands(
+						{
+							network,
+							listed,
+							storagePricePerUnit:
+								funds.prices.status === "ready"
+									? funds.prices.data.storagePerUnit
+									: null,
+							selected: listed ? selectedRows(selection, listed.rows) : [],
+							canSign: actions !== null,
+							autoExtend,
+						},
+						{
+							extendExpiring: () =>
+								setBulk({ kind: "extend", scope: "expiring" }),
+							extendSelected,
+							setAutoExtend: (enabled) => {
+								autoExtend?.update({ enabled });
+								// Turning it on opens the setting: nothing renews until a cap is set.
+								if (enabled) setAutoExtendOpen(true);
+							},
+							autoExtendSettings: () => setAutoExtendOpen(true),
+							go,
+							filter: (next) => navigate({ view: "files", filter: next }),
+						},
+					)}
+					rows={listed?.rows ?? []}
+					onJump={jumpTo}
+					onFilter={(text) => {
+						setQuery(text);
+						if (route.view !== "files")
+							navigate({ view: "files", filter: "all" });
+					}}
+					onClose={() => setPaletteOpen(false)}
+				/>
+			) : null}
+			{autoExtendOpen && autoExtend ? (
+				<AutoExtendSheet
+					network={network}
+					autoExtend={autoExtend}
+					onClose={() => setAutoExtendOpen(false)}
 				/>
 			) : null}
 			{pickers.inputs}
