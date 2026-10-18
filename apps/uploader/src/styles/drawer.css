@@ -131,6 +131,15 @@
 	flex-wrap: wrap;
 	gap: 6px;
 }
+/* Long actions (the delete step names what it does) wrap inside the column. */
+.drawer .acts .btn {
+	max-width: 100%;
+	white-space: normal;
+	text-align: center;
+	line-height: 1.35;
+	padding-top: 6px;
+	padding-bottom: 6px;
+}
 .drawer .ver {
 	display: flex;
 	gap: 10px;
