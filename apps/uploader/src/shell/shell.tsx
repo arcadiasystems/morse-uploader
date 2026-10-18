@@ -1,5 +1,8 @@
 import { useCurrentNetwork } from "@mysten/dapp-kit-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { listBlobs } from "@/blobs/list-blobs";
+import { DEFAULT_SORT, nextSort, type RowSort } from "@/blobs/sort-rows";
+import { useBlobListing } from "@/blobs/use-blob-listing";
 import { useFunds } from "@/funds/use-funds";
 import { NETWORKS } from "@/network/networks";
 import { useSession } from "@/wallet/use-session";
@@ -17,8 +20,20 @@ export function Shell() {
 	const session = useSession();
 	const address = session?.account.address ?? null;
 	const funds = useFunds(network, address);
+	const blobs = useBlobListing(network, address);
 	const profileMenu = usePopover();
 	const [view, setView] = useState<BlobView>("all");
+	const [query, setQuery] = useState("");
+	const [sort, setSort] = useState<RowSort>(DEFAULT_SORT);
+
+	const listing = blobs.read;
+	const listed = useMemo(
+		() =>
+			listing.status === "ready"
+				? listBlobs(listing.data, listing.readAt.getTime())
+				: null,
+		[listing],
+	);
 
 	return (
 		<div className="app">
@@ -27,6 +42,9 @@ export function Shell() {
 				address={address}
 				funds={funds}
 				profileMenu={profileMenu}
+				query={query}
+				onQueryChange={setQuery}
+				searchDisabled={address === null}
 			/>
 			<div className="body">
 				<Sidebar
@@ -34,14 +52,23 @@ export function Shell() {
 					onSelect={setView}
 					network={network}
 					connected={address !== null}
+					listed={listed}
 				/>
 				<main className="main">
 					<div className="panes">
 						<LocalPane />
 						<WalrusPane
+							key={`${network.id}:${address ?? ""}`}
 							network={network}
 							address={address}
 							view={view}
+							query={query}
+							onClearQuery={() => setQuery("")}
+							sort={sort}
+							onSort={(key) => setSort((current) => nextSort(current, key))}
+							listing={listing}
+							listed={listed}
+							onRefresh={blobs.refresh}
 							prices={funds.prices}
 							onConnect={profileMenu.open}
 						/>

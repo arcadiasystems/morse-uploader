@@ -1,4 +1,8 @@
+import type { ReactNode } from "react";
+import type { ListedBlobs } from "@/blobs/list-blobs";
 import { Icon, type IconName } from "@/components/icon";
+import { formatBytes } from "@/lib/format-bytes";
+import { formatDays } from "@/lib/format-date";
 import type { NetworkConfig } from "@/network/networks";
 import { BLOB_VIEWS, type BlobView } from "./blob-views";
 
@@ -7,6 +11,8 @@ interface SidebarProps {
 	onSelect: (view: BlobView) => void;
 	network: NetworkConfig;
 	connected: boolean;
+	/** The wallet's blobs, once read. */
+	listed: ListedBlobs | null;
 }
 
 const WALRUS_VIEWS: readonly BlobView[] = [
@@ -14,24 +20,36 @@ const WALRUS_VIEWS: readonly BlobView[] = [
 	"quilts",
 	"encrypted",
 	"expiring",
+	"expired",
 ];
 const PUBLISHED_VIEWS: readonly BlobView[] = ["publications", "shared"];
 
-/** Views of the Walrus pane, features that are coming, and the storage summary. */
-export function Sidebar({ view, onSelect, network, connected }: SidebarProps) {
-	const viewItem = (id: BlobView) => (
-		<li key={id}>
-			<button
-				type="button"
-				className={id === view ? "item on" : "item"}
-				aria-current={id === view ? "true" : undefined}
-				onClick={() => onSelect(id)}
-			>
-				<Icon name={BLOB_VIEWS[id].icon} />
-				{BLOB_VIEWS[id].label}
-			</button>
-		</li>
-	);
+/** Views of the Walrus pane with their counts, features that are coming, and the storage summary. */
+export function Sidebar({
+	view,
+	onSelect,
+	network,
+	connected,
+	listed,
+}: SidebarProps) {
+	const viewItem = (id: BlobView) => {
+		const { filter, icon, label } = BLOB_VIEWS[id];
+		const count = listed && filter ? listed.summary.counts[filter] : null;
+		return (
+			<li key={id}>
+				<button
+					type="button"
+					className={id === view ? "item on" : "item"}
+					aria-current={id === view ? "true" : undefined}
+					onClick={() => onSelect(id)}
+				>
+					<Icon name={icon} />
+					{label}
+					{count === null ? null : <span className="n">{count}</span>}
+				</button>
+			</li>
+		);
+	};
 
 	return (
 		<aside className="side" aria-label="Sidebar">
@@ -59,24 +77,78 @@ export function Sidebar({ view, onSelect, network, connected }: SidebarProps) {
 					<ComingItem icon="batch" label="One-signature batch register" />
 				</ul>
 			</section>
-			<div className="storage">
-				<b>Storage paid through</b>
-				<div className="bar" aria-hidden="true">
-					<i />
-				</div>
-				<small>
-					{connected
-						? "The blob that expires first shows here."
-						: "Connect a wallet to see how long your storage is paid for."}
-				</small>
-				<small>
-					Epochs last{" "}
-					{network.epochDays === 1 ? "1 day" : `${network.epochDays} days`} on{" "}
-					{network.label}. You can pay up to {network.maxEpochsAhead} epochs
-					ahead.
-				</small>
-			</div>
+			<StorageCard network={network} connected={connected} listed={listed} />
 		</aside>
+	);
+}
+
+/**
+ * When the first paid storage ends. The bar measures that against the
+ * longest period anyone can pay for: 53 epochs ahead of now.
+ */
+function StorageCard({
+	network,
+	connected,
+	listed,
+}: {
+	network: NetworkConfig;
+	connected: boolean;
+	listed: ListedBlobs | null;
+}) {
+	const next = listed?.summary.nextToExpire ?? null;
+	const horizonMs = listed
+		? network.maxEpochsAhead * listed.clock.epochDurationMs
+		: 0;
+	const share =
+		next && listed && horizonMs > 0
+			? Math.min(
+					1,
+					Math.max(0, next.status.expiresAtMs - listed.nowMs) / horizonMs,
+				)
+			: 0;
+
+	return (
+		<div className="storage">
+			<b>Storage paid through</b>
+			<div
+				className="bar"
+				aria-hidden="true"
+				title={`Next expiry against the longest period you can pay for, ${network.maxEpochsAhead} epochs`}
+			>
+				<i style={{ width: `${(share * 100).toFixed(1)}%` }} />
+			</div>
+			<small>{firstExpiryLine(connected, listed)}</small>
+			{listed && listed.rows.length > 0 ? (
+				<small>
+					{formatBytes(listed.summary.totalSize)} across{" "}
+					{listed.rows.length === 1 ? "1 blob" : `${listed.rows.length} blobs`}
+				</small>
+			) : null}
+			<small>
+				Epochs last{" "}
+				{network.epochDays === 1 ? "1 day" : `${network.epochDays} days`} on{" "}
+				{network.label}. You can pay up to {network.maxEpochsAhead} epochs
+				ahead.
+			</small>
+		</div>
+	);
+}
+
+function firstExpiryLine(
+	connected: boolean,
+	listed: ListedBlobs | null,
+): ReactNode {
+	if (listed === null) {
+		return connected
+			? "The blob that expires first shows here."
+			: "Connect a wallet to see how long your storage is paid for.";
+	}
+	const next = listed.summary.nextToExpire;
+	if (next === null) return "No certified blob is paid for right now.";
+	return (
+		<>
+			Next blob expires in <b>{formatDays(next.status.daysLeft)}</b>
+		</>
 	);
 }
 
