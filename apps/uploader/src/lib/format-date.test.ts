@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { formatAgo, formatDays, formatShortDate } from "./format-date";
+import {
+	formatAgo,
+	formatDays,
+	formatShortDate,
+	formatWhen,
+} from "./format-date";
 
 // Noon UTC keeps the calendar day the same in every time zone from UTC-11 to UTC+11.
 const noon = (year: number, month: number, day: number) =>
@@ -30,6 +35,24 @@ describe("formatDays", () => {
 		expect(formatDays(0)).toBe("< 1 day");
 		expect(formatDays(1)).toBe("1 day");
 		expect(formatDays(23)).toBe("23 days");
+	});
+});
+
+describe("formatWhen", () => {
+	const now = noon(2026, 10, 18);
+	it("gives the time for today, then Yesterday, then a short date", () => {
+		// Half an hour before noon UTC is the same calendar day from UTC-11 to UTC+11.
+		const earlier = now - 30 * 60_000;
+		const time = new Intl.DateTimeFormat("en-GB", {
+			hour: "2-digit",
+			minute: "2-digit",
+		}).format(earlier);
+		expect(formatWhen(earlier, now)).toBe(time);
+		// 24-hour clock with two-digit hours and minutes.
+		expect(formatWhen(earlier, now)).toMatch(/^\d{2}:\d{2}$/);
+		expect(formatWhen(noon(2026, 10, 17), now)).toBe("Yesterday");
+		expect(formatWhen(noon(2026, 10, 3), now)).toBe("3 Oct");
+		expect(formatWhen(noon(2025, 7, 1), now)).toBe("1 Jul 2025");
 	});
 });
 

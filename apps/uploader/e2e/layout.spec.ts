@@ -1,6 +1,5 @@
-import { mkdir, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
 import { expect, type Page, test } from "@playwright/test";
+import { profileTrigger } from "./app-actions";
 
 async function horizontalOverflow(
 	page: Page,
@@ -24,18 +23,19 @@ test.describe("layout without a wallet", () => {
 		expect(scrollWidth).toBe(innerWidth);
 	});
 
-	test("/app has no horizontal overflow at 390; the Walrus pane fills the screen", async ({
+	test("/app has no horizontal overflow at 390; the rail is a tab bar along the bottom", async ({
 		page,
 	}) => {
 		await page.setViewportSize({ width: 390, height: 844 });
 		await page.goto("/app");
-		const walrusPane = page.getByRole("region", { name: "Walrus Testnet" });
-		await expect(walrusPane).toBeVisible();
-		await expect(
-			page.getByRole("heading", { name: "This computer" }),
-		).toBeHidden();
-		const box = await walrusPane.boundingBox();
-		expect(box?.width).toBe(390);
+		const overview = page.getByRole("region", { name: "Overview" });
+		await expect(overview).toBeVisible();
+		expect((await overview.boundingBox())?.width).toBe(390);
+		const bar = await page
+			.getByRole("navigation", { name: "Views" })
+			.boundingBox();
+		expect(bar?.width).toBe(390);
+		expect((bar?.y ?? 0) + (bar?.height ?? 0)).toBe(844);
 		const { scrollWidth, innerWidth } = await horizontalOverflow(page);
 		expect(scrollWidth).toBe(innerWidth);
 	});
@@ -43,14 +43,22 @@ test.describe("layout without a wallet", () => {
 	test("Coming features are visibly disabled", async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 });
 		await page.goto("/app");
-		const sidebar = page.getByRole("complementary", { name: "Sidebar" });
+		const rail = page.getByRole("navigation", { name: "Views" });
+		const agents = rail.getByRole("button", {
+			name: "Agents and keys (MCP), coming",
+		});
+		await expect(agents).toBeDisabled();
+		await expect(agents).toContainText("soon");
+
+		await rail.getByRole("button", { name: "More" }).click();
+		const more = page.getByRole("dialog", { name: "More" });
 		for (const feature of [
-			"Download for Mac",
-			"One-signature batch register",
+			"Desktop app",
+			"One-signature batching",
 			"Walrus Sites deploy",
 			"Agents and keys (MCP)",
 		]) {
-			const item = sidebar.getByRole("button", { name: feature });
+			const item = more.getByRole("button", { name: feature });
 			await expect(item).toBeDisabled();
 			await expect(item).toContainText("Coming");
 		}
@@ -61,24 +69,24 @@ test.describe("layout without a wallet", () => {
 	}) => {
 		await page.setViewportSize({ width: 1440, height: 900 });
 		await page.goto("/app");
-		await page
-			.getByRole("banner")
-			.getByRole("button", { name: "Connect wallet" })
-			.click();
+		await profileTrigger(page).click();
 		const menu = page.getByRole("dialog", {
 			name: "Profiles, network and wallet",
 		});
 		await menu.getByRole("radio", { name: "Walrus Mainnet" }).check();
-		await expect(
-			page.getByRole("region", { name: "Walrus Mainnet" }),
-		).toBeVisible();
-		await expect(page.getByRole("banner")).toContainText("Walrus Mainnet");
-		await expect(page.getByText(/FROST\/MiB\/epoch/)).toBeVisible();
+		const network = page.locator("header.top .net");
+		await expect(network).toHaveText("Walrus Mainnet");
+		await page.keyboard.press("Escape");
+		// The Overview prices the network from its Walrus system object.
+		await expect(page.getByText("WAL / GiB·epoch")).toBeVisible({
+			timeout: 60_000,
+		});
+		await expect(page.getByRole("region", { name: "Overview" })).toContainText(
+			"on Walrus Mainnet",
+		);
 
 		await page.reload();
-		await expect(
-			page.getByRole("region", { name: "Walrus Mainnet" }),
-		).toBeVisible();
+		await expect(network).toHaveText("Walrus Mainnet");
 	});
 
 	test("the profile menu is reachable and dismissible from the keyboard", async ({
@@ -86,9 +94,8 @@ test.describe("layout without a wallet", () => {
 	}) => {
 		await page.setViewportSize({ width: 1440, height: 900 });
 		await page.goto("/app");
-		const trigger = page
-			.getByRole("banner")
-			.getByRole("button", { name: "Connect wallet" });
+		const trigger = profileTrigger(page);
+		await expect(trigger).toHaveAccessibleName("Connect wallet");
 		await trigger.focus();
 		await page.keyboard.press("Enter");
 		const menu = page.getByRole("dialog", {
@@ -101,73 +108,33 @@ test.describe("layout without a wallet", () => {
 		await expect(trigger).toBeFocused();
 	});
 
-	test("the local pane lists a picked folder as a tree with sizes and selection", async ({
+	test("without a wallet the Overview asks to connect, prices Walrus, and Upload waits", async ({
 		page,
 	}) => {
 		await page.setViewportSize({ width: 1440, height: 900 });
 		await page.goto("/app");
-		const root = test.info().outputPath("site-export");
-		for (const [path, text] of Object.entries({
-			"index.html": "<h1>Hi</h1>",
-			"assets/logo.svg": "<svg/>",
-			"assets/style.css": "body{}",
-		})) {
-			await mkdir(dirname(join(root, path)), { recursive: true });
-			await writeFile(join(root, path), text);
-		}
-		await page.locator('input[data-picker="folder"]').setInputFiles(root);
-
-		const local = page.getByRole("region", { name: "This computer" });
-		const folder = local.getByRole("button", {
-			name: /site-export\/\s*3 files/,
+		const overview = page.getByRole("region", { name: "Overview" });
+		await expect(
+			overview.getByRole("heading", { name: "Connect a wallet" }),
+		).toBeVisible();
+		await expect(overview.getByText("Price right now")).toBeVisible();
+		await expect(overview.getByText("WAL / GiB·epoch")).toBeVisible({
+			timeout: 60_000,
 		});
-		await expect(folder).toHaveAttribute("aria-expanded", "false");
-		await expect(local.locator(".ft")).toContainText("3 files");
-		await expect(local.locator(".ft")).toContainText("3 selected · 23 B");
-
-		await folder.click();
-		await expect(folder).toHaveAttribute("aria-expanded", "true");
-		await local.getByRole("button", { name: /assets\/\s*2 files/ }).click();
-		await expect(local.getByText("logo.svg")).toBeVisible();
-
-		await local.getByRole("checkbox", { name: "index.html" }).uncheck();
-		await expect(local.locator(".ft")).toContainText("2 selected · 12 B");
-		const folderBox = local.getByRole("checkbox", {
-			name: /Select site-export\//,
-		});
-		expect(
-			await folderBox.evaluate(
-				(box) => (box as HTMLInputElement).indeterminate,
-			),
-		).toBe(true);
-
-		// Uploading needs a wallet.
+		// The drop zone needs a wallet to upload into.
+		await expect(
+			page.getByRole("region", { name: "Drop files to upload" }),
+		).toHaveCount(0);
 		await expect(
 			page.getByRole("button", { name: "Upload", exact: true }),
 		).toBeDisabled();
-	});
+		await expect(page.locator("header.top .ctx")).toHaveText("Not connected");
 
-	test("files dropped on the local pane are listed and selected", async ({
-		page,
-	}) => {
-		await page.setViewportSize({ width: 1440, height: 900 });
-		await page.goto("/app");
-		const local = page.getByRole("region", { name: "This computer" });
-		const transfer = await page.evaluateHandle(() => {
-			const data = new DataTransfer();
-			data.items.add(new File(["one"], "one.txt", { type: "text/plain" }));
-			data.items.add(new File(["two!"], "two.txt", { type: "text/plain" }));
-			return data;
-		});
-		await local.dispatchEvent("dragover", { dataTransfer: transfer });
-		await expect(local.locator(".drop")).toHaveClass(/on/);
-		await local.dispatchEvent("drop", { dataTransfer: transfer });
+		await page.goto("/app#files");
 		await expect(
-			local.getByRole("checkbox", { name: "one.txt" }),
-		).toBeChecked();
-		await expect(
-			local.getByRole("checkbox", { name: "two.txt" }),
-		).toBeChecked();
-		await expect(local.locator(".ft")).toContainText("2 selected · 7 B");
+			page
+				.getByRole("region", { name: "Files" })
+				.getByText("Connect a wallet", { exact: true }),
+		).toBeVisible();
 	});
 });

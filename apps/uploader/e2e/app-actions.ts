@@ -6,11 +6,16 @@ export function short(address: string): string {
 	return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
+/** The rail's profile avatar, which opens the profile menu. */
+export function profileTrigger(page: Page): Locator {
+	return page.locator("[data-profile-trigger]");
+}
+
 export async function openProfileMenu(page: Page): Promise<Locator> {
 	const menu = page.getByRole("dialog", {
 		name: "Profiles, network and wallet",
 	});
-	if (!(await menu.isVisible())) await page.locator(".topbar .profile").click();
+	if (!(await menu.isVisible())) await profileTrigger(page).click();
 	await expect(menu).toBeVisible();
 	return menu;
 }
@@ -21,5 +26,5 @@ export async function connect(page: Page, address: string): Promise<void> {
 	await menu
 		.getByRole("button", { name: new RegExp(TEST_WALLET_NAME) })
 		.click();
-	await expect(page.locator(".topbar .profile")).toContainText(short(address));
+	await expect(profileTrigger(page)).toContainText(short(address));
 }
