@@ -63,13 +63,15 @@ export function TraySettingsPanel(props: TraySettingsProps) {
 			{
 				id: "encryption",
 				label: "Encryption",
-				value: tray?.sealing ? "Seal, per file" : "Off",
+				value: (tray ? tray.sealing : settings.encrypt)
+					? "Seal, per file"
+					: "Off",
 				act: "seal",
 			},
 			{
 				id: "folders",
 				label: "Folders",
-				value: folders === "quilt" ? "Quilt per folder" : "One blob per file",
+				value: folders === "quilt" ? "Quilt per folder" : "Blob per file",
 				act: "change",
 			},
 			{
@@ -122,14 +124,16 @@ export function TraySettingsPanel(props: TraySettingsProps) {
 	);
 }
 
+/** The Keep for tile: the period or epochs, "…" until the epoch clock is read. */
 function keepValue({ settings, tray }: TraySettingsProps): string {
-	const keep = tray?.keep ?? settings.keep;
 	const permanent = settings.deletable ? "" : ", permanent";
-	if (keep === null) return "No period fits";
-	if (keep.kind === "epochs")
+	const keep = tray ? tray.keep : settings.keep;
+	if (keep?.kind === "epochs")
 		return `${keep.epochs} ${keep.epochs === 1 ? "epoch" : "epochs"}${permanent}`;
-	const period = tray?.periods.find((option) => option.id === keep.id);
-	return `${period?.label ?? "…"}${permanent}`;
+	if (!tray) return "…";
+	if (keep === null) return "No period fits";
+	const period = tray.periods.find((option) => option.id === keep.id);
+	return `${period?.label ?? keep.id}${permanent}`;
 }
 
 function publishValue(settings: TraySettings, tray: TrayQuote | null): string {
@@ -246,7 +250,8 @@ function EncryptionEditor({
 	return (
 		<SwitchRow
 			title="Encrypt with Seal"
-			checked={settings.encrypt && sealAvailable}
+			// The setting itself, held until this network's Seal settings are read.
+			checked={settings.encrypt && network.seal.kind === "available"}
 			disabled={!sealAvailable}
 			onChange={(encrypt) => onChange({ encrypt })}
 		>
