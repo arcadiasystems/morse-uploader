@@ -69,6 +69,9 @@ describe("copy rules", () => {
 			/publisher timeout/i, // item 10: it is the upload relay
 			/[Bb]atching with one signature/, // item 8: never below N + 1
 			/frees storage/, // item 16: storage returns to the wallet
+			/\b\d+ storage nodes\b/, // item 11: the SDK reports no node count
+			/per year at today's price/, // items 5 and 6: periods are epochs within 53
+			/auto-extend from your wallet/i, // item 13: no background extend
 		];
 		expect(
 			files
@@ -95,6 +98,34 @@ describe("copy rules", () => {
 		);
 		expect(sheet).toContain(
 			"Client-side. Only wallets you allow can decrypt. The blob id, file name and size stay public.",
+		);
+	});
+
+	it("uses the notes' wording in the blob drawer (items 11, 12, 13 and 16)", () => {
+		// JSX wraps long copy over lines, so whitespace is folded before matching.
+		const text = (suffix: string) =>
+			(files.find((file) => file.path.endsWith(suffix))?.text ?? "").replace(
+				/\s+/g,
+				" ",
+			);
+		// Item 11: verify says what happened, never a node count.
+		expect(text("drawer/verify-section.tsx")).toContain(
+			"Bytes match the blob id. Rebuilt from storage nodes",
+		);
+		// Item 16: delete returns a Storage object; no WAL comes back.
+		const remove = text("drawer/delete-section.tsx");
+		expect(remove).toContain("returns its storage to your wallet");
+		expect(remove).toContain("No WAL is refunded.");
+		// Item 13 and section 9: auto-extend only runs while the app is open.
+		expect(text("drawer/auto-extend-panel.tsx")).toContain(
+			"Auto-extend runs while Morse Uploader is open. It asks your wallet to sign one transaction for all blobs that are close to expiry and never spends more than your WAL cap.",
+		);
+		// Item 12: a blob has no Walrus Site link, and the drawer says so.
+		expect(text("drawer/share-section.tsx")).toContain("No Walrus Site link");
+		// Item 5: the end is an epoch, with days as an estimate. Storage is
+		// valid while epoch < end_epoch (section 5), so it runs until that epoch starts.
+		expect(text("drawer/storage-section.tsx")).toContain(
+			"Paid until epoch {blob.endEpoch} starts",
 		);
 	});
 

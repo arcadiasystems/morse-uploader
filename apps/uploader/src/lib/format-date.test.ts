@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { formatDays, formatModified, formatShortDate } from "./format-date";
+import {
+	formatAgo,
+	formatDays,
+	formatModified,
+	formatShortDate,
+} from "./format-date";
 
 // Noon UTC keeps the calendar day the same in every time zone from UTC-11 to UTC+11.
 const noon = (year: number, month: number, day: number) =>
@@ -39,5 +44,21 @@ describe("formatModified", () => {
 		expect(formatModified(noon(2026, 10, 18) - 3_600_000, now)).toBe("today");
 		expect(formatModified(noon(2026, 10, 17), now)).toBe("yesterday");
 		expect(formatModified(noon(2026, 10, 2), now)).toBe("2 Oct");
+	});
+});
+
+describe("formatAgo", () => {
+	const now = noon(2026, 10, 18);
+	it("says how long ago a check ran", () => {
+		expect(formatAgo(now - 20_000, now)).toBe("just now");
+		expect(formatAgo(now - 60_000, now)).toBe("1 minute ago");
+		expect(formatAgo(now - 2 * 60_000, now)).toBe("2 minutes ago");
+		expect(formatAgo(now - 3_600_000, now)).toBe("1 hour ago");
+		expect(formatAgo(now - 5 * 3_600_000, now)).toBe("5 hours ago");
+		expect(formatAgo(now - 2 * 86_400_000, now)).toBe("2 days ago");
+	});
+
+	it("treats a moment in the future as now", () => {
+		expect(formatAgo(now + 5_000, now)).toBe("just now");
 	});
 });

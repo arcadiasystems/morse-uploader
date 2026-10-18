@@ -14,19 +14,29 @@ import { EncryptedObject, SessionKey } from "@mysten/seal";
 import type { Keypair } from "@mysten/sui/cryptography";
 import { SuiGrpcClient } from "@mysten/sui/grpc";
 import { fromHex } from "@mysten/sui/utils";
-import { expect, type Locator, type Page, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 import { sealCiphertextSize } from "../src/upload/seal-ciphertext-size";
 import { connect } from "./app-actions";
 import {
-	balance,
 	type ChainBlob,
 	ownedBlobs,
 	quiltPatchIdentifiers,
-	SUI_COIN_TYPE,
 	walCoinType,
-	walrusEpoch,
 } from "./chain";
 import { installTestWallet, KEY_ENV, keypairFromEnv } from "./test-wallet";
+import {
+	aggregatorBytes,
+	chainBlob,
+	clearSelection,
+	confirm,
+	expectWalSpent,
+	openSheet,
+	overflow,
+	predictedWal,
+	queueRow,
+	spendTracker,
+	waitForDone,
+} from "./upload-actions";
 
 /**
  * Real uploads on Testnet with the funded test wallet, each for one epoch
@@ -354,12 +364,6 @@ test.describe("the upload sheet on a phone", () => {
 	});
 });
 
-interface DoneItem {
-	blobId: string;
-	recipientFile: string | null;
-	entryId: number | undefined;
-}
-
 function file(name: string, text: string, mimeType: string) {
 	return { name, mimeType, buffer: Buffer.from(text + RUN) };
 }
@@ -376,131 +380,6 @@ async function writeFolder(
 	return root;
 }
 
-/** Opens the sheet: with files, through the picker behind Upload; without, for the selection. */
-async function openSheet(
-	page: Page,
-	files?: { name: string; mimeType: string; buffer: Buffer }[],
-): Promise<Locator> {
-	if (files) {
-		await clearSelection(page);
-		const chooser = page.waitForEvent("filechooser");
-		await page.getByRole("button", { name: "Upload", exact: true }).click();
-		await (await chooser).setFiles(files);
-	} else {
-		await page.getByRole("button", { name: "Upload", exact: true }).click();
-	}
-	const sheet = page.getByRole("dialog", {
-		name: /Upload \d+ items? to Walrus/,
-	});
-	await expect(sheet).toBeVisible();
-	return sheet;
-}
-
-/**
- * Clears the local pane's selection, so Upload opens the picker or takes
- * only new files. Phones have no local pane; there it has nothing to clear.
- */
-async function clearSelection(page: Page): Promise<void> {
-	const local = page.getByRole("region", { name: "This computer" });
-	if (!(await local.isVisible())) return;
-	const selectAll = local.getByRole("button", { name: "Select all" });
-	// With part of the list selected, select everything first: then Select none clears it all.
-	if ((await selectAll.isVisible()) && (await selectAll.isEnabled()))
-		await selectAll.click();
-	const selectNone = local.getByRole("button", { name: "Select none" });
-	if (await selectNone.isVisible()) await selectNone.click();
-	await expect(local.locator(".ft")).toContainText("Nothing selected");
-}
-
-/** Sets the period to `epochs` and reads the WAL the sheet predicts, in FROST. */
-async function predictedWal(sheet: Locator, epochs: number): Promise<bigint> {
-	await sheet.getByRole("spinbutton").fill(String(epochs));
-	await expect(sheet.getByText(`Storage, ${epochs} epoch`)).toBeVisible();
-	await expect(sheet.getByText(/≈/).first()).toBeVisible({ timeout: 60_000 });
-	const amount = async (label: RegExp) =>
-		toFrost(
-			await sheet
-				.locator(".cost dt", { hasText: label })
-				.locator("xpath=following-sibling::dd")
-				.evaluate(
-					(dd) => (dd.querySelector(".sr-only") ?? dd).textContent ?? "",
-				),
-		);
-	return (await amount(/^Storage/)) + (await amount(/^Write fee/));
-}
-
-function toFrost(text: string): bigint {
-	const match = /(\d+)(?:\.(\d+))?/.exec(text.replaceAll(",", ""));
-	if (!match) throw new Error(`No amount in "${text}".`);
-	return (
-		BigInt(match[1] ?? "0") * 1_000_000_000n +
-		BigInt((match[2] ?? "").padEnd(9, "0"))
-	);
-}
-
-async function confirm(sheet: Locator, signatures: number): Promise<void> {
-	const upload = sheet.getByRole("button", {
-		name: `Upload · sign ${signatures} times`,
-	});
-	await expect(upload).toBeEnabled({ timeout: 60_000 });
-	await upload.click();
-	await expect(sheet).toBeHidden();
-}
-
-function queueRow(page: Page, name: string): Locator {
-	return page
-		.locator("tr.q", { has: page.locator(".label", { hasText: name }) })
-		.last();
-}
-
-/** Waits until each named item is done, from the Done tab, and reads what it shows. */
-async function waitForDone(
-	page: Page,
-	names: readonly string[],
-): Promise<DoneItem[]> {
-	await page.getByRole("tab", { name: /Done/ }).click();
-	const items: DoneItem[] = [];
-	for (const name of names) {
-		const row = queueRow(page, name);
-		await expect(row).toHaveClass(/done/, { timeout: 240_000 });
-		const blobId = await row.locator(".id [title]").getAttribute("title");
-		if (!blobId) throw new Error(`${name} shows no blob id.`);
-		const entry = await row
-			.locator("[data-entry-id]")
-			.getAttribute("data-entry-id", { timeout: 1_000 })
-			.catch(() => null);
-		items.push({
-			blobId,
-			recipientFile: await row
-				.locator("[data-recipient-file]")
-				.getAttribute("data-recipient-file", { timeout: 1_000 })
-				.catch(() => null),
-			entryId: entry === null ? undefined : Number(entry),
-		});
-	}
-	return items;
-}
-
-async function chainBlob(
-	owner: string,
-	blobId: string | undefined,
-): Promise<ChainBlob> {
-	let found: ChainBlob | undefined;
-	await expect
-		.poll(
-			async () => {
-				found = (await ownedBlobs(NETWORK, owner)).find(
-					(blob) => blob.blobId === blobId,
-				);
-				return found?.certifiedEpoch ?? null;
-			},
-			{ timeout: 60_000 },
-		)
-		.not.toBeNull();
-	if (!found) throw new Error(`Blob ${blobId} is not owned by ${owner}.`);
-	return found;
-}
-
 /** The blob's row in the Walrus pane, found by searching its blob id. */
 async function expectListed(page: Page, blob: ChainBlob): Promise<void> {
 	const search = page.getByRole("searchbox", { name: /Search blobs/ });
@@ -509,73 +388,4 @@ async function expectListed(page: Page, blob: ChainBlob): Promise<void> {
 		page.locator(`.pane.remote tr[data-key="${blob.objectId}"]`),
 	).toBeVisible({ timeout: 60_000 });
 	await search.fill("");
-}
-
-async function aggregatorBytes(blobId: string): Promise<Uint8Array> {
-	let bytes: Uint8Array | null = null;
-	await expect
-		.poll(
-			async () => {
-				const response = await fetch(
-					`https://aggregator.walrus-testnet.walrus.space/v1/blobs/${blobId}`,
-				);
-				if (!response.ok) return response.status;
-				bytes = new Uint8Array(await response.arrayBuffer());
-				return 200;
-			},
-			{ timeout: 90_000, intervals: [2_000, 5_000] },
-		)
-		.toBe(200);
-	if (!bytes) throw new Error(`The aggregator did not serve ${blobId}.`);
-	return bytes;
-}
-
-interface Spend {
-	owner: string;
-	wal: string;
-	walBefore: bigint;
-	suiBefore: bigint;
-	epoch: number;
-}
-
-async function spendTracker(owner: string, wal: string): Promise<Spend> {
-	const [walBefore, suiBefore, { epoch }] = await Promise.all([
-		balance(NETWORK, owner, wal),
-		balance(NETWORK, owner, SUI_COIN_TYPE),
-		walrusEpoch(NETWORK),
-	]);
-	return { owner, wal, walBefore, suiBefore, epoch };
-}
-
-/**
- * The WAL the uploads spent equals what the sheet predicted. The tolerance
- * is 1%, for a price vote landing between the quote and the register; in
- * practice the two are equal to the FROST.
- */
-async function expectWalSpent(spend: Spend, predicted: bigint): Promise<void> {
-	let spent = 0n;
-	await expect
-		.poll(
-			async () => {
-				spent =
-					spend.walBefore - (await balance(NETWORK, spend.owner, spend.wal));
-				return spent > 0n;
-			},
-			{ timeout: 30_000 },
-		)
-		.toBe(true);
-	const suiSpent =
-		spend.suiBefore - (await balance(NETWORK, spend.owner, SUI_COIN_TYPE));
-	test.info().annotations.push({
-		type: "spend",
-		description: `WAL predicted ${predicted}, spent ${spent} FROST; SUI spent ${suiSpent} MIST`,
-	});
-	const difference = spent > predicted ? spent - predicted : predicted - spent;
-	expect(difference * 100n).toBeLessThanOrEqual(predicted);
-}
-
-async function overflow(page: Page): Promise<{ fits: boolean }> {
-	return page.evaluate(() => ({
-		fits: document.documentElement.scrollWidth === window.innerWidth,
-	}));
 }

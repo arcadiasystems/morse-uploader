@@ -109,6 +109,8 @@ export interface ChainBlob {
 	/** URL-safe base64, converted here from the u256 without the SDK. */
 	blobId: string;
 	size: bigint;
+	/** The encoded size storage is billed on. */
+	encodedSize: bigint;
 	certifiedEpoch: number | null;
 	startEpoch: number;
 	endEpoch: number;
@@ -121,7 +123,7 @@ interface BlobJson {
 	size: string;
 	certified_epoch: number | null;
 	deletable: boolean;
-	storage: { start_epoch: number; end_epoch: number };
+	storage: { start_epoch: number; end_epoch: number; storage_size: string };
 }
 
 /** u256 little-endian to URL-safe base64 without padding (PROTOCOL-NOTES section 7). */
@@ -190,6 +192,7 @@ export async function ownedBlobs(
 				objectId: node.address,
 				blobId: blobIdFromDecimal(json.blob_id),
 				size: BigInt(json.size),
+				encodedSize: BigInt(json.storage.storage_size),
 				certifiedEpoch: json.certified_epoch,
 				startEpoch: json.storage.start_epoch,
 				endEpoch: json.storage.end_epoch,
