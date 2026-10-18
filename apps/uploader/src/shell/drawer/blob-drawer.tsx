@@ -13,11 +13,13 @@ import { errorMessage } from "@/lib/error-message";
 import { formatBytes } from "@/lib/format-bytes";
 import { formatShortDate } from "@/lib/format-date";
 import { type ChainRead, useChainRead } from "@/lib/use-chain-read";
+import { deleteBlocker } from "@/manage/delete-rules";
 import { mediaTypeOf } from "@/manage/preview-plan";
 import { embedSnippet, shareLinks } from "@/manage/share";
 import type { AutoExtend } from "@/manage/use-auto-extend";
 import type { NetworkConfig } from "@/network/networks";
 import type { WalletActions } from "@/wallet/use-wallet-actions";
+import { DeleteSection } from "./delete-section";
 import { type DrawerTarget, targetRow } from "./drawer-target";
 import { PreviewSection } from "./preview-section";
 import { PublishSection, type PublishSubject } from "./publish-section";
@@ -37,7 +39,7 @@ export interface DrawerContext {
 
 /**
  * The blob drawer (design/app-blob.html): preview, verification, record,
- * storage with extend and auto-extend, publish to Morse and share,
+ * storage with extend and auto-extend, publish to Morse, share and delete,
  * for a blob, a quilt, or one file in a quilt. The record is read live from
  * chain when the drawer opens and after every change it makes.
  */
@@ -312,6 +314,15 @@ export function BlobDrawer({
 							quilt={blob.isQuilt && !patch}
 						/>
 					) : null}
+
+					<DeleteSection
+						network={network}
+						blob={blob}
+						blocker={deleteBlocker(blob, clock)}
+						quiltFile={patch !== null}
+						actions={context.actions}
+						onDeleted={changed}
+					/>
 				</>
 			)}
 		</aside>

@@ -72,6 +72,18 @@ export function buildExtendTransaction(
 }
 
 /**
+ * Deletes a deletable blob; Move `delete_blob` returns its `Storage` object,
+ * which goes back to the owner.
+ */
+export function buildDeleteTransaction(
+	client: NetworkClient,
+	objectId: string,
+	owner: string,
+): Transaction {
+	return client.walrus.deleteBlobTransaction({ blobObjectId: objectId, owner });
+}
+
+/**
  * Runs the transaction against current chain state without signing it.
  * Nothing is submitted, so nothing changes on chain.
  * @throws {SimulationFailedError} When it would fail.
