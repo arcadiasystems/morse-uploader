@@ -477,6 +477,18 @@
 	flex: 1;
 }
 
+/* Addition: a problem stated where it happens: a drop, the upload sheet, the queue. */
+.drop .problem,
+.modal .problem,
+.qnote.problem {
+	color: var(--warn);
+	background: var(--warn-bg);
+	border: 1px solid var(--warn-line);
+	border-radius: 8px;
+	padding: 8px 10px;
+	font-size: 12.5px;
+}
+
 /* ---------- Transfer queue ---------- */
 .queue {
 	border-top: 1px solid var(--line);

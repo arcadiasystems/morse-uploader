@@ -4,9 +4,11 @@ import { listBlobs } from "@/blobs/list-blobs";
 import { DEFAULT_SORT, nextSort, type RowSort } from "@/blobs/sort-rows";
 import { useBlobListing } from "@/blobs/use-blob-listing";
 import { useFunds } from "@/funds/use-funds";
+import { useLocalLibrary } from "@/local/use-local-library";
 import { NETWORKS } from "@/network/networks";
 import { useSession } from "@/wallet/use-session";
 import type { BlobView } from "./blob-views";
+import { useFilePickers } from "./file-pickers";
 import { LocalPane } from "./panes/local-pane";
 import { WalrusPane } from "./panes/walrus-pane";
 import { Sidebar } from "./sidebar";
@@ -25,6 +27,8 @@ export function Shell() {
 	const [view, setView] = useState<BlobView>("all");
 	const [query, setQuery] = useState("");
 	const [sort, setSort] = useState<RowSort>(DEFAULT_SORT);
+	const local = useLocalLibrary();
+	const pickers = useFilePickers((picked) => local.add(picked));
 
 	const listing = blobs.read;
 	const listed = useMemo(
@@ -56,7 +60,12 @@ export function Shell() {
 				/>
 				<main className="main">
 					<div className="panes">
-						<LocalPane />
+						<LocalPane
+							local={local}
+							pickers={pickers}
+							onAdd={local.add}
+							nowMs={Date.now()}
+						/>
 						<WalrusPane
 							key={`${network.id}:${address ?? ""}`}
 							network={network}
@@ -76,6 +85,7 @@ export function Shell() {
 					<TransferQueue />
 				</main>
 			</div>
+			{pickers.inputs}
 		</div>
 	);
 }
