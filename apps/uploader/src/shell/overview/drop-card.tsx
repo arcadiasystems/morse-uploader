@@ -1,62 +1,15 @@
-import { type DragEvent, useState } from "react";
-import { errorMessage } from "@/lib/error-message";
-import type { PickedFile } from "@/local/local-library";
-import { readDroppedItems } from "@/local/read-picked-files";
 import type { FilePickers } from "../file-pickers";
 
 /**
- * The Overview's drop zone. Dropped or chosen files and folders open the
- * upload sheet with the live price; nothing is sent until the wallet signs.
- * R3's staging tray takes drops anywhere on the window.
+ * The Overview's drop zone. A drop here lands like a drop anywhere on the
+ * window, which the shell takes; the buttons open the file and folder
+ * pickers. Nothing is sent until the wallet signs.
  */
-export function DropCard({
-	pickers,
-	onPicked,
-}: {
-	pickers: FilePickers;
-	onPicked: (files: PickedFile[]) => void;
-}) {
-	const [dragging, setDragging] = useState(false);
-	const [problem, setProblem] = useState<string | null>(null);
-
-	function onDragOver(event: DragEvent<HTMLElement>) {
-		if (!event.dataTransfer.types.includes("Files")) return;
-		event.preventDefault();
-		event.dataTransfer.dropEffect = "copy";
-		setDragging(true);
-	}
-
-	function onDragLeave(event: DragEvent<HTMLElement>) {
-		const next = event.relatedTarget;
-		if (next instanceof Node && event.currentTarget.contains(next)) return;
-		setDragging(false);
-	}
-
-	function onDrop(event: DragEvent<HTMLElement>) {
-		event.preventDefault();
-		setDragging(false);
-		setProblem(null);
-		readDroppedItems(event.dataTransfer).then(
-			(picked) => {
-				if (picked.length > 0) onPicked(picked);
-			},
-			(error: unknown) =>
-				setProblem(
-					`The browser could not read what was dropped: ${errorMessage(error)}`,
-				),
-		);
-	}
-
+export function DropCard({ pickers }: { pickers: FilePickers }) {
 	return (
 		<div className="card span-4">
-			<section
-				className={dragging ? "dz on" : "dz"}
-				aria-label="Drop files to upload"
-				onDragOver={onDragOver}
-				onDragLeave={onDragLeave}
-				onDrop={onDrop}
-			>
-				<b>Drop files or folders</b>
+			<section className="dz" aria-label="Add files to upload">
+				<b>Drop files or folders anywhere</b>
 				<span>
 					Folders keep their structure and upload as one quilt of up to 666
 					files. Up to 1 GiB per upload. Nothing is sent until you sign.
@@ -69,11 +22,6 @@ export function DropCard({
 						Choose folder
 					</button>
 				</span>
-				{problem ? (
-					<span className="problem" role="alert">
-						{problem}
-					</span>
-				) : null}
 			</section>
 		</div>
 	);

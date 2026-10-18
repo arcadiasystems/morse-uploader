@@ -42,6 +42,9 @@ import { BulkExtendSheet, type ExtendScope } from "./bulk/bulk-extend-sheet";
 import { BulkPublishSheet } from "./bulk/bulk-publish-sheet";
 import { BulkShareSheet } from "./bulk/bulk-share-sheet";
 import { BulkVerifySheet } from "./bulk/bulk-verify-sheet";
+import { DropOverlay } from "./drop/drop-overlay";
+import { DropProblem } from "./drop/drop-problem";
+import { useWindowDrop } from "./drop/use-window-drop";
 import { useFilePickers } from "./file-pickers";
 import { type FilesJump, FilesView } from "./files/files-view";
 import type { FilesLayout } from "./files/filter-bar";
@@ -130,6 +133,16 @@ export function Shell() {
 		setSheet((current) => ({ session: current.session + 1, open: true }));
 	}
 	const pickers = useFilePickers(upload);
+	const [dropProblem, setDropProblem] = useState<string | null>(null);
+	const dragging = useWindowDrop({
+		onFiles: (files) => {
+			setDropProblem(null);
+			// Staged files belong to a wallet: without one, the drop asks to connect.
+			if (address === null) profileMenu.open();
+			else upload(files);
+		},
+		onProblem: setDropProblem,
+	});
 
 	function confirmUpload(batch: TransferBatch) {
 		transfers.queue.enqueue(batch);
@@ -309,7 +322,6 @@ export function Shell() {
 								navigate({ view: "files", filter: "published" })
 							}
 							pickers={pickers}
-							onPicked={upload}
 						/>
 					) : (
 						<FilesView
@@ -418,6 +430,13 @@ export function Shell() {
 					network={network}
 					autoExtend={autoExtend}
 					onClose={() => setAutoExtendOpen(false)}
+				/>
+			) : null}
+			{dragging ? <DropOverlay connected={address !== null} /> : null}
+			{dropProblem !== null ? (
+				<DropProblem
+					message={dropProblem}
+					onDismiss={() => setDropProblem(null)}
 				/>
 			) : null}
 			{pickers.inputs}

@@ -1,0 +1,72 @@
+/* ---------- Drop anywhere (design/v2/app-drop.html) ---------- */
+/* Over the view, inset 14px inside the rail and the top bar. It takes no
+   pointer events: the window handles the drag wherever the pointer is. */
+.dropall {
+	position: fixed;
+	top: calc(var(--bar) + 14px);
+	left: calc(var(--rail) + 14px);
+	right: 14px;
+	bottom: 14px;
+	border: 1.5px dashed rgba(125, 243, 232, 0.6);
+	border-radius: 18px;
+	background: rgba(125, 243, 232, 0.05);
+	backdrop-filter: blur(2px);
+	display: grid;
+	place-items: center;
+	padding: 24px;
+	pointer-events: none;
+	z-index: 50;
+}
+.dropall div {
+	text-align: center;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+.dropall b {
+	font-family: var(--disp);
+	font-size: 28px;
+	font-weight: 700;
+	letter-spacing: -0.03em;
+}
+.dropall span {
+	color: var(--fg-2);
+}
+
+/* Why a drop staged nothing, until dismissed. */
+.drop-problem {
+	position: fixed;
+	left: 50%;
+	bottom: 22px;
+	transform: translateX(-50%);
+	width: max-content;
+	max-width: min(560px, calc(100vw - 32px));
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 10px 10px 10px 16px;
+	border: 1px solid var(--warn-line);
+	border-radius: 12px;
+	background: var(--glass-strong);
+	backdrop-filter: blur(18px);
+	box-shadow: var(--shadow);
+	color: var(--warn);
+	font-size: 12.5px;
+	z-index: 60;
+}
+.drop-problem .x {
+	flex: none;
+	width: 28px;
+	height: 28px;
+	display: grid;
+	place-items: center;
+	border: 0;
+	border-radius: 8px;
+	background: transparent;
+	color: var(--fg-3);
+	cursor: pointer;
+}
+.drop-problem .x:hover {
+	color: var(--fg);
+	background: var(--panel);
+}
