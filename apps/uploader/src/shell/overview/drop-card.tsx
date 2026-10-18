@@ -9,10 +9,11 @@ export function DropCard({ pickers }: { pickers: FilePickers }) {
 	return (
 		<div className="card span-4">
 			<section className="dz" aria-label="Add files to upload">
-				<b>Drop files or folders anywhere</b>
+				<b>Drop anything, anywhere</b>
 				<span>
+					Files and folders. They stage first; nothing is sent until you sign.
 					Folders keep their structure and upload as one quilt of up to 666
-					files. Up to 1 GiB per upload. Nothing is sent until you sign.
+					files. Up to 1 GiB per upload.
 				</span>
 				<span className="acts">
 					<button className="btn sm" type="button" onClick={pickers.openFiles}>

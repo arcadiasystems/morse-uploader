@@ -77,7 +77,6 @@ describe("copy rules", () => {
 			/extended this month/i, // chain keeps no extend history per blob
 			/via MCP/, // agents are not built
 			/Open Morse Press/, // no address to link to
-			/Drop anything, anywhere/, // R1 has one drop zone; drop anywhere is R3
 		];
 		expect(
 			files
@@ -95,6 +94,9 @@ describe("copy rules", () => {
 			"Folders keep their structure and upload as one quilt of up to 666 files.",
 		);
 		expect(drop).toContain("Up to 1 GiB per upload.");
+		// R3 makes the design's headline true: drops land anywhere and stage first.
+		expect(drop).toContain("Drop anything, anywhere");
+		expect(drop).toContain("They stage first; nothing is sent until you sign.");
 		// Items 2 and 7: the staging tray's itemised cost.
 		const cost = text("staging/cost-list.tsx");
 		expect(cost).toContain("Each blob carries 64 MB of fixed metadata.");
