@@ -112,7 +112,8 @@ export function CommandPalette({
 				: [
 						{
 							key: "filter",
-							group: "actions",
+							// Last, so Enter on an exact command or blob runs that, not the filter.
+							group: "blobs",
 							mark: "⌕",
 							title: `Filter Files by “${typed}”`,
 							detail: undefined,
@@ -120,7 +121,7 @@ export function CommandPalette({
 							run: () => onFilter(typed),
 						},
 					];
-		const all = [...commandOptions, ...filterOption, ...blobOptions];
+		const all = [...commandOptions, ...blobOptions, ...filterOption];
 		return PALETTE_GROUPS.flatMap((group) =>
 			all.filter((option) => option.group === group),
 		);
