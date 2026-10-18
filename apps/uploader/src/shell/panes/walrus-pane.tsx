@@ -16,7 +16,7 @@ import { BlobList } from "../blob-list/blob-list";
 import { buildListItems } from "../blob-list/list-items";
 import { ListSkeleton } from "../blob-list/list-skeleton";
 import { BLOB_VIEWS, type BlobView } from "../blob-views";
-import { BlobDrawer } from "../drawer/blob-drawer";
+import { BlobDrawer, type DrawerContext } from "../drawer/blob-drawer";
 import { drawerTarget } from "../drawer/drawer-target";
 import { EmptyState } from "../empty-state";
 import { PriceFooter } from "./price-footer";
@@ -36,6 +36,9 @@ interface WalrusPaneProps {
 	onRefresh: () => void;
 	prices: ChainRead<WalrusPrices>;
 	onConnect: () => void;
+	drawer: DrawerContext;
+	/** Opens Extend all for the blobs expiring soon. */
+	onExtendExpiring: () => void;
 }
 
 /**
@@ -56,6 +59,8 @@ export function WalrusPane({
 	onRefresh,
 	prices,
 	onConnect,
+	drawer,
+	onExtendExpiring,
 }: WalrusPaneProps) {
 	const { store, patches } = useQuiltPatches();
 	const pane = useRef<HTMLElement>(null);
@@ -221,7 +226,11 @@ export function WalrusPane({
 			</div>
 			{content}
 			{listed ? (
-				<BlobFooter summary={listed.summary} selected={selected} />
+				<BlobFooter
+					summary={listed.summary}
+					selected={selected}
+					onExtendExpiring={drawer.actions ? onExtendExpiring : null}
+				/>
 			) : (
 				<PriceFooter prices={prices} />
 			)}
@@ -231,6 +240,7 @@ export function WalrusPane({
 					target={drawerTarget(selected)}
 					network={network}
 					listed={listed}
+					context={drawer}
 					onClose={closeDrawer}
 				/>
 			) : null}

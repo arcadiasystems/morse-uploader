@@ -1,17 +1,22 @@
 import { useCurrentNetwork } from "@mysten/dapp-kit-react";
 import { normalizeSuiAddress } from "@mysten/sui/utils";
 import { useCallback, useMemo, useState } from "react";
+import { filterRows } from "@/blobs/filter-rows";
 import { listBlobs } from "@/blobs/list-blobs";
 import { DEFAULT_SORT, nextSort, type RowSort } from "@/blobs/sort-rows";
 import { useBlobListing } from "@/blobs/use-blob-listing";
 import { useFunds } from "@/funds/use-funds";
 import type { PickedFile } from "@/local/local-library";
 import { useLocalLibrary } from "@/local/use-local-library";
+import { useAutoExtend } from "@/manage/use-auto-extend";
 import { NETWORKS } from "@/network/networks";
 import type { TransferBatch } from "@/transfers/transfer-job";
 import { useTransferQueue } from "@/transfers/use-transfer-queue";
 import { useSession } from "@/wallet/use-session";
-import type { BlobView } from "./blob-views";
+import { useWalletActions } from "@/wallet/use-wallet-actions";
+import { BLOB_VIEWS, type BlobView } from "./blob-views";
+import type { DrawerContext } from "./drawer/blob-drawer";
+import { type ExtendAllScope, ExtendAllSheet } from "./drawer/extend-all-sheet";
 import { useFilePickers } from "./file-pickers";
 import { LocalPane } from "./panes/local-pane";
 import { WalrusPane } from "./panes/walrus-pane";
@@ -49,10 +54,13 @@ export function Shell() {
 
 	const refreshBlobs = blobs.refresh;
 	const refreshFunds = funds.refresh;
-	const transfers = useTransferQueue(network.id, address, () => {
+	const refreshChain = useCallback(() => {
 		refreshBlobs();
 		refreshFunds();
-	});
+	}, [refreshBlobs, refreshFunds]);
+	const transfers = useTransferQueue(network.id, address, refreshChain);
+	const actions = useWalletActions(network.id);
+	const [extendAll, setExtendAll] = useState<ExtendAllScope | null>(null);
 
 	function addPicked(picked: PickedFile[], thenUpload = false) {
 		// Files picked to upload are the selection: nothing chosen earlier rides along.
@@ -80,6 +88,22 @@ export function Shell() {
 				: null,
 		[listing],
 	);
+	const autoExtend = useAutoExtend({
+		network,
+		actions,
+		listed,
+		storagePricePerUnit:
+			funds.prices.status === "ready" ? funds.prices.data.storagePerUnit : null,
+		refreshBlobs,
+		onRenewed: refreshChain,
+	});
+	const drawer: DrawerContext = {
+		actions,
+		balances: funds.balances,
+		autoExtend,
+		onChanged: refreshChain,
+	};
+	const viewFilter = BLOB_VIEWS[view].filter;
 
 	return (
 		<div className="app">
@@ -100,6 +124,7 @@ export function Shell() {
 					network={network}
 					connected={address !== null}
 					listed={listed}
+					onExtendExpiring={actions ? () => setExtendAll("expiring") : null}
 				/>
 				<main className="main">
 					<div className="panes">
@@ -123,6 +148,8 @@ export function Shell() {
 							onRefresh={blobs.refresh}
 							prices={funds.prices}
 							onConnect={profileMenu.open}
+							drawer={drawer}
+							onExtendExpiring={() => setExtendAll("expiring")}
 						/>
 					</div>
 					<TransfersPane
@@ -145,6 +172,23 @@ export function Shell() {
 					session={sheet.session}
 					onClose={closeSheet}
 					onConfirm={confirmUpload}
+				/>
+			) : null}
+			{extendAll !== null && actions !== null && listed !== null ? (
+				<ExtendAllSheet
+					network={network}
+					listed={listed}
+					viewRows={
+						viewFilter === null
+							? []
+							: filterRows(listed.rows, viewFilter, query)
+					}
+					viewLabel={BLOB_VIEWS[view].label}
+					initialScope={extendAll}
+					actions={actions}
+					balances={funds.balances}
+					onClose={() => setExtendAll(null)}
+					onExtended={refreshChain}
 				/>
 			) : null}
 			{pickers.inputs}

@@ -8,35 +8,52 @@ import type { ListedBlobs } from "@/blobs/list-blobs";
 import { readQuiltPatchList } from "@/blobs/quilt-patch-list";
 import { readLiveBlob } from "@/blobs/read-blob-object";
 import { Icon, type IconName } from "@/components/icon";
+import type { Balances } from "@/funds/types";
 import { errorMessage } from "@/lib/error-message";
 import { formatBytes } from "@/lib/format-bytes";
 import { formatShortDate } from "@/lib/format-date";
-import { useChainRead } from "@/lib/use-chain-read";
+import { type ChainRead, useChainRead } from "@/lib/use-chain-read";
 import { mediaTypeOf } from "@/manage/preview-plan";
+import type { AutoExtend } from "@/manage/use-auto-extend";
 import type { NetworkConfig } from "@/network/networks";
+import type { WalletActions } from "@/wallet/use-wallet-actions";
 import { type DrawerTarget, targetRow } from "./drawer-target";
 import { PreviewSection } from "./preview-section";
 import { RecordSection } from "./record-section";
+import { StorageSection } from "./storage-section";
 import { VerifySection } from "./verify-section";
 
+/** What the drawer needs from the shell: signing, balances, auto-extend and a way to re-read. */
+export interface DrawerContext {
+	actions: WalletActions | null;
+	balances: ChainRead<Balances>;
+	autoExtend: AutoExtend | null;
+	/** Something changed on chain: the list and balances read again. */
+	onChanged: () => void;
+}
+
 /**
- * The blob drawer (design/app-blob.html): preview, verification and record for a blob, a quilt, or one file in a
- * quilt. The record is read live from chain when the drawer opens.
+ * The blob drawer (design/app-blob.html): preview, verification, record, and storage with extend and auto-extend,
+ * for a blob, a quilt, or one file in a quilt. The record is read live
+ * from chain when the drawer opens and after every change it makes.
  */
 export function BlobDrawer({
 	target,
 	network,
 	listed,
+	context,
 	onClose,
 }: {
 	target: DrawerTarget;
 	network: NetworkConfig;
 	listed: ListedBlobs;
+	context: DrawerContext;
 	onClose: () => void;
 }) {
 	const client = useCurrentClient();
 	const row = targetRow(target);
 	const objectId = row.blob.objectId;
+	// Refreshed after each change, so the last record stays on screen meanwhile.
 	const { read: live, refresh: readAgain } = useChainRead(
 		`${network.id}:live:${objectId}`,
 		(signal) => readLiveBlob(client, objectId, signal),
@@ -70,6 +87,11 @@ export function BlobDrawer({
 	const expired = status.kind === "expired";
 	const certified = blob.certifiedEpoch !== null;
 	const liveAndCertified = certified && !expired;
+
+	function changed() {
+		readAgain();
+		context.onChanged();
+	}
 
 	function onKeyDown(event: KeyboardEvent<HTMLElement>) {
 		if (event.key === "Escape") {
@@ -221,7 +243,7 @@ export function BlobDrawer({
 									? { kind: "unavailable" }
 									: { kind: "reading" }
 						}
-						viewer={null}
+						viewer={context.actions?.address ?? null}
 						patch={
 							patch
 								? {
@@ -230,6 +252,19 @@ export function BlobDrawer({
 									}
 								: null
 						}
+					/>
+
+					<StorageSection
+						network={network}
+						blob={blob}
+						status={status}
+						clock={clock}
+						nowMs={nowMs}
+						actions={context.actions}
+						balances={context.balances}
+						autoExtend={context.autoExtend}
+						scope={patch ? "quilt-file" : "blob"}
+						onExtended={changed}
 					/>
 				</>
 			)}
