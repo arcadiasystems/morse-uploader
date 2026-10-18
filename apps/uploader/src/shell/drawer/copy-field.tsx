@@ -34,7 +34,7 @@ export function CopyField({
 					<input id={id} ref={field} readOnly value={value} />
 				)}
 				<button
-					className="btn btn-soft xs"
+					className="btn sm"
 					type="button"
 					aria-label={`Copy ${label.toLowerCase()}`}
 					onClick={() => copy(value)}

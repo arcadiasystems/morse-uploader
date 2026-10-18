@@ -1,52 +1,72 @@
 import { useCurrentNetwork } from "@mysten/dapp-kit-react";
 import { normalizeSuiAddress } from "@mysten/sui/utils";
 import { useCallback, useMemo, useState } from "react";
-import { filterRows } from "@/blobs/filter-rows";
-import { listBlobs } from "@/blobs/list-blobs";
+import { useActivity } from "@/activity/use-activity";
+import {
+	type BlobFilter,
+	filterRows,
+	type MorseMarks,
+} from "@/blobs/filter-rows";
+import { type ListedBlobs, listBlobs } from "@/blobs/list-blobs";
+import { publishedObjectIds, sharedObjectIds } from "@/blobs/morse-marks";
 import { DEFAULT_SORT, nextSort, type RowSort } from "@/blobs/sort-rows";
 import { useBlobListing } from "@/blobs/use-blob-listing";
 import { useFunds } from "@/funds/use-funds";
+import { errorMessage } from "@/lib/error-message";
+import { formatBytes } from "@/lib/format-bytes";
+import { shortenAddress } from "@/lib/shorten-address";
+import type { ChainRead } from "@/lib/use-chain-read";
 import type { PickedFile } from "@/local/local-library";
-import { useLocalLibrary } from "@/local/use-local-library";
+import { usePickedFiles } from "@/local/use-picked-files";
 import { useAutoExtend } from "@/manage/use-auto-extend";
+import type { Publications } from "@/morse/read-publications";
+import type { SharedFiles } from "@/morse/read-shared-files";
+import { useMorseReads } from "@/morse/use-morse-reads";
 import { NETWORKS } from "@/network/networks";
+import { summarizeTransfers } from "@/transfers/summarize-transfers";
 import type { TransferBatch } from "@/transfers/transfer-job";
 import { useTransferQueue } from "@/transfers/use-transfer-queue";
 import { useSession } from "@/wallet/use-session";
 import { useWalletActions } from "@/wallet/use-wallet-actions";
-import { BLOB_VIEWS, type BlobView } from "./blob-views";
+import { useAppRoute } from "./app-route";
 import type { DrawerContext } from "./drawer/blob-drawer";
 import { type ExtendAllScope, ExtendAllSheet } from "./drawer/extend-all-sheet";
 import { useFilePickers } from "./file-pickers";
-import { LocalPane } from "./panes/local-pane";
-import { WalrusPane } from "./panes/walrus-pane";
-import { Sidebar } from "./sidebar";
+import { FILE_FILTER_CONFIG } from "./files/file-filters";
+import { FilesView } from "./files/files-view";
+import type { FilesLayout } from "./files/filter-bar";
+import { Overview } from "./overview/overview";
+import { Rail } from "./rail/rail";
 import { Topbar } from "./topbar";
-import { TransfersPane } from "./transfer-queue";
+import { TransfersPanel } from "./transfers/transfers-panel";
 import { UploadSheet } from "./upload-sheet/upload-sheet";
 import { usePopover } from "./use-popover";
 
-/** The app shell: top bar, sidebar, the two panes and the transfer queue. */
+/**
+ * The app shell: the rail, the top bar with search, transfers, balances and
+ * Upload, the current view, and the sheets and slide-overs above them.
+ */
 export function Shell() {
 	const network = NETWORKS[useCurrentNetwork()];
 	const session = useSession();
 	const address = session?.account.address ?? null;
 	const funds = useFunds(network, address);
 	const blobs = useBlobListing(network, address);
+	const activity = useActivity(network, address);
+	const morse = useMorseReads(network, address);
+	const [route, navigate] = useAppRoute();
 	const profileMenu = usePopover();
-	const [view, setView] = useState<BlobView>("all");
+	const balanceMenu = usePopover();
+	const transfersPanel = usePopover();
 	const [query, setQuery] = useState("");
 	const [sort, setSort] = useState<RowSort>(DEFAULT_SORT);
-	const local = useLocalLibrary();
+	const [layout, setLayout] = useState<FilesLayout>("list");
+	const picked = usePickedFiles();
 	// Each opening is a new session, so the sheet reads prices again.
 	const [sheet, setSheet] = useState<{ session: number; open: boolean }>({
 		session: 0,
 		open: false,
 	});
-	const openSheet = useCallback(
-		() => setSheet((current) => ({ session: current.session + 1, open: true })),
-		[],
-	);
 	const closeSheet = useCallback(
 		() => setSheet((current) => ({ ...current, open: false })),
 		[],
@@ -54,30 +74,30 @@ export function Shell() {
 
 	const refreshBlobs = blobs.refresh;
 	const refreshFunds = funds.refresh;
+	const refreshActivity = activity.refresh;
+	const refreshMorse = morse.refresh;
+	// After the app changes something on chain, everything shown reads again.
 	const refreshChain = useCallback(() => {
 		refreshBlobs();
 		refreshFunds();
-	}, [refreshBlobs, refreshFunds]);
+		refreshActivity();
+		refreshMorse();
+	}, [refreshBlobs, refreshFunds, refreshActivity, refreshMorse]);
 	const transfers = useTransferQueue(network.id, address, refreshChain);
+	const transfersSummary = summarizeTransfers(transfers.state);
 	const actions = useWalletActions(network.id);
 	const [extendAll, setExtendAll] = useState<ExtendAllScope | null>(null);
 
-	function addPicked(picked: PickedFile[], thenUpload = false) {
-		// Files picked to upload are the selection: nothing chosen earlier rides along.
-		if (thenUpload) local.clearSelection();
-		local.add(picked);
-		if (thenUpload) openSheet();
+	function upload(files: PickedFile[]) {
+		picked.replace(files);
+		setSheet((current) => ({ session: current.session + 1, open: true }));
 	}
-	const pickers = useFilePickers(addPicked);
-
-	function onUpload() {
-		if (local.selected.size > 0) openSheet();
-		else pickers.openFilesToUpload();
-	}
+	const pickers = useFilePickers(upload);
 
 	function confirmUpload(batch: TransferBatch) {
 		transfers.queue.enqueue(batch);
 		closeSheet();
+		transfersPanel.open();
 	}
 
 	const listing = blobs.read;
@@ -103,71 +123,122 @@ export function Shell() {
 		autoExtend,
 		onChanged: refreshChain,
 	};
-	const viewFilter = BLOB_VIEWS[view].filter;
+	const filter: BlobFilter = route.view === "files" ? route.filter : "all";
+	const publications =
+		morse.publications.status === "ready" &&
+		morse.publications.data.kind === "complete"
+			? morse.publications.data.publications
+			: null;
+	const sharedFiles =
+		morse.shared.status === "ready" && morse.shared.data.kind === "complete"
+			? morse.shared.data.files
+			: null;
+	const marks = useMemo(
+		(): MorseMarks => ({
+			published:
+				listed && publications
+					? publishedObjectIds(
+							listed.rows,
+							publications.flatMap((publication) => publication.refs),
+						)
+					: null,
+			shared:
+				listed && sharedFiles
+					? sharedObjectIds(listed.rows, sharedFiles)
+					: null,
+		}),
+		[listed, publications, sharedFiles],
+	);
+	const countNotes = {
+		published: markNote(morse.publications, "your Morse publications"),
+		shared: markNote(morse.shared, "your access policies"),
+	};
+
+	function search(next: string) {
+		setQuery(next);
+		// Results list in Files; searching from the Overview goes there.
+		if (route.view === "overview" && next.trim() !== "")
+			navigate({ view: "files", filter: "all" });
+	}
 
 	return (
-		<div className="app">
-			<Topbar
-				network={network}
-				address={address}
-				funds={funds}
-				profileMenu={profileMenu}
-				query={query}
-				onQueryChange={setQuery}
-				searchDisabled={address === null}
-				onUpload={onUpload}
-			/>
-			<div className="body">
-				<Sidebar
-					view={view}
-					onSelect={setView}
-					network={network}
-					connected={address !== null}
-					listed={listed}
-					onExtendExpiring={actions ? () => setExtendAll("expiring") : null}
+		<>
+			<div className="glow violet" aria-hidden="true" />
+			<div className="glow teal" aria-hidden="true" />
+			<div className="app">
+				<Rail
+					route={route}
+					transfersActive={transfersSummary.active}
+					transfersPanel={transfersPanel}
+					profileMenu={profileMenu}
 				/>
-				<main className="main">
-					<div className="panes">
-						<LocalPane
-							local={local}
+				<div className="main">
+					<Topbar
+						title={route.view === "overview" ? "Overview" : "Files"}
+						context={contextLine(address, listed)}
+						network={network}
+						address={address}
+						funds={funds}
+						balanceMenu={balanceMenu}
+						query={query}
+						onQueryChange={search}
+						searchDisabled={address === null}
+						transfers={transfersSummary}
+						transfersPanel={transfersPanel}
+						onUpload={pickers.openFiles}
+					/>
+					{route.view === "overview" ? (
+						<Overview
+							network={network}
+							address={address}
+							listing={listing}
+							listed={listed}
+							prices={funds.prices}
+							activity={activity.read}
+							morse={morse}
+							onExtendExpiring={actions ? () => setExtendAll("expiring") : null}
+							onTopUp={address === null ? null : balanceMenu.open}
+							onConnect={profileMenu.open}
+							onRetryBlobs={blobs.refresh}
+							onRetryActivity={activity.refresh}
+							onShowPublished={() =>
+								navigate({ view: "files", filter: "published" })
+							}
 							pickers={pickers}
-							onAdd={addPicked}
-							nowMs={Date.now()}
+							onPicked={upload}
 						/>
-						<WalrusPane
+					) : (
+						<FilesView
 							key={`${network.id}:${address ?? ""}`}
 							network={network}
 							address={address}
-							view={view}
+							filter={filter}
 							query={query}
 							onClearQuery={() => setQuery("")}
 							sort={sort}
-							onSort={(key) => setSort((current) => nextSort(current, key))}
+							onSort={setSort}
+							onSortBy={(key) => setSort((current) => nextSort(current, key))}
+							layout={layout}
+							onLayout={setLayout}
 							listing={listing}
 							listed={listed}
-							onRefresh={blobs.refresh}
-							prices={funds.prices}
+							marks={marks}
+							countNotes={countNotes}
+							onRefresh={refreshChain}
 							onConnect={profileMenu.open}
 							drawer={drawer}
 							onExtendExpiring={() => setExtendAll("expiring")}
 						/>
-					</div>
-					<TransfersPane
-						state={transfers.state}
-						onRetry={(id) => transfers.queue.retry(id)}
-						onDismiss={(id) => transfers.queue.dismiss(id)}
-						onPause={() => transfers.queue.pause()}
-						onResume={() => transfers.queue.resume()}
-						restoreError={transfers.restoreError}
-					/>
-				</main>
+					)}
+				</div>
 			</div>
+			<TransfersPanel panel={transfersPanel} transfers={transfers} />
 			{sheet.open && address !== null ? (
 				<UploadSheet
 					network={network}
 					owner={normalizeSuiAddress(address)}
-					library={local.library}
-					selected={local.selected}
+					library={picked.library}
+					selected={picked.selected}
 					balances={funds.balances}
 					session={sheet.session}
 					onClose={closeSheet}
@@ -178,12 +249,8 @@ export function Shell() {
 				<ExtendAllSheet
 					network={network}
 					listed={listed}
-					viewRows={
-						viewFilter === null
-							? []
-							: filterRows(listed.rows, viewFilter, query)
-					}
-					viewLabel={BLOB_VIEWS[view].label}
+					viewRows={filterRows(listed.rows, filter, query, marks)}
+					viewLabel={FILE_FILTER_CONFIG[filter].label}
 					initialScope={extendAll}
 					actions={actions}
 					balances={funds.balances}
@@ -192,6 +259,31 @@ export function Shell() {
 				/>
 			) : null}
 			{pickers.inputs}
-		</div>
+		</>
 	);
+}
+
+/** The line under the view title: who, how many blobs, how much. */
+function contextLine(address: string | null, listed: ListedBlobs | null) {
+	if (address === null) return "Not connected";
+	const who = shortenAddress(address);
+	if (listed === null) return `${who} · reading blobs`;
+	const count = listed.rows.length;
+	return `${who} · ${count === 1 ? "1 blob" : `${count} blobs`} · ${formatBytes(listed.totalSize)}`;
+}
+
+/** Why a Morse count is missing, or `undefined` once it is real. */
+function markNote(
+	read: ChainRead<Publications | SharedFiles>,
+	what: string,
+): string | undefined {
+	switch (read.status) {
+		case "idle":
+		case "loading":
+			return `Reading ${what} from chain…`;
+		case "error":
+			return `Could not read ${what}: ${errorMessage(read.error)}`;
+		case "ready":
+			return read.data.kind === "unavailable" ? read.data.reason : undefined;
+	}
 }

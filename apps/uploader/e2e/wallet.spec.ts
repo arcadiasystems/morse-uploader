@@ -6,7 +6,7 @@ import {
 	verifyTransactionSignature,
 } from "@mysten/sui/verify";
 import { expect, type Locator, type Page, test } from "@playwright/test";
-import { connect, openProfileMenu, short } from "./app-actions";
+import { connect, openProfileMenu, profileTrigger, short } from "./app-actions";
 import {
 	balance,
 	decimal,
@@ -32,6 +32,11 @@ async function shownAmount(row: Locator): Promise<string> {
 	});
 }
 
+/** The top bar's balances pill: WAL, SUI and the network. */
+function balancePill(page: Page): Locator {
+	return page.locator("header.top button.net");
+}
+
 async function expectBalancesMatchChain(
 	page: Page,
 	network: Network,
@@ -40,7 +45,7 @@ async function expectBalancesMatchChain(
 	const wal =
 		network === "mainnet" ? MAINNET_WAL_COIN_TYPE : await walCoinType(network);
 	const panel = page.getByRole("dialog", { name: "Balances and top up" });
-	if (!(await panel.isVisible())) await page.locator(".bal").click();
+	if (!(await panel.isVisible())) await balancePill(page).click();
 	await expect(async () => {
 		await panel.getByRole("button", { name: "Refresh" }).click();
 		await expect(panel.getByText(/Read from chain at/)).toBeVisible();
@@ -80,9 +85,8 @@ test.describe("wallet, balances and profiles", () => {
 	test("connects and shows balances equal to chain", async ({ page }) => {
 		const address = fundedKey.toSuiAddress();
 		await connect(page, address);
-		await expect(
-			page.getByRole("region", { name: "Walrus Testnet" }),
-		).toContainText(short(address));
+		await expect(page.locator("header.top .ctx")).toContainText(short(address));
+		await expect(balancePill(page)).toContainText("Testnet");
 		await expectBalancesMatchChain(page, "testnet", address);
 	});
 
@@ -93,9 +97,7 @@ test.describe("wallet, balances and profiles", () => {
 		await connect(page, address);
 		const menu = await openProfileMenu(page);
 		await menu.getByRole("radio", { name: "Walrus Mainnet" }).check();
-		await expect(
-			page.getByRole("region", { name: "Walrus Mainnet" }),
-		).toBeVisible();
+		await expect(balancePill(page)).toContainText("Walrus Mainnet");
 		await page.keyboard.press("Escape");
 
 		await expectBalancesMatchChain(page, "mainnet", address);
@@ -106,8 +108,8 @@ test.describe("wallet, balances and profiles", () => {
 		// This account holds nothing on Walrus Mainnet, which is below any upload floor.
 		expect(walOnChain).toBe(0n);
 		expect(suiOnChain).toBe(0n);
-		await expect(page.locator(".bal")).toHaveClass(/\blow\b/);
-		await expect(page.locator(".bal")).toContainText("top up");
+		await expect(balancePill(page)).toHaveClass(/\blow\b/);
+		await expect(balancePill(page)).toContainText("top up");
 		const panel = page.getByRole("dialog", { name: "Balances and top up" });
 		await expect(
 			panel.getByText("Top up to upload on Walrus Mainnet"),
@@ -144,35 +146,25 @@ test.describe("wallet, balances and profiles", () => {
 		await form.getByLabel(/Account in/).selectOption(freshAddress);
 		await form.getByRole("radio", { name: "Walrus Mainnet" }).check();
 		await form.getByRole("button", { name: "Save profile" }).click();
-		await expect(page.locator(".topbar .profile")).toContainText("Fresh");
-		await expect(page.locator(".topbar .profile")).toContainText(
-			short(freshAddress),
-		);
-		await expect(
-			page.getByRole("region", { name: "Walrus Mainnet" }),
-		).toBeVisible();
+		await expect(profileTrigger(page)).toContainText("Fresh");
+		await expect(profileTrigger(page)).toContainText(short(freshAddress));
+		await expect(balancePill(page)).toContainText("Walrus Mainnet");
 		await page.keyboard.press("Escape");
 		await expectBalancesMatchChain(page, "mainnet", freshAddress);
 		await page.keyboard.press("Escape");
 
 		menu = await openProfileMenu(page);
 		await menu.getByRole("button", { name: /^Funded/ }).click();
-		await expect(page.locator(".topbar .profile")).toContainText(
-			short(fundedAddress),
-		);
-		await expect(
-			page.getByRole("region", { name: "Walrus Testnet" }),
-		).toBeVisible();
+		await expect(profileTrigger(page)).toContainText(short(fundedAddress));
+		await expect(balancePill(page)).toContainText("Testnet");
 		await page.keyboard.press("Escape");
 		await expectBalancesMatchChain(page, "testnet", fundedAddress);
 		expect(wallet.connects()).toBe(1);
 		expect(wallet.disconnects()).toBe(0);
 
 		await page.reload();
-		await expect(page.locator(".topbar .profile")).toContainText("Funded");
-		await expect(
-			page.getByRole("region", { name: "Walrus Testnet" }),
-		).toBeVisible();
+		await expect(profileTrigger(page)).toContainText("Funded");
+		await expect(balancePill(page)).toContainText("Testnet");
 		menu = await openProfileMenu(page);
 		await menu.getByRole("button", { name: "Remove profile Fresh" }).click();
 		await expect(

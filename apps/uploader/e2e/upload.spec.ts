@@ -27,10 +27,10 @@ import { installTestWallet, KEY_ENV, keypairFromEnv } from "./test-wallet";
 import {
 	aggregatorBytes,
 	chainBlob,
-	clearSelection,
 	confirm,
 	expectWalSpent,
 	openSheet,
+	openTransfers,
 	overflow,
 	predictedWal,
 	queueRow,
@@ -109,7 +109,6 @@ test.describe("uploads on Testnet", () => {
 			"about.txt": "About this quilt.\n",
 			"assets/a.txt": "An asset.\n",
 		});
-		await clearSelection(page);
 		await page.locator('input[data-picker="folder"]').setInputFiles(folder);
 		const sheet = await openSheet(page);
 		await expect(
@@ -141,7 +140,6 @@ test.describe("uploads on Testnet", () => {
 			"first.txt": "First of two.\n",
 			"second.txt": "Second of two.\n",
 		});
-		await clearSelection(page);
 		await page.locator('input[data-picker="folder"]').setInputFiles(folder);
 		const sheet = await openSheet(page);
 		await sheet.getByText("One blob per file", { exact: true }).click();
@@ -309,7 +307,8 @@ test.describe("uploads on Testnet", () => {
 		const predicted = await predictedWal(sheet, 1);
 		await confirm(sheet, 2);
 
-		await page.getByRole("tab", { name: /Failed/ }).click();
+		const panel = await openTransfers(page);
+		await panel.getByRole("tab", { name: /Failed/ }).click();
 		const row = queueRow(page, "finish-me.txt");
 		await expect(row).toContainText("Certify failed", { timeout: 180_000 });
 		await expect(row).toContainText("Finish certifies it");
@@ -334,8 +333,9 @@ test.describe("uploads on Testnet", () => {
 
 	test("has no horizontal overflow at 390 with the queue populated", async () => {
 		await page.setViewportSize({ width: 390, height: 844 });
-		await page.getByRole("tab", { name: /Done/ }).click();
-		await expect(page.locator("tr.q.done").first()).toBeVisible();
+		const panel = await openTransfers(page);
+		await panel.getByRole("tab", { name: /Done/ }).click();
+		await expect(panel.locator("tr.q.done").first()).toBeVisible();
 		expect(await overflow(page)).toEqual({ fits: true });
 		await page.setViewportSize({ width: 1440, height: 900 });
 	});
@@ -380,12 +380,12 @@ async function writeFolder(
 	return root;
 }
 
-/** The blob's row in the Walrus pane, found by searching its blob id. */
+/** The blob's row in Files, found by searching its blob id. */
 async function expectListed(page: Page, blob: ChainBlob): Promise<void> {
 	const search = page.getByRole("searchbox", { name: /Search blobs/ });
 	await search.fill(blob.blobId);
 	await expect(
-		page.locator(`.pane.remote tr[data-key="${blob.objectId}"]`),
+		page.locator(`table.tbl tr[data-key="${blob.objectId}"]`),
 	).toBeVisible({ timeout: 60_000 });
 	await search.fill("");
 }

@@ -188,7 +188,7 @@ function Decrypt({
 			)}
 			<div className="acts">
 				<button
-					className="btn btn-ink xs"
+					className="btn solid sm"
 					type="button"
 					disabled={state.kind === "working"}
 					aria-busy={state.kind === "working"}
@@ -347,7 +347,7 @@ function Recipients({
 					) : null}
 					<div className="acts">
 						<button
-							className="btn btn-soft xs"
+							className="btn sm"
 							type="button"
 							disabled={!valid || already || adding.kind === "signing"}
 							aria-busy={adding.kind === "signing"}

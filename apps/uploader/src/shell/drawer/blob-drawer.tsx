@@ -155,7 +155,11 @@ export function BlobDrawer({
 			onKeyDown={onKeyDown}
 		>
 			<div className="hd">
-				<span className={blob.isEncrypted ? "ico enc" : "ico"}>
+				<span
+					className={
+						blob.isEncrypted ? "ico enc" : blob.isQuilt ? "ico dir" : "ico"
+					}
+				>
 					<Icon name={headerIcon(blob, mediaType, patch !== null)} />
 				</span>
 				<div>

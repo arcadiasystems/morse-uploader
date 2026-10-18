@@ -4,12 +4,13 @@ import { Brand } from "@/components/brand";
 export function ShellFallback() {
 	return (
 		<div className="app" aria-busy="true">
-			<header className="topbar">
-				<Brand />
-			</header>
-			<div className="body">
-				<div className="side" />
-				<div className="main" />
+			<nav className="rail" aria-label="Views">
+				<span className="lg">
+					<Brand wordmark={false} />
+				</span>
+			</nav>
+			<div className="main">
+				<header className="top" />
 			</div>
 		</div>
 	);

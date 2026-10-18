@@ -8,6 +8,8 @@ export interface Balances {
 export interface WalrusPrices {
 	/** Per 1 MiB of encoded size per epoch. */
 	storagePerUnit: bigint;
+	/** Per 1 MiB of encoded size, charged once when a blob is registered. */
+	writePerUnit: bigint;
 	/** Storage plus write fee for the smallest blob (1 byte) for one epoch. */
 	smallestUpload: bigint;
 }

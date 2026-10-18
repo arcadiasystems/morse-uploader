@@ -8,6 +8,25 @@ interface IconShape {
 
 /** Stroke icons from the design package, plus the few the shell adds. */
 const ICONS = {
+	home: {
+		body: (
+			<>
+				<path d="M4 11 12 4l8 7v9H4z" />
+				<path d="M10 20v-6h4v6" />
+			</>
+		),
+	},
+	transfers: {
+		body: <path d="M7 17V7M4 10l3-3 3 3M17 7v10M14 14l3 3 3-3" />,
+	},
+	settings: {
+		body: (
+			<>
+				<circle cx="12" cy="12" r="3" />
+				<path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2" />
+			</>
+		),
+	},
 	folder: {
 		body: (
 			<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
@@ -34,8 +53,8 @@ const ICONS = {
 	clock: {
 		body: (
 			<>
-				<circle cx="12" cy="12" r="9" />
-				<path d="M12 7v5l3 2" />
+				<circle cx="12" cy="12" r="8.5" />
+				<path d="M12 7.5V12l3 2" />
 			</>
 		),
 	},
@@ -52,11 +71,7 @@ const ICONS = {
 			</>
 		),
 	},
-	share: {
-		body: (
-			<path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M12 15V3M7 8l5-5 5 5" />
-		),
-	},
+	share: { body: <path d="M4 13v6h16v-6M12 15V4M8 8l4-4 4 4" /> },
 	agent: {
 		body: (
 			<>
@@ -91,7 +106,7 @@ const ICONS = {
 		),
 	},
 	upload: { body: <path d="M12 19V5M5 12l7-7 7 7" />, strokeWidth: 2.2 },
-	list: { body: <path d="M4 7h16M4 12h16M4 17h16" />, strokeWidth: 2.2 },
+	list: { body: <path d="M4 7h16M4 12h16M4 17h16" />, strokeWidth: 2 },
 	grid: {
 		body: (
 			<>
@@ -161,6 +176,16 @@ const ICONS = {
 	},
 	chevron: { body: <path d="m9 6 6 6-6 6" />, strokeWidth: 2.4 },
 	arrowUp: { body: <path d="M12 19V5M6 11l6-6 6 6" />, strokeWidth: 2.4 },
+	more: {
+		body: (
+			<>
+				<circle cx="5" cy="12" r="1" />
+				<circle cx="12" cy="12" r="1" />
+				<circle cx="19" cy="12" r="1" />
+			</>
+		),
+		strokeWidth: 2.4,
+	},
 } satisfies Record<string, IconShape>;
 
 export type IconName = keyof typeof ICONS;
@@ -175,7 +200,7 @@ export function Icon({ name, size = 16 }: { name: IconName; size?: number }) {
 			viewBox={shape.viewBox ?? "0 0 24 24"}
 			fill="none"
 			stroke="currentColor"
-			strokeWidth={shape.strokeWidth ?? 2}
+			strokeWidth={shape.strokeWidth ?? 1.8}
 			strokeLinecap="round"
 			strokeLinejoin="round"
 			aria-hidden="true"

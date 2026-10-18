@@ -17,25 +17,31 @@ export function formatShortDate(ms: number, nowMs: number): string {
 	return (sameYear ? DAY_MONTH : DAY_MONTH_YEAR).format(ms);
 }
 
-/** Whole days as a short duration: `< 1 day`, `1 day`, `23 days`. */
-export function formatDays(days: number): string {
-	if (days < 1) return "< 1 day";
-	return days === 1 ? "1 day" : `${days} days`;
-}
+const TIME = new Intl.DateTimeFormat("en-GB", {
+	hour: "2-digit",
+	minute: "2-digit",
+});
 
 /**
- * A file's modified time as the design's local pane shows it: `today`,
- * `yesterday`, otherwise a short date. Days are the viewer's calendar days.
+ * When something happened, as the design's activity list writes it: the
+ * time for today (`14:12`), `Yesterday`, then a short date. Days are the
+ * viewer's calendar days.
  */
-export function formatModified(ms: number, nowMs: number): string {
+export function formatWhen(ms: number, nowMs: number): string {
 	const day = (value: number) => {
 		const date = new Date(value);
 		return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
 	};
 	const daysAgo = Math.round((day(nowMs) - day(ms)) / 86_400_000);
-	if (daysAgo === 0) return "today";
-	if (daysAgo === 1) return "yesterday";
+	if (daysAgo === 0) return TIME.format(ms);
+	if (daysAgo === 1) return "Yesterday";
 	return formatShortDate(ms, nowMs);
+}
+
+/** Whole days as a short duration: `< 1 day`, `1 day`, `23 days`. */
+export function formatDays(days: number): string {
+	if (days < 1) return "< 1 day";
+	return days === 1 ? "1 day" : `${days} days`;
 }
 
 /** How long ago a moment was, for "checked 2 minutes ago": `just now`, minutes, hours, then days. */

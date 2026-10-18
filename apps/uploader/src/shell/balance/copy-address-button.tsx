@@ -7,11 +7,7 @@ export function CopyAddressButton({ address }: { address: string }) {
 
 	return (
 		<>
-			<button
-				className="btn btn-soft xs"
-				type="button"
-				onClick={() => copy(address)}
-			>
+			<button className="btn sm" type="button" onClick={() => copy(address)}>
 				<Icon name="copy" size={13} />
 				{state === "copied" ? "Address copied" : "Copy address"}
 			</button>

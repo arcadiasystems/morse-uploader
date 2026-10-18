@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Morse Uploader · Morse Uploader</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="dark.css">
+</head>
+<body>
+<div class="glow" style="width:640px;height:480px;left:-200px;top:-120px;background:#5B3FD8"></div>
+<div class="glow" style="width:560px;height:480px;right:-160px;bottom:-200px;background:#1BA79B"></div>
+<div class="land">
+<div class="tile" style="left:48px;top:430px;transform:rotate(-14deg)"><svg aria-hidden="true" width="48" height="48" viewBox="0 0 100 100"><path d="M8 72 V30 H36 V72 H64 V30 H92 V72" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+<div class="tile" style="right:70px;top:250px;transform:rotate(18deg);width:120px;height:120px"><svg aria-hidden="true" width="40" height="40" viewBox="0 0 100 100"><path d="M8 72 V30 H36 V72 H64 V30 H92 V72" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+<nav class="nav"><span class="wm"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 100 100"><path d="M8 72 V30 H36 V72 H64 V30 H92 V72" fill="none" stroke="#F4F2EC" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/></svg>morse <span>uploader</span></span><span class="mono">Docs</span><span class="mono">Changelog</span><div class="r"><a class="btn" href="#">Download ↓</a><a class="btn f" href="app.html">Open uploader ↗</a></div></nav>
+<section class="hero"><span class="mono c">// transfer client for walrus</span><h1>Move data to Walrus.<br><em>Keep every key.</em></h1><p>Drop folders, stage them, see the price, sign once per blob. Every object your wallet owns in one place, with its storage clock, its record on Sui and a way to prove it is intact.</p><div class="cta"><a class="btn f lg" href="app.html">Start transferring ↗</a><a class="btn lg" href="#compare">Read the docs</a></div></section>
+<div class="shot"><img src="app-desktop.png" alt="Morse Uploader files view with the inspector open"></div>
+<section class="feat4">
+  <div class="fcard"><span class="mono c">// stage, then sign</span><b>Nothing uploads by surprise</b><p>Drops land in a tray with the live price. One button signs the batch. Close the tab and the tray is still there.</p></div>
+  <div class="fcard"><span class="mono c">// storage clock</span><b>Every blob shows its time left</b><p>Expiry is a bar on every row, a timeline on the overview, and one action to extend everything that needs it.</p></div>
+  <div class="fcard"><span class="mono c">// quilts</span><b>Folders stay folders</b><p>A folder becomes one quilt with paths intact. Open it in place, address files by path, publish it as a Walrus Site.</p></div>
+  <div class="fcard"><span class="mono c">// record</span><b>Verify, share, publish</b><p>Re-check any blob against storage nodes, share an aggregator link, or attach it to a Morse publication with a record.</p></div>
+</section>
+<section class="cmp" id="compare"><h2>Console is a hosted drive. Uploader is a client.</h2>
+<table><thead><tr><th></th><th>Walrus Console</th><th>Morse Uploader</th></tr></thead><tbody>
+<tr><td>Login</td><td>Google or Apple account</td><td class="y">Any Sui wallet, no account</td></tr>
+<tr><td>Keys and payment</td><td>Console manages WAL for you</td><td class="y">Your wallet signs every transaction</td></tr>
+<tr><td>Limits</td><td>5 GB per space, 5 folders, 100 MiB per upload</td><td class="y">Walrus limits only</td></tr>
+<tr><td>Folders</td><td>Encrypted private folders</td><td class="y">Quilts with paths, public or Seal-encrypted per folder</td></tr>
+<tr><td>Expiry</td><td>Auto-extended by Console</td><td class="y">Visible per blob, extend by hand or auto-extend with a cap</td></tr>
+<tr><td>Verification</td><td>Upload status polling</td><td class="y">Re-verify any blob against storage nodes</td></tr>
+<tr><td>Publishing</td><td>Not in scope</td><td class="y">Morse publications and Walrus Sites</td></tr>
+<tr><td>Agents</td><td>MCP with API keys</td><td class="y">MCP with a wallet-scoped, revocable capability</td></tr>
+</tbody></table></section>
+<footer class="foot"><span>Morse Uploader is an open source client for Walrus by Morse.</span><span class="sig">-- --- .-. ... .</span></footer>
+</div></body></html>
