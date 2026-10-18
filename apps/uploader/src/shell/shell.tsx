@@ -2,16 +2,25 @@ import { useCurrentNetwork } from "@mysten/dapp-kit-react";
 import { normalizeSuiAddress } from "@mysten/sui/utils";
 import { useCallback, useMemo, useState } from "react";
 import { useActivity } from "@/activity/use-activity";
-import { filterRows } from "@/blobs/filter-rows";
+import {
+	type BlobFilter,
+	filterRows,
+	type MorseMarks,
+} from "@/blobs/filter-rows";
 import { type ListedBlobs, listBlobs } from "@/blobs/list-blobs";
+import { publishedObjectIds, sharedObjectIds } from "@/blobs/morse-marks";
 import { DEFAULT_SORT, nextSort, type RowSort } from "@/blobs/sort-rows";
 import { useBlobListing } from "@/blobs/use-blob-listing";
 import { useFunds } from "@/funds/use-funds";
+import { errorMessage } from "@/lib/error-message";
 import { formatBytes } from "@/lib/format-bytes";
 import { shortenAddress } from "@/lib/shorten-address";
+import type { ChainRead } from "@/lib/use-chain-read";
 import type { PickedFile } from "@/local/local-library";
 import { usePickedFiles } from "@/local/use-picked-files";
 import { useAutoExtend } from "@/manage/use-auto-extend";
+import type { Publications } from "@/morse/read-publications";
+import type { SharedFiles } from "@/morse/read-shared-files";
 import { useMorseReads } from "@/morse/use-morse-reads";
 import { NETWORKS } from "@/network/networks";
 import { summarizeTransfers } from "@/transfers/summarize-transfers";
@@ -19,28 +28,19 @@ import type { TransferBatch } from "@/transfers/transfer-job";
 import { useTransferQueue } from "@/transfers/use-transfer-queue";
 import { useSession } from "@/wallet/use-session";
 import { useWalletActions } from "@/wallet/use-wallet-actions";
-import { type FileFilter, useAppRoute } from "./app-route";
-import { BLOB_VIEWS, type BlobView } from "./blob-views";
+import { useAppRoute } from "./app-route";
 import type { DrawerContext } from "./drawer/blob-drawer";
 import { type ExtendAllScope, ExtendAllSheet } from "./drawer/extend-all-sheet";
 import { useFilePickers } from "./file-pickers";
+import { FILE_FILTER_CONFIG } from "./files/file-filters";
+import { FilesView } from "./files/files-view";
+import type { FilesLayout } from "./files/filter-bar";
 import { Overview } from "./overview/overview";
-import { WalrusPane } from "./panes/walrus-pane";
 import { Rail } from "./rail/rail";
 import { Topbar } from "./topbar";
 import { TransfersPanel } from "./transfers/transfers-panel";
 import { UploadSheet } from "./upload-sheet/upload-sheet";
 import { usePopover } from "./use-popover";
-
-/** The Walrus pane's view for each Files filter. */
-const PANE_VIEWS: Readonly<Record<FileFilter, BlobView>> = {
-	all: "all",
-	quilts: "quilts",
-	encrypted: "encrypted",
-	expiring: "expiring",
-	published: "publications",
-	shared: "shared",
-};
 
 /**
  * The app shell: the rail, the top bar with search, transfers, balances and
@@ -60,6 +60,7 @@ export function Shell() {
 	const transfersPanel = usePopover();
 	const [query, setQuery] = useState("");
 	const [sort, setSort] = useState<RowSort>(DEFAULT_SORT);
+	const [layout, setLayout] = useState<FilesLayout>("list");
 	const picked = usePickedFiles();
 	// Each opening is a new session, so the sheet reads prices again.
 	const [sheet, setSheet] = useState<{ session: number; open: boolean }>({
@@ -122,8 +123,36 @@ export function Shell() {
 		autoExtend,
 		onChanged: refreshChain,
 	};
-	const view = PANE_VIEWS[route.view === "files" ? route.filter : "all"];
-	const viewFilter = BLOB_VIEWS[view].filter;
+	const filter: BlobFilter = route.view === "files" ? route.filter : "all";
+	const publications =
+		morse.publications.status === "ready" &&
+		morse.publications.data.kind === "complete"
+			? morse.publications.data.publications
+			: null;
+	const sharedFiles =
+		morse.shared.status === "ready" && morse.shared.data.kind === "complete"
+			? morse.shared.data.files
+			: null;
+	const marks = useMemo(
+		(): MorseMarks => ({
+			published:
+				listed && publications
+					? publishedObjectIds(
+							listed.rows,
+							publications.flatMap((publication) => publication.refs),
+						)
+					: null,
+			shared:
+				listed && sharedFiles
+					? sharedObjectIds(listed.rows, sharedFiles)
+					: null,
+		}),
+		[listed, publications, sharedFiles],
+	);
+	const countNotes = {
+		published: markNote(morse.publications, "your Morse publications"),
+		shared: markNote(morse.shared, "your access policies"),
+	};
 
 	function search(next: string) {
 		setQuery(next);
@@ -158,49 +187,49 @@ export function Shell() {
 						transfersPanel={transfersPanel}
 						onUpload={pickers.openFiles}
 					/>
-					<div className="content">
-						{route.view === "overview" ? (
-							<Overview
-								network={network}
-								address={address}
-								listing={listing}
-								listed={listed}
-								prices={funds.prices}
-								activity={activity.read}
-								morse={morse}
-								onExtendExpiring={
-									actions ? () => setExtendAll("expiring") : null
-								}
-								onTopUp={address === null ? null : balanceMenu.open}
-								onConnect={profileMenu.open}
-								onRetryBlobs={blobs.refresh}
-								onRetryActivity={activity.refresh}
-								onShowPublished={() =>
-									navigate({ view: "files", filter: "published" })
-								}
-								pickers={pickers}
-								onPicked={upload}
-							/>
-						) : (
-							<WalrusPane
-								key={`${network.id}:${address ?? ""}`}
-								network={network}
-								address={address}
-								view={view}
-								query={query}
-								onClearQuery={() => setQuery("")}
-								sort={sort}
-								onSort={(key) => setSort((current) => nextSort(current, key))}
-								listing={listing}
-								listed={listed}
-								onRefresh={blobs.refresh}
-								prices={funds.prices}
-								onConnect={profileMenu.open}
-								drawer={drawer}
-								onExtendExpiring={() => setExtendAll("expiring")}
-							/>
-						)}
-					</div>
+					{route.view === "overview" ? (
+						<Overview
+							network={network}
+							address={address}
+							listing={listing}
+							listed={listed}
+							prices={funds.prices}
+							activity={activity.read}
+							morse={morse}
+							onExtendExpiring={actions ? () => setExtendAll("expiring") : null}
+							onTopUp={address === null ? null : balanceMenu.open}
+							onConnect={profileMenu.open}
+							onRetryBlobs={blobs.refresh}
+							onRetryActivity={activity.refresh}
+							onShowPublished={() =>
+								navigate({ view: "files", filter: "published" })
+							}
+							pickers={pickers}
+							onPicked={upload}
+						/>
+					) : (
+						<FilesView
+							key={`${network.id}:${address ?? ""}`}
+							network={network}
+							address={address}
+							filter={filter}
+							query={query}
+							onClearQuery={() => setQuery("")}
+							sort={sort}
+							onSort={setSort}
+							onSortBy={(key) => setSort((current) => nextSort(current, key))}
+							layout={layout}
+							onLayout={setLayout}
+							listing={listing}
+							listed={listed}
+							marks={marks}
+							countNotes={countNotes}
+							onRefresh={refreshChain}
+							onConnect={profileMenu.open}
+							drawer={drawer}
+							onExtendExpiring={() => setExtendAll("expiring")}
+						/>
+					)}
 				</div>
 			</div>
 			<TransfersPanel panel={transfersPanel} transfers={transfers} />
@@ -220,12 +249,8 @@ export function Shell() {
 				<ExtendAllSheet
 					network={network}
 					listed={listed}
-					viewRows={
-						viewFilter === null
-							? []
-							: filterRows(listed.rows, viewFilter, query)
-					}
-					viewLabel={BLOB_VIEWS[view].label}
+					viewRows={filterRows(listed.rows, filter, query, marks)}
+					viewLabel={FILE_FILTER_CONFIG[filter].label}
 					initialScope={extendAll}
 					actions={actions}
 					balances={funds.balances}
@@ -244,5 +269,21 @@ function contextLine(address: string | null, listed: ListedBlobs | null) {
 	const who = shortenAddress(address);
 	if (listed === null) return `${who} · reading blobs`;
 	const count = listed.rows.length;
-	return `${who} · ${count === 1 ? "1 blob" : `${count} blobs`} · ${formatBytes(listed.summary.totalSize)}`;
+	return `${who} · ${count === 1 ? "1 blob" : `${count} blobs`} · ${formatBytes(listed.totalSize)}`;
+}
+
+/** Why a Morse count is missing, or `undefined` once it is real. */
+function markNote(
+	read: ChainRead<Publications | SharedFiles>,
+	what: string,
+): string | undefined {
+	switch (read.status) {
+		case "idle":
+		case "loading":
+			return `Reading ${what} from chain…`;
+		case "error":
+			return `Could not read ${what}: ${errorMessage(read.error)}`;
+		case "ready":
+			return read.data.kind === "unavailable" ? read.data.reason : undefined;
+	}
 }

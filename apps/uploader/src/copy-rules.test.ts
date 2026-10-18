@@ -56,10 +56,8 @@ describe("copy rules", () => {
 	});
 
 	it("says an expired blob keeps its record on Sui, as the notes confirm", () => {
-		const pane = files.find((file) =>
-			file.path.endsWith("blob-list/list-row.tsx"),
-		);
-		expect(pane?.text).toContain('"record on Sui"');
+		const row = files.find((file) => file.path.endsWith("files/file-row.tsx"));
+		expect(row?.text).toContain('"record stays on Sui"');
 	});
 
 	it("drops the design's claims the notes correct (PROTOCOL-NOTES section 13)", () => {

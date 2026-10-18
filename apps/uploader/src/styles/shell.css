@@ -200,6 +200,9 @@
 .top .upload svg {
 	flex: 0 0 auto;
 }
+.top .r .anchor {
+	flex: 0 0 auto;
+}
 
 /* The balances and network pill. */
 .net {

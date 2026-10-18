@@ -1,7 +1,7 @@
 import { type BlobRow, hasReadablePatches } from "@/blobs/blob-row";
 import { type QuiltPatches, UNREAD_PATCHES } from "@/blobs/quilt-patch-store";
 
-/** One line of the Walrus pane's list: a blob, a quilt patch, or a quilt's read status. */
+/** One line of the Files list: a blob, a quilt patch, or a quilt's read status. */
 export type ListItem =
 	| {
 			kind: "blob";
@@ -33,12 +33,12 @@ export type ListItem =
 			error: unknown;
 	  };
 
-/** Fixed heights keep the virtual window's arithmetic exact. */
+/** Fixed heights, border included, keep the virtual window's arithmetic exact. */
 export const ITEM_HEIGHT: Readonly<Record<ListItem["kind"], number>> = {
-	blob: 50,
-	patch: 36,
-	"patches-loading": 36,
-	"patches-error": 36,
+	blob: 53,
+	patch: 38,
+	"patches-loading": 38,
+	"patches-error": 38,
 };
 
 /**

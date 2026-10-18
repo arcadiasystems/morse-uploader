@@ -53,82 +53,90 @@ export function Overview(props: OverviewProps) {
 	const { network, address, listing, listed, prices } = props;
 	if (address === null) {
 		return (
-			<section className="view" aria-label="Overview">
-				<div className="ov">
-					<div className="card glass span-8 hello">
-						<span className="eyebrow">Transfer client for Walrus</span>
-						<h2>Connect a wallet</h2>
-						<p>
-							Your blobs on {network.walrusLabel} appear here, with what they
-							cost and how long they are paid for. Morse Uploader never holds
-							your keys; your wallet signs every transaction.
-						</p>
-						<div className="acts">
-							<button
-								className="btn solid sm"
-								type="button"
-								onClick={props.onConnect}
-							>
-								Connect wallet
-							</button>
+			<div className="content">
+				<section className="view" aria-label="Overview">
+					<div className="ov">
+						<div className="card glass span-8 hello">
+							<span className="eyebrow">Transfer client for Walrus</span>
+							<h2>Connect a wallet</h2>
+							<p>
+								Your blobs on {network.walrusLabel} appear here, with what they
+								cost and how long they are paid for. Morse Uploader never holds
+								your keys; your wallet signs every transaction.
+							</p>
+							<div className="acts">
+								<button
+									className="btn solid sm"
+									type="button"
+									onClick={props.onConnect}
+								>
+									Connect wallet
+								</button>
+							</div>
 						</div>
+						<PriceCard network={network} prices={prices} onTopUp={null} />
 					</div>
-					<PriceCard network={network} prices={prices} onTopUp={null} />
-				</div>
-			</section>
+				</section>
+			</div>
 		);
 	}
 	const summary = listed ? summarizeOverview(listed.rows) : null;
 	return (
-		<section className="view" aria-label="Overview">
-			<div className="ov">
-				{listing.status === "error" ? (
-					<div className="card span-8">
-						<h4>Your blobs</h4>
-						<p className="problem" role="alert">
-							Could not read your blobs: {errorMessage(listing.error)}
-						</p>
-						<div className="acts">
-							<button
-								className="btn sm"
-								type="button"
-								onClick={props.onRetryBlobs}
-							>
-								Try again
-							</button>
+		<div className="content">
+			<section className="view" aria-label="Overview">
+				<div className="ov">
+					{listing.status === "error" ? (
+						<div className="card span-8">
+							<h4>Your blobs</h4>
+							<p className="problem" role="alert">
+								Could not read your blobs: {errorMessage(listing.error)}
+							</p>
+							<div className="acts">
+								<button
+									className="btn sm"
+									type="button"
+									onClick={props.onRetryBlobs}
+								>
+									Try again
+								</button>
+							</div>
 						</div>
-					</div>
-				) : (
-					<>
-						<StoredCard summary={summary} />
-						<PaidThroughCard
-							network={network}
-							listed={listed}
-							summary={summary}
-							prices={prices}
-							onExtendExpiring={props.onExtendExpiring}
-						/>
-					</>
-				)}
-				<PriceCard network={network} prices={prices} onTopUp={props.onTopUp} />
-				<ExpiryTimelineCard network={network} listed={listed} />
-				<DropCard pickers={props.pickers} onPicked={props.onPicked} />
-				<ActivityCard
-					network={network}
-					activity={props.activity}
-					listed={listed}
-					morse={props.morse}
-					onRetry={props.onRetryActivity}
-				/>
-				<PublishedCard
-					network={network}
-					publications={props.morse.publications}
-					listed={listed}
-					onRetry={props.morse.refresh}
-					onShowPublished={props.onShowPublished}
-				/>
-			</div>
-		</section>
+					) : (
+						<>
+							<StoredCard summary={summary} />
+							<PaidThroughCard
+								network={network}
+								listed={listed}
+								summary={summary}
+								prices={prices}
+								onExtendExpiring={props.onExtendExpiring}
+							/>
+						</>
+					)}
+					<PriceCard
+						network={network}
+						prices={prices}
+						onTopUp={props.onTopUp}
+					/>
+					<ExpiryTimelineCard network={network} listed={listed} />
+					<DropCard pickers={props.pickers} onPicked={props.onPicked} />
+					<ActivityCard
+						network={network}
+						activity={props.activity}
+						listed={listed}
+						morse={props.morse}
+						onRetry={props.onRetryActivity}
+					/>
+					<PublishedCard
+						network={network}
+						publications={props.morse.publications}
+						listed={listed}
+						onRetry={props.morse.refresh}
+						onShowPublished={props.onShowPublished}
+					/>
+				</div>
+			</section>
+		</div>
 	);
 }
 

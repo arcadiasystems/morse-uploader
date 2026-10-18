@@ -1,6 +1,7 @@
+import type { BlobFilter } from "@/blobs/filter-rows";
 import { Brand } from "@/components/brand";
 import { Icon, type IconName } from "@/components/icon";
-import { type AppRoute, type FileFilter, routeHash } from "../app-route";
+import { type AppRoute, routeHash } from "../app-route";
 import { ProfileMenu } from "../profile-menu/profile-menu";
 import type { Popover } from "../use-popover";
 import { MoreMenu } from "./more-menu";
@@ -22,7 +23,7 @@ interface Destination {
 }
 
 const filesWith =
-	(...filters: readonly FileFilter[]) =>
+	(...filters: readonly BlobFilter[]) =>
 	(route: AppRoute) =>
 		route.view === "files" && filters.includes(route.filter);
 

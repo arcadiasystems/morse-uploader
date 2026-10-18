@@ -5,11 +5,13 @@ const OVERSCAN_PX = 600;
 
 /**
  * The slice of a fixed-layout list that is on screen in `scroller`, given
- * each item's top. Only that slice is rendered, so a list of thousands of
- * blobs scrolls as smoothly as one of ten.
+ * each item's top within `list`, which may sit below other content in the
+ * scroller. Only that slice is rendered, so a list of thousands of blobs
+ * scrolls as smoothly as one of ten.
  */
 export function useVisibleRange(
 	scroller: RefObject<HTMLElement | null>,
+	list: RefObject<HTMLElement | null>,
 	tops: readonly number[],
 ): { start: number; end: number } {
 	const [viewport, setViewport] = useState({ top: 0, height: 0 });
@@ -20,7 +22,10 @@ export function useVisibleRange(
 		let frame = 0;
 		const measure = () => {
 			frame = 0;
-			setViewport({ top: element.scrollTop, height: element.clientHeight });
+			setViewport({
+				top: element.scrollTop - offsetIn(list.current, element),
+				height: element.clientHeight,
+			});
 		};
 		const schedule = () => {
 			if (frame === 0) frame = requestAnimationFrame(measure);
@@ -34,7 +39,7 @@ export function useVisibleRange(
 			resize.disconnect();
 			cancelAnimationFrame(frame);
 		};
-	}, [scroller]);
+	}, [scroller, list]);
 
 	const start = lastAtOrAbove(tops, viewport.top - OVERSCAN_PX);
 	const end = Math.min(
@@ -42,6 +47,19 @@ export function useVisibleRange(
 		lastAtOrAbove(tops, viewport.top + viewport.height + OVERSCAN_PX) + 1,
 	);
 	return { start, end };
+}
+
+/** How far below the top of the scroller's content `list` starts. */
+export function offsetIn(
+	list: HTMLElement | null,
+	scroller: HTMLElement,
+): number {
+	if (!list) return 0;
+	return (
+		list.getBoundingClientRect().top -
+		scroller.getBoundingClientRect().top +
+		scroller.scrollTop
+	);
 }
 
 /** The index of the last top at or above `y`, or 0 when every top is below it. */

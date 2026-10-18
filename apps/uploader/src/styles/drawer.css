@@ -1,10 +1,8 @@
-/* The blob drawer, drawn as the design's inspector glass until R2 builds the inspector. */
+/* The blob drawer, drawn as the design's inspector until R2 builds it: a column beside the list. */
 .drawer {
-	position: fixed;
-	right: 0;
-	top: var(--bar);
-	bottom: 0;
-	width: var(--insp);
+	position: relative;
+	min-width: 0;
+	min-height: 0;
 	background: var(--glass);
 	backdrop-filter: blur(16px);
 	border-left: 1px solid var(--line);
@@ -12,7 +10,6 @@
 	flex-direction: column;
 	overflow: auto;
 	overscroll-behavior: contain;
-	z-index: 20;
 }
 .drawer > * {
 	/* The drawer scrolls as a whole; its sections never shrink to fit. */
@@ -387,12 +384,4 @@
 	font-size: 0.75em;
 	line-height: 0;
 	vertical-align: -0.25em;
-}
-
-@media (max-width: 860px) {
-	/* A full-width sheet under the top bar on phones. */
-	.drawer {
-		width: 100%;
-		border-left: 0;
-	}
 }

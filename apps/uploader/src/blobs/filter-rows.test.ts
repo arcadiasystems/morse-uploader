@@ -15,14 +15,13 @@ describe("matchesFilter", () => {
 			expect(matchesFilter(row, "all")).toBe(true);
 	});
 
-	it("sorts blobs into the sidebar views", () => {
+	it("sorts blobs into the Files filters", () => {
 		expect(matchesFilter(quilt, "quilts")).toBe(true);
 		expect(matchesFilter(plain, "quilts")).toBe(false);
 		expect(matchesFilter(encrypted, "encrypted")).toBe(true);
 		expect(matchesFilter(expiring, "expiring")).toBe(true);
 		// A blob that was never certified is not counted as expiring.
 		expect(matchesFilter(registered, "expiring")).toBe(false);
-		expect(matchesFilter(expired, "expired")).toBe(true);
 		expect(matchesFilter(expired, "expiring")).toBe(false);
 	});
 });

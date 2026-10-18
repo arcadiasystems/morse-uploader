@@ -38,7 +38,7 @@ export function BalancePill({
 				<b>
 					<TokenAmount raw={wal} context="compact" /> WAL
 				</b>
-				<span className="more">
+				<span className="rest">
 					<span aria-hidden="true"> · </span>
 					<TokenAmount raw={sui} context="compact" /> SUI
 					<span aria-hidden="true"> · </span>

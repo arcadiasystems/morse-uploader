@@ -1,35 +1,25 @@
 import { useCallback, useSyncExternalStore } from "react";
+import { BLOB_FILTERS, type BlobFilter } from "@/blobs/filter-rows";
 
 /**
  * Where the app is: the Overview, or Files with a filter. It lives in the
  * URL hash (`#overview`, `#files/expiring`) so a reload, a bookmark or the
  * back button returns to the same place.
  */
-export const FILE_FILTERS = [
-	"all",
-	"quilts",
-	"encrypted",
-	"expiring",
-	"published",
-	"shared",
-] as const;
-
-export type FileFilter = (typeof FILE_FILTERS)[number];
-
 export type AppRoute =
 	| { view: "overview" }
-	| { view: "files"; filter: FileFilter };
+	| { view: "files"; filter: BlobFilter };
 
 const OVERVIEW: AppRoute = { view: "overview" };
 
-function isFileFilter(value: string): value is FileFilter {
-	return (FILE_FILTERS as readonly string[]).includes(value);
+function isBlobFilter(value: string): value is BlobFilter {
+	return (BLOB_FILTERS as readonly string[]).includes(value);
 }
 
 /** The route a hash names; anything unknown is the Overview, the home. */
 export function parseRoute(hash: string): AppRoute {
 	const [view, filter = "all"] = hash.replace(/^#/, "").split("/");
-	if (view !== "files" || !isFileFilter(filter)) return OVERVIEW;
+	if (view !== "files" || !isBlobFilter(filter)) return OVERVIEW;
 	return { view: "files", filter };
 }
 

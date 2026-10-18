@@ -8,6 +8,11 @@ export interface BlobRow {
 	status: BlobStatus;
 	/** The blob's name, or its short blob id when it has none. */
 	label: string;
+	/**
+	 * Estimated start of the epoch it was registered in: when it was
+	 * uploaded, as near as chain can say. Blob objects carry no timestamp.
+	 */
+	registeredAtMs: number;
 }
 
 /** Shortens a blob id for display, as the design shows it: `0iKeiiQ2…m7Xp`. */
@@ -25,6 +30,9 @@ export function toBlobRows(
 		blob,
 		status: blobStatus(blob, clock, nowMs),
 		label: blob.name ?? shortenBlobId(blob.blobId),
+		registeredAtMs:
+			clock.epochStartMs +
+			(blob.registeredEpoch - clock.epoch) * clock.epochDurationMs,
 	}));
 }
 
