@@ -200,3 +200,18 @@
 		transition: color 120ms var(--ease);
 	}
 }
+
+/* ---------- The app shot ---------- */
+.land .shot {
+	max-width: 1200px;
+	margin: 40px auto 0;
+	padding: 0 28px;
+}
+.land .shot img {
+	display: block;
+	width: 100%;
+	height: auto;
+	border-radius: 22px;
+	border: 1px solid rgba(255, 255, 255, 0.14);
+	box-shadow: 0 60px 120px rgba(0, 0, 0, 0.6);
+}

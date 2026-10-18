@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AppShot } from "@/landing/app-shot";
 import { FeatureCards } from "@/landing/feature-cards";
 import { Hero } from "@/landing/hero";
 import { LandingFooter } from "@/landing/landing-footer";
@@ -24,6 +25,7 @@ export default function HomePage() {
 				<LandingNav />
 				<main>
 					<Hero />
+					<AppShot />
 					<FeatureCards />
 				</main>
 				<LandingFooter />
