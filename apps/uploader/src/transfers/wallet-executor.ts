@@ -78,6 +78,18 @@ const REJECTION = /reject|denied|declined|cancel/i;
 /** Slush's web wallet when `window.open` is refused without a user gesture. */
 const POPUP_BLOCKED = /open (a )?new window|popup/i;
 
+/**
+ * A failed wallet request (a transaction or a message to sign) as the app's
+ * error: declined, a blocked popup, or as the wallet gave it.
+ */
+export function walletRequestError(error: unknown): unknown {
+	if (error instanceof Error && REJECTION.test(error.message))
+		return new WalletRejectedError({ cause: error });
+	if (error instanceof Error && POPUP_BLOCKED.test(error.message))
+		return new WalletPopupBlockedError({ cause: error });
+	return error;
+}
+
 export interface WalletExecutor {
 	address: string;
 	/**
@@ -148,11 +160,7 @@ export function createWalletExecutor(
 			try {
 				signed = await sign(transaction);
 			} catch (error) {
-				if (error instanceof Error && REJECTION.test(error.message))
-					throw new WalletRejectedError({ cause: error });
-				if (error instanceof Error && POPUP_BLOCKED.test(error.message))
-					throw new WalletPopupBlockedError({ cause: error });
-				throw error;
+				throw walletRequestError(error);
 			}
 			const submitted = await client.core.executeTransaction({
 				transaction: fromBase64(signed.bytes),

@@ -5,16 +5,19 @@ import {
 } from "@mysten/dapp-kit-react";
 import { normalizeSuiAddress } from "@mysten/sui/utils";
 import { useMemo } from "react";
+import type { SignPersonalMessage } from "@/morse/recipient-file-access";
 import type { NetworkId } from "@/network/networks";
 import {
 	createWalletExecutor,
 	type WalletExecutor,
+	walletRequestError,
 } from "@/transfers/wallet-executor";
 
-/** What the drawer signs with, for the connected account. */
+/** What the drawer signs with: transactions and personal messages, for the connected account. */
 export interface WalletActions {
 	address: string;
 	executor: WalletExecutor;
+	signPersonalMessage: SignPersonalMessage;
 }
 
 /**
@@ -38,6 +41,17 @@ export function useWalletActions(network: NetworkId): WalletActions | null {
 					dAppKit.signTransaction({ transaction, account, network }),
 				client,
 			),
+			signPersonalMessage: async (message) => {
+				try {
+					return await dAppKit.signPersonalMessage({
+						message,
+						account,
+						network,
+					});
+				} catch (error) {
+					throw walletRequestError(error);
+				}
+			},
 		};
 	}, [account, client, dAppKit, network]);
 }

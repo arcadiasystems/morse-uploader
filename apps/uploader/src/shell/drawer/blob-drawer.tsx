@@ -21,6 +21,7 @@ import type { NetworkConfig } from "@/network/networks";
 import type { WalletActions } from "@/wallet/use-wallet-actions";
 import { DeleteSection } from "./delete-section";
 import { type DrawerTarget, targetRow } from "./drawer-target";
+import { EncryptedSection } from "./encrypted-section";
 import { PreviewSection } from "./preview-section";
 import { PublishSection, type PublishSubject } from "./publish-section";
 import { RecordSection } from "./record-section";
@@ -178,14 +179,12 @@ export function BlobDrawer({
 			) : (
 				<>
 					{blob.isEncrypted && !patch ? (
-						<section className="sec" aria-label="Preview">
-							<div className="thumb">
-								<span className="msg">
-									An encrypted blob's bytes are ciphertext, so there is nothing
-									to preview.
-								</span>
-							</div>
-						</section>
+						<EncryptedSection
+							network={network}
+							blob={blob}
+							readable={liveAndCertified}
+							actions={context.actions}
+						/>
 					) : blob.isQuilt && !patch ? (
 						<section className="sec" aria-label="Preview">
 							<div className="thumb">

@@ -57,6 +57,11 @@ export interface NetworkConfig {
 	/** Sui full node; one URL serves gRPC for both networks. */
 	grpcUrl: string;
 	/**
+	 * Sui GraphQL, for event queries gRPC does not offer: finding the Morse
+	 * RecipientFile of an encrypted blob. Answers with CORS `*`.
+	 */
+	graphqlUrl: string;
+	/**
 	 * Mysten's public aggregator (PROTOCOL-NOTES section 10, docs
 	 * network-reference "Aggregators and publishers"). Answers with CORS `*`.
 	 */
@@ -90,6 +95,7 @@ export const NETWORKS: Readonly<Record<NetworkId, NetworkConfig>> = {
 		label: "Testnet",
 		walrusLabel: "Walrus Testnet",
 		grpcUrl: "https://fullnode.testnet.sui.io:443",
+		graphqlUrl: "https://graphql.testnet.sui.io/graphql",
 		aggregatorUrl: "https://aggregator.walrus-testnet.walrus.space",
 		uploadRelayUrl: "https://upload-relay.testnet.walrus.space",
 		explorerUrl: "https://suiscan.xyz/testnet",
@@ -133,6 +139,7 @@ export const NETWORKS: Readonly<Record<NetworkId, NetworkConfig>> = {
 		label: "Walrus Mainnet",
 		walrusLabel: "Walrus Mainnet",
 		grpcUrl: "https://fullnode.mainnet.sui.io:443",
+		graphqlUrl: "https://graphql.mainnet.sui.io/graphql",
 		aggregatorUrl: "https://aggregator.walrus-mainnet.walrus.space",
 		uploadRelayUrl: "https://upload-relay.mainnet.walrus.space",
 		explorerUrl: "https://suiscan.xyz/mainnet",
