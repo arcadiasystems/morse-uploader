@@ -58,14 +58,15 @@ export const BLOB_VIEWS = {
 		filter: null,
 		emptyTitle: "Morse publications",
 		empty:
-			"Blobs attached to your Morse publications appear here once publishing arrives.",
+			"Publish a blob to Morse from its drawer. Listing published blobs here needs every entry of every collection you publish to, and Morse has no index by blob yet, so this view has no count.",
 	},
 	shared: {
 		label: "Shared links",
 		icon: "share",
 		filter: null,
 		emptyTitle: "Shared links",
-		empty: "Blobs you share a link to appear here once sharing arrives.",
+		empty:
+			"A share link is a plain aggregator URL with no record on chain, so there is nothing to list or count. Copy a link from a blob's Share section.",
 	},
 } as const satisfies Record<string, BlobViewConfig>;
 

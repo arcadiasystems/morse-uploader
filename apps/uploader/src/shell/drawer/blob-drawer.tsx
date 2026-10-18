@@ -14,12 +14,15 @@ import { formatBytes } from "@/lib/format-bytes";
 import { formatShortDate } from "@/lib/format-date";
 import { type ChainRead, useChainRead } from "@/lib/use-chain-read";
 import { mediaTypeOf } from "@/manage/preview-plan";
+import { embedSnippet, shareLinks } from "@/manage/share";
 import type { AutoExtend } from "@/manage/use-auto-extend";
 import type { NetworkConfig } from "@/network/networks";
 import type { WalletActions } from "@/wallet/use-wallet-actions";
 import { type DrawerTarget, targetRow } from "./drawer-target";
 import { PreviewSection } from "./preview-section";
+import { PublishSection, type PublishSubject } from "./publish-section";
 import { RecordSection } from "./record-section";
+import { ShareSection } from "./share-section";
 import { StorageSection } from "./storage-section";
 import { VerifySection } from "./verify-section";
 
@@ -33,9 +36,10 @@ export interface DrawerContext {
 }
 
 /**
- * The blob drawer (design/app-blob.html): preview, verification, record, and storage with extend and auto-extend,
- * for a blob, a quilt, or one file in a quilt. The record is read live
- * from chain when the drawer opens and after every change it makes.
+ * The blob drawer (design/app-blob.html): preview, verification, record,
+ * storage with extend and auto-extend, publish to Morse and share,
+ * for a blob, a quilt, or one file in a quilt. The record is read live from
+ * chain when the drawer opens and after every change it makes.
  */
 export function BlobDrawer({
 	target,
@@ -266,6 +270,48 @@ export function BlobDrawer({
 						scope={patch ? "quilt-file" : "blob"}
 						onExtended={changed}
 					/>
+
+					<PublishSection
+						network={network}
+						subject={publishSubject(
+							blob,
+							liveAndCertified,
+							patch,
+							name,
+							mediaType,
+						)}
+						actions={context.actions}
+					/>
+
+					{liveAndCertified ? (
+						<ShareSection
+							network={network}
+							links={
+								patch
+									? patch.entry
+										? shareLinks(network.aggregatorUrl, {
+												kind: "patch",
+												patchId: patch.entry.patchId,
+											})
+										: []
+									: blob.isQuilt
+										? []
+										: shareLinks(network.aggregatorUrl, {
+												kind: "blob",
+												blobId: blob.blobId,
+												objectId: blob.objectId,
+												hasHeaders: blob.contentType !== null,
+											})
+							}
+							embed={
+								url && !blob.isEncrypted && (!blob.isQuilt || patch)
+									? embedSnippet({ url, name, contentType: mediaType })
+									: null
+							}
+							encrypted={blob.isEncrypted}
+							quilt={blob.isQuilt && !patch}
+						/>
+					) : null}
 				</>
 			)}
 		</aside>
@@ -280,4 +326,53 @@ function headerIcon(
 	if (blob.isEncrypted) return "lock";
 	if (blob.isQuilt && !isPatch) return "quilt";
 	return mediaType?.startsWith("image/") ? "image" : "file";
+}
+
+/** What Publish to Morse can attach, or why it cannot (Morse docs "Entries" and "Collections"). */
+function publishSubject(
+	blob: BlobRecord,
+	liveAndCertified: boolean,
+	patch: { identifier: string; entry: { patchId: string } | null } | null,
+	name: string,
+	mediaType: string | null,
+): PublishSubject {
+	if (blob.isEncrypted)
+		return {
+			kind: "blocked",
+			reason:
+				"Encrypted files use a RecipientFile as their access policy, which Morse entries do not take.",
+		};
+	if (!liveAndCertified)
+		return {
+			kind: "blocked",
+			reason:
+				blob.certifiedEpoch === null
+					? "Only a certified blob can be published. Finish it first."
+					: "Its storage has ended, so it cannot be published.",
+		};
+	if (!blob.deletable)
+		return {
+			kind: "blocked",
+			reason:
+				"Morse only takes deletable blobs, so a publication can unpublish and correct. This blob is permanent.",
+		};
+	if (blob.isQuilt && !patch)
+		return {
+			kind: "blocked",
+			reason:
+				"A quilt goes into Morse file by file. Open the quilt and select a file to publish it.",
+		};
+	if (patch && !patch.entry)
+		return {
+			kind: "blocked",
+			reason: "Reading this file's patch id from the aggregator…",
+		};
+	return {
+		kind: "ready",
+		name,
+		contentType: mediaType,
+		blobObjectId: blob.objectId,
+		patchId: patch?.entry?.patchId ?? null,
+		mode: patch ? "quilt" : "blob",
+	};
 }
