@@ -313,7 +313,12 @@ test.describe("Walrus pane, read from chain", () => {
 		expect(await patches.locator(".nm").allTextContents()).toEqual(identifiers);
 
 		// Left on a patch goes to its quilt; Left again closes it.
-		await patches.first().click();
+		// Selecting opens the drawer over the pane's right side; click the name, left of it.
+		await patches
+			.first()
+			.locator("td")
+			.nth(1)
+			.click({ position: { x: 12, y: 10 } });
 		await page.keyboard.press("ArrowLeft");
 		await expect(row).toHaveAttribute("aria-selected", "true");
 		await page.keyboard.press("ArrowLeft");
@@ -323,7 +328,7 @@ test.describe("Walrus pane, read from chain", () => {
 		await expect(row).toHaveAttribute("aria-expanded", "true");
 	});
 
-	test("selects rows from the keyboard and enables only read-only actions", async ({
+	test("selects rows from the keyboard, opens the drawer and enables the actions", async ({
 		page,
 	}) => {
 		const { epoch } = await walrusEpoch("testnet");
@@ -353,8 +358,16 @@ test.describe("Walrus pane, read from chain", () => {
 			"href",
 			`https://aggregator.walrus-testnet.walrus.space/v1/blobs/by-object-id/${target.objectId}`,
 		);
+		// Selecting opens the blob drawer; the toolbar's drawer actions jump to their section.
+		await expect(page.locator("aside.drawer")).toBeVisible();
 		for (const action of ["Extend", "Share", "Verify", "Publish to Morse"])
-			await expect(tools.getByRole("button", { name: action })).toBeDisabled();
+			await expect(tools.getByRole("button", { name: action })).toBeEnabled();
+		// The drawer covers the toolbar's right end, as the design draws it; closed, Verify reopens it there.
+		await page.getByRole("button", { name: "Close details" }).click();
+		await tools.getByRole("button", { name: "Verify" }).click();
+		await expect(
+			page.locator("aside.drawer #drawer-verify-title"),
+		).toBeInViewport();
 		await expect(page.locator(".pane.remote .ft .info")).toContainText(
 			`ends ${target.endEpoch}`,
 		);

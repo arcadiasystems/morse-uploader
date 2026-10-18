@@ -8,9 +8,12 @@ import type { ListItem } from "./list-items";
 export function BlobFooter({
 	summary,
 	selected,
+	onExtendExpiring,
 }: {
 	summary: BlobSummary;
 	selected: ListItem | null;
+	/** Opens Extend all for the blobs expiring soon; `null` when nobody can sign. */
+	onExtendExpiring: (() => void) | null;
 }) {
 	const { counts, totalSize } = summary;
 	return (
@@ -32,6 +35,11 @@ export function BlobFooter({
 					`${counts.expiring} expiring within ${EXPIRING_SOON_DAYS} days`
 				)}
 			</span>
+			{!selected && counts.expiring > 0 && onExtendExpiring ? (
+				<button className="link" type="button" onClick={onExtendExpiring}>
+					Extend all
+				</button>
+			) : null}
 		</div>
 	);
 }

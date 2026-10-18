@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { hasReadablePatches } from "@/blobs/blob-row";
 import { filterRows } from "@/blobs/filter-rows";
 import type { ListedBlobs } from "@/blobs/list-blobs";
@@ -16,6 +16,12 @@ import { BlobList } from "../blob-list/blob-list";
 import { buildListItems } from "../blob-list/list-items";
 import { ListSkeleton } from "../blob-list/list-skeleton";
 import { BLOB_VIEWS, type BlobView } from "../blob-views";
+import {
+	BlobDrawer,
+	type DrawerContext,
+	type DrawerSection,
+} from "../drawer/blob-drawer";
+import { drawerTarget } from "../drawer/drawer-target";
 import { EmptyState } from "../empty-state";
 import { PriceFooter } from "./price-footer";
 import { ViewToggle } from "./view-toggle";
@@ -34,6 +40,9 @@ interface WalrusPaneProps {
 	onRefresh: () => void;
 	prices: ChainRead<WalrusPrices>;
 	onConnect: () => void;
+	drawer: DrawerContext;
+	/** Opens Extend all for the blobs expiring soon. */
+	onExtendExpiring: () => void;
 }
 
 /**
@@ -54,9 +63,18 @@ export function WalrusPane({
 	onRefresh,
 	prices,
 	onConnect,
+	drawer,
+	onExtendExpiring,
 }: WalrusPaneProps) {
 	const { store, patches } = useQuiltPatches();
+	const pane = useRef<HTMLElement>(null);
 	const [selectedKey, setSelectedKey] = useState<string | null>(null);
+	// Selecting a row opens the drawer; closing it keeps the selection.
+	const [drawerOpen, setDrawerOpen] = useState(false);
+	const [focus, setFocus] = useState<{
+		section: DrawerSection;
+		request: number;
+	} | null>(null);
 	const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
 	const { filter } = BLOB_VIEWS[view];
 
@@ -72,6 +90,25 @@ export function WalrusPane({
 		[rows, expanded, patches],
 	);
 	const selected = items.find((item) => item.key === selectedKey) ?? null;
+
+	function select(key: string | null) {
+		setSelectedKey(key);
+		setDrawerOpen(key !== null);
+		setFocus(null);
+	}
+
+	function openDrawer(section: DrawerSection) {
+		setDrawerOpen(true);
+		setFocus((current) => ({
+			section,
+			request: (current?.request ?? 0) + 1,
+		}));
+	}
+
+	function closeDrawer() {
+		setDrawerOpen(false);
+		pane.current?.querySelector<HTMLElement>(".blist")?.focus();
+	}
 
 	// Patch counts show on quilt rows, so every readable quilt's index is read
 	// once the list arrives; the store skips quilts it has already read.
@@ -164,7 +201,7 @@ export function WalrusPane({
 				sort={sort}
 				onSort={onSort}
 				selectedKey={selectedKey}
-				onSelect={setSelectedKey}
+				onSelect={select}
 				onToggle={toggleQuilt}
 				onRetryPatches={store.retry}
 				nowMs={listed.nowMs}
@@ -173,7 +210,11 @@ export function WalrusPane({
 	}
 
 	return (
-		<section className="pane remote" aria-labelledby="pane-walrus-title">
+		<section
+			className="pane remote"
+			aria-labelledby="pane-walrus-title"
+			ref={pane}
+		>
 			<div className="hd">
 				<h3 id="pane-walrus-title">
 					<i className={dot} aria-hidden="true" />
@@ -196,16 +237,35 @@ export function WalrusPane({
 				</div>
 			</div>
 			<div className="tools">
-				<BlobActions selected={selected} network={network} />
+				<BlobActions
+					selected={selected}
+					network={network}
+					onOpen={openDrawer}
+				/>
 				<span className="sp" />
 				<ViewToggle />
 			</div>
 			{content}
 			{listed ? (
-				<BlobFooter summary={listed.summary} selected={selected} />
+				<BlobFooter
+					summary={listed.summary}
+					selected={selected}
+					onExtendExpiring={drawer.actions ? onExtendExpiring : null}
+				/>
 			) : (
 				<PriceFooter prices={prices} />
 			)}
+			{drawerOpen && selected && listed ? (
+				<BlobDrawer
+					key={selected.key}
+					target={drawerTarget(selected)}
+					network={network}
+					listed={listed}
+					context={drawer}
+					focus={focus}
+					onClose={closeDrawer}
+				/>
+			) : null}
 		</section>
 	);
 }

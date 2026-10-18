@@ -6,6 +6,7 @@ import "@/styles/blobs.css";
 import "@/styles/local.css";
 import "@/styles/upload.css";
 import "@/styles/transfers.css";
+import "@/styles/drawer.css";
 
 export const metadata: Metadata = {
 	title: "Walrus",

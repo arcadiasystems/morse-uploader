@@ -1,0 +1,404 @@
+/* The blob drawer. Ported from design/uploader.css; additions are marked. */
+.drawer {
+	/* Fixed instead of the design's absolute: same box, and the drawer can live in the Walrus pane. */
+	position: fixed;
+	right: 0;
+	top: var(--bar);
+	bottom: 0;
+	width: 380px;
+	background: var(--paper);
+	border-left: 1px solid var(--line);
+	box-shadow: -20px 0 50px rgba(18, 20, 24, 0.08);
+	display: flex;
+	flex-direction: column;
+	overflow: auto;
+	overscroll-behavior: contain;
+	z-index: 20;
+}
+.drawer > * {
+	/* The drawer scrolls as a whole; its sections never shrink to fit. */
+	flex: 0 0 auto;
+}
+.drawer .hd {
+	padding: 16px 18px;
+	border-bottom: 1px solid var(--line);
+	display: flex;
+	gap: 12px;
+	align-items: flex-start;
+}
+.drawer .hd .ico {
+	width: 40px;
+	height: 40px;
+	border-radius: 10px;
+	background: var(--bone);
+	display: grid;
+	place-items: center;
+	color: var(--ultra);
+	flex: 0 0 auto;
+}
+.drawer .hd .ico.enc {
+	color: var(--ink);
+}
+.drawer .hd > div {
+	min-width: 0;
+}
+.drawer .hd h3 {
+	font-family: var(--disp);
+	font-size: 17px;
+	font-weight: 800;
+	letter-spacing: -0.02em;
+	word-break: break-all;
+}
+.drawer .hd small {
+	font-family: var(--mono);
+	font-size: 11.5px;
+	color: var(--stone);
+	display: block;
+	margin-top: 2px;
+}
+.drawer .hd .x {
+	margin-left: auto;
+	border: 0;
+	background: transparent;
+	color: var(--stone);
+	cursor: pointer;
+	width: 28px;
+	height: 28px;
+	border-radius: 8px;
+	display: grid;
+	place-items: center;
+	flex: 0 0 auto;
+}
+.drawer .hd .x:hover {
+	color: var(--ink);
+	background: var(--bone);
+}
+.drawer .sec {
+	padding: 14px 18px;
+	border-bottom: 1px solid var(--line);
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	scroll-margin-top: 8px;
+}
+.drawer .sec:last-child {
+	border-bottom: 0;
+}
+.drawer .sec h4 {
+	font-family: var(--mono);
+	font-size: 10.5px;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--stone);
+	font-weight: 500;
+}
+.drawer dl {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	gap: 7px 12px;
+	font-size: 12.5px;
+}
+.drawer dt {
+	color: var(--stone);
+}
+.drawer dd {
+	font-family: var(--mono);
+	font-size: 12px;
+	/* Fix: the design's break-all splits words; ids still wrap anywhere. */
+	overflow-wrap: anywhere;
+}
+.drawer dd a {
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+.drawer dd .cp {
+	font-family: var(--sans);
+	font-size: 11px;
+	color: var(--ultra);
+	font-weight: 600;
+	margin-left: 6px;
+	cursor: pointer;
+	border: 0;
+	background: transparent;
+	padding: 0;
+}
+.drawer .acts {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+.drawer .ver {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+	background: var(--ok-bg);
+	border: 1px solid var(--ok-line);
+	border-radius: 10px;
+	padding: 10px 12px;
+	font-size: 12.5px;
+	color: #0b4d3a;
+}
+.drawer .ver i {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--ok);
+	flex: 0 0 auto;
+}
+/* Addition: a failed check and a note in the same box, in amber. */
+.drawer .ver.warn {
+	background: var(--warn-bg);
+	border-color: var(--warn-line);
+	color: var(--warn);
+}
+.drawer .ver.warn i {
+	background: var(--warn);
+}
+.drawer .ver.wait {
+	background: var(--bone);
+	border-color: var(--line);
+	color: var(--body);
+}
+.drawer .ver.wait i {
+	background: var(--line-2);
+}
+.drawer .exp {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+.drawer .exp .bar {
+	height: 6px;
+	border-radius: 999px;
+	background: var(--line);
+	overflow: hidden;
+}
+.drawer .exp .bar i {
+	display: block;
+	height: 100%;
+	background: var(--ok);
+}
+.drawer .exp .bar.warn i {
+	background: var(--warn);
+}
+.drawer .exp small,
+.drawer .hint {
+	font-size: 12px;
+	color: var(--stone);
+}
+.drawer .thumb {
+	border: 1px solid var(--line);
+	border-radius: 10px;
+	background: var(--bone);
+	min-height: 120px;
+	display: grid;
+	place-items: center;
+	color: var(--stone);
+	font-family: var(--mono);
+	font-size: 12px;
+	overflow: hidden;
+	text-align: center;
+	padding: 0;
+}
+/* Addition: the real preview inside the design's thumb. */
+.drawer .thumb img {
+	display: block;
+	max-width: 100%;
+	max-height: 240px;
+	object-fit: contain;
+}
+.drawer .thumb pre {
+	margin: 0;
+	width: 100%;
+	max-height: 240px;
+	overflow: auto;
+	padding: 10px 12px;
+	font-family: var(--mono);
+	font-size: 11.5px;
+	line-height: 1.5;
+	color: var(--ink);
+	text-align: left;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	background: var(--paper);
+}
+.drawer .thumb .msg {
+	padding: 16px;
+}
+.drawer .pub {
+	border: 1px solid var(--line);
+	border-radius: 12px;
+	padding: 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	font-size: 12.5px;
+}
+.drawer .pub select,
+.drawer .pub input[type="text"],
+.drawer .field-row input {
+	width: 100%;
+	border: 1px solid var(--line-2);
+	border-radius: 8px;
+	padding: 7px 10px;
+	background: var(--paper);
+	font-size: 13px;
+}
+.drawer .danger {
+	color: var(--warn);
+}
+
+/* ---------- Additions ---------- */
+/* A short note under an action: why it is off, or what happened. */
+.drawer .note {
+	font-size: 12px;
+	color: var(--stone);
+}
+.drawer .note.warn {
+	color: var(--warn);
+	background: var(--warn-bg);
+	border: 1px solid var(--warn-line);
+	border-radius: 10px;
+	padding: 8px 10px;
+}
+.drawer .note.ok {
+	color: #0b4d3a;
+	background: var(--ok-bg);
+	border: 1px solid var(--ok-line);
+	border-radius: 10px;
+	padding: 8px 10px;
+}
+.drawer .note a {
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+.drawer .panel {
+	border: 1px solid var(--line);
+	border-radius: 12px;
+	padding: 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	background: var(--bone);
+}
+.drawer .panel.danger-zone {
+	border-color: var(--warn-line);
+	background: var(--warn-bg);
+}
+.drawer .panel p {
+	font-size: 12.5px;
+	color: var(--body);
+}
+.drawer .stepper {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	flex-wrap: wrap;
+	font-size: 12.5px;
+}
+.drawer .stepper input {
+	width: 64px;
+	border: 1px solid var(--line-2);
+	border-radius: 8px;
+	padding: 4px 8px;
+	background: var(--paper);
+	font-family: var(--mono);
+	font-variant-numeric: tabular-nums;
+	font-size: 12.5px;
+}
+.drawer dl.cost {
+	/* The cost list keeps the sheet's rows, not the record's two-column grid. */
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	font-size: 12.5px;
+}
+.drawer dl.cost dd {
+	overflow-wrap: normal;
+}
+.drawer .copy-field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+.drawer .copy-field > label {
+	font-size: 12px;
+	color: var(--stone);
+}
+.drawer .copy-field .line {
+	display: flex;
+	gap: 6px;
+	min-width: 0;
+}
+.drawer .copy-field input,
+.drawer .copy-field textarea {
+	flex: 1;
+	min-width: 0;
+	border: 1px solid var(--line);
+	border-radius: 8px;
+	padding: 5px 8px;
+	background: var(--bone);
+	font-family: var(--mono);
+	font-size: 11.5px;
+	color: var(--ink);
+	resize: none;
+}
+.drawer .members {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	font-family: var(--mono);
+	font-size: 12px;
+}
+.drawer .lock {
+	display: flex;
+	gap: 10px;
+	align-items: flex-start;
+	font-size: 12.5px;
+	color: var(--body);
+}
+.drawer .lock svg {
+	flex: 0 0 auto;
+	color: var(--ink);
+	margin-top: 1px;
+}
+.drawer input[type="file"] {
+	font-size: 12px;
+	max-width: 100%;
+}
+
+/* The sidebar storage card's Extend all link. */
+.storage .link {
+	border: 0;
+	background: transparent;
+	padding: 0;
+	font-size: 12px;
+	color: var(--ultra);
+	font-weight: 600;
+	cursor: pointer;
+	text-align: left;
+	line-height: 1.35;
+}
+
+/* The Walrus pane footer's Extend all link for blobs expiring soon. */
+.pane .ft .link {
+	border: 0;
+	background: transparent;
+	padding: 0;
+	font: inherit;
+	color: var(--ultra);
+	font-weight: 600;
+	cursor: pointer;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+@media (max-width: 860px) {
+	/* The design's 390 render: a full-width sheet under the top bar. */
+	.drawer {
+		width: 100%;
+		border-left: 0;
+	}
+}

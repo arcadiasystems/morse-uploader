@@ -12,6 +12,7 @@ import type { TransferBatch } from "@/transfers/transfer-job";
 import { type PeriodId, periodOptions, storageEndMs } from "@/upload/periods";
 import {
 	choiceKey,
+	choiceLabel,
 	collectionMode,
 	PUBLISH_BLOCKER_TEXT,
 	type PublishChoice,
@@ -593,7 +594,7 @@ function PublishPicker({
 			>
 				{choices.map((option) => (
 					<option key={choiceKey(option)} value={choiceKey(option)}>
-						{option.publicationName} · {option.collectionName}
+						{choiceLabel(option, choices)}
 					</option>
 				))}
 			</select>
