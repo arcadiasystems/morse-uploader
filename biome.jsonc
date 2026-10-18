@@ -7,8 +7,10 @@
 	},
 	"files": {
 		"ignoreUnknown": false,
-		// The example app has its own toolchain; the library gates do not lint it.
-		"includes": ["**", "!examples", "!**/dist"]
+		// The example app and the Uploader app (apps/) have their own toolchains; the
+		// library gates do not lint them. design/ is the reference design package
+		// (static HTML, CSS and renders), not source.
+		"includes": ["**", "!examples", "!apps", "!design", "!**/dist"]
 	},
 	"formatter": {
 		"enabled": true,

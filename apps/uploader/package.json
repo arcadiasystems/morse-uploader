@@ -1,0 +1,36 @@
+{
+	"name": "@arcadiasystems/morse-uploader-app",
+	"version": "0.0.0",
+	"private": true,
+	"description": "Morse Uploader v2: a non-custodial transfer client for Walrus, in the browser.",
+	"license": "MIT",
+	"type": "module",
+	"scripts": {
+		"dev": "next dev",
+		"build": "next build",
+		"lint": "biome check .",
+		"lint:fix": "biome check --write .",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
+		"e2e": "playwright test"
+	},
+	"dependencies": {
+		"@mysten/dapp-kit-core": "1.6.38",
+		"@mysten/dapp-kit-react": "2.1.40",
+		"@mysten/sui": "2.36.0",
+		"@mysten/walrus": "1.2.35",
+		"next": "16.4.2",
+		"react": "19.3.1",
+		"react-dom": "19.3.1"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.4.7",
+		"@mysten/wallet-standard": "0.21.34",
+		"@playwright/test": "1.64.1",
+		"@types/node": "24.19.2",
+		"@types/react": "19.3.0",
+		"@types/react-dom": "19.3.0",
+		"typescript": "6.0.3",
+		"vitest": "4.1.12"
+	}
+}
