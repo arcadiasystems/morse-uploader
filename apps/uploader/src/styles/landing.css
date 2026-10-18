@@ -1,95 +1,202 @@
-/* Minimal landing until the full landing page ships, in the dark tokens. */
+/* The landing, design/v2/index.html in the dark tokens. Every rule is scoped
+   to .land: Next keeps a route's CSS after a client-side navigation, so these
+   must never reach the app at /app. */
 .land {
 	position: relative;
 	z-index: 1;
 	min-height: 100vh;
-	display: flex;
-	flex-direction: column;
+	/* The rotated tiles must never widen the page. */
+	overflow-x: clip;
 }
+
+/* ---------- Top bar ---------- */
 .land .nav {
-	height: 72px;
 	display: flex;
 	align-items: center;
-	gap: 14px;
-	padding: 0 56px;
+	gap: 28px;
+	padding: 24px 56px;
 }
-.land .nav .right {
+/* The design sets the wordmark's two words 10px apart. */
+.land .nav .brand .wm {
+	display: inline-flex;
+	gap: 10px;
+}
+.land .nav-link {
+	display: inline-flex;
+	align-items: center;
+	min-height: 36px;
+	margin-top: 2px;
+	font-family: var(--mono);
+	font-size: 11px;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--fg-3);
+	border-radius: 4px;
+}
+.land .nav-link:hover {
+	color: var(--fg);
+}
+.land .nav-actions {
 	margin-left: auto;
 	display: flex;
 	gap: 10px;
-	align-items: center;
 }
+/* A planned feature: dashed and dimmed, so it reads as not here yet. */
+.land .btn.coming {
+	border-style: dashed;
+}
+.land .btn.coming .soon {
+	color: var(--cyan);
+}
+
+/* ---------- Hero ---------- */
 .land .hero {
-	padding: 96px 28px 72px;
+	text-align: center;
+	padding: 64px 28px 30px;
 	max-width: 980px;
 	margin: 0 auto;
-	width: 100%;
-	flex: 1;
-	text-align: center;
 }
-.land h1 {
+/* The design sets the eyebrow inline, on the body's line box. */
+.land .hero .eyebrow {
+	line-height: 19.5px;
+}
+.land .hero h1 {
 	font-family: var(--disp);
-	font-size: clamp(44px, 6vw, 84px);
-	line-height: 1;
-	letter-spacing: -0.035em;
 	font-weight: 400;
+	font-size: clamp(44px, 6vw, 84px);
+	letter-spacing: -0.035em;
+	line-height: 1;
 	margin-top: 14px;
 }
-.land h1 em {
+.land .hero h1 em {
 	font-style: normal;
 	background: var(--grad);
 	-webkit-background-clip: text;
 	background-clip: text;
 	color: transparent;
 }
-.land .lead {
+.land .hero .lead {
+	color: var(--fg-2);
 	font-size: 18px;
 	line-height: 1.5;
-	color: var(--fg-2);
-	margin: 22px auto 0;
 	max-width: 600px;
+	margin: 22px auto 0;
 }
-.land .cta {
+.land .hero .cta {
 	display: flex;
 	gap: 10px;
-	flex-wrap: wrap;
 	justify-content: center;
+	flex-wrap: wrap;
 	margin-top: 28px;
 }
-.foot {
+
+/* ---------- Glass tiles with the Trace, only on the landing ---------- */
+.land .tile {
+	position: absolute;
+	width: 150px;
+	height: 150px;
+	border-radius: 26px;
+	/* The design's glass: violet into cyan over the glow, lit from inside. */
+	background: linear-gradient(
+		135deg,
+		rgba(179, 136, 255, 0.26),
+		rgba(125, 243, 232, 0.12)
+	);
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	box-shadow:
+		inset 0 0 40px rgba(255, 255, 255, 0.08),
+		0 30px 60px rgba(0, 0, 0, 0.5);
+	backdrop-filter: blur(6px);
+	color: rgba(255, 255, 255, 0.8);
+	pointer-events: none;
+}
+.land .tile::after {
+	content: "";
+	position: absolute;
+	inset: 34%;
+	border: 2px solid rgba(255, 255, 255, 0.5);
+	border-radius: 6px;
+	transform: rotate(45deg);
+}
+.land .tile svg {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+}
+.land .tile.left {
+	left: 48px;
+	top: 430px;
+	transform: rotate(-14deg);
+}
+.land .tile.right {
+	right: 70px;
+	top: 250px;
+	width: 120px;
+	height: 120px;
+	transform: rotate(18deg);
+}
+
+/* ---------- Feature cards ---------- */
+.land .feats {
+	max-width: 1200px;
+	margin: 60px auto 0;
+	padding: 0 28px;
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 14px;
+}
+.land .fcard {
+	border: 1px solid var(--line);
+	border-radius: 18px;
+	background: var(--panel);
+	padding: 22px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+.land .fcard h3 {
+	font-family: var(--disp);
+	font-size: 18px;
+	font-weight: 700;
+	letter-spacing: -0.02em;
+}
+.land .fcard p:not(.eyebrow) {
+	font-size: 13.5px;
+	color: var(--fg-2);
+}
+
+/* ---------- Footer ---------- */
+.land .foot {
 	border-top: 1px solid var(--line);
 	padding: 22px 56px;
-	font-size: 12.5px;
-	color: var(--fg-3);
 	display: flex;
 	justify-content: space-between;
-	gap: 14px;
+	gap: 12px;
 	flex-wrap: wrap;
+	font-size: 12.5px;
+	color: var(--fg-3);
 }
-.foot a {
-	color: var(--fg);
-	font-weight: 500;
-}
-.foot .sig {
+.land .foot .sig {
 	font-family: var(--mono);
 	letter-spacing: 0.2em;
 	color: var(--cyan);
 }
 
-@media (max-width: 860px) {
-	.land .nav {
-		padding: 0 20px;
-	}
-	.land .nav .right .btn.text {
-		display: none;
-	}
-	.land .hero {
-		padding: 40px 20px 24px;
-	}
-	.land .cta .btn {
-		width: 100%;
-	}
-	.foot {
-		padding: 20px;
+/* Links in running text: quietly underlined, brighter on hover. */
+.land p a {
+	color: var(--fg-2);
+	text-decoration: underline;
+	text-decoration-color: var(--line-2);
+	text-underline-offset: 3px;
+}
+.land p a:hover {
+	color: var(--fg);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.land .nav-link,
+	.land p a {
+		transition: color 120ms var(--ease);
 	}
 }
