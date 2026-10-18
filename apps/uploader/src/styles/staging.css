@@ -456,3 +456,27 @@ body:has(aside.insp) .tray {
 	font-size: 11px;
 	color: var(--fg-4);
 }
+
+/* ---------- Phones: the drop field, the tray and notes above the tab bar ---------- */
+@media (max-width: 860px) {
+	.dropall {
+		left: 14px;
+		bottom: calc(var(--tabbar) + 14px);
+	}
+	.drop-problem {
+		bottom: calc(var(--tabbar) + 12px);
+	}
+	/* Full width above the tab bar, as dark.css lays the tray out on phones. */
+	.tray,
+	body:has(aside.insp) .tray {
+		left: 12px;
+		right: 12px;
+		bottom: calc(var(--tabbar) + 12px);
+		width: auto;
+		max-height: calc(100dvh - var(--bar) - var(--tabbar) - 24px);
+	}
+	/* A selection's bulk bar takes the same place; the tray waits until it clears. */
+	body:has(.bulk) .tray {
+		display: none;
+	}
+}
