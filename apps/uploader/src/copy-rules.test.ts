@@ -95,15 +95,17 @@ describe("copy rules", () => {
 			"Folders keep their structure and upload as one quilt of up to 666 files.",
 		);
 		expect(drop).toContain("Up to 1 GiB per upload.");
-		const sheet = text("upload-sheet/upload-sheet.tsx");
-		// Items 2, 7, 8 and 14.
-		expect(sheet).toContain("Each blob carries 64 MB of fixed metadata.");
-		expect(sheet).toContain("Relay tip (SUI)");
-		expect(sheet).toContain("Network fees (SUI)");
-		expect(sheet).toContain(
+		// Items 2 and 7: the staging tray's itemised cost.
+		const cost = text("staging/cost-list.tsx");
+		expect(cost).toContain("Each blob carries 64 MB of fixed metadata.");
+		expect(cost).toContain("Relay tip (SUI)");
+		expect(cost).toContain("Network fees (SUI)");
+		// Item 8: how the signatures come, under Sign and send.
+		expect(text("staging/sign-help.ts")).toContain(
 			"Your wallet asks once per item to register and once to certify the batch",
 		);
-		expect(sheet).toContain(
+		// Item 14: what Seal keeps private, and what stays public.
+		expect(text("staging/tray-settings.tsx")).toContain(
 			"Client-side. Only wallets you allow can decrypt. The blob id, file name and size stay public.",
 		);
 	});

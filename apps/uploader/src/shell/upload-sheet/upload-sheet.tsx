@@ -12,29 +12,25 @@ import type { TransferBatch } from "@/transfers/transfer-job";
 import { type PeriodId, periodOptions, storageEndMs } from "@/upload/periods";
 import {
 	choiceKey,
-	choiceLabel,
 	collectionMode,
 	PUBLISH_BLOCKER_TEXT,
 	type PublishChoice,
 	publishBlocker,
 	publishChoices,
 } from "@/upload/publish-rules";
-import type { SignaturePlan } from "@/upload/upload-cost";
 import {
 	blobAttributes,
 	buildUploadPlan,
 	type UploadMode,
 	type UploadPlan,
 } from "@/upload/upload-plan";
-import {
-	buildQuote,
-	itemEstimates,
-	type Quote,
-	quoteGas,
-} from "@/upload/upload-quote";
+import { buildQuote, itemEstimates, quoteGas } from "@/upload/upload-quote";
 import { useQuoteInputs, useRegisterGas } from "@/upload/use-upload-quote";
+import { CostList } from "../staging/cost-list";
+import { PublishPicker } from "../staging/publish-picker";
+import { listText, signHelp } from "../staging/sign-help";
+import { SwitchRow } from "../switch-row";
 import { useModalFocus } from "../use-modal-focus";
-import { SwitchRow } from "./switch-row";
 import { TreePreview } from "./tree-preview";
 
 interface UploadSheetProps {
@@ -103,7 +99,7 @@ export function UploadSheet({
 	const nowMs =
 		inputs.status === "ready" ? inputs.readAt.getTime() : Date.now();
 	const periods = ready
-		? periodOptions(ready.clock, network.maxEpochsAhead, nowMs)
+		? periodOptions(network.id, ready.clock, network.maxEpochsAhead, nowMs)
 		: [];
 	const firstFit = periods.find((period) => period.fits);
 	const chosenKeep: Keep | null =
@@ -470,138 +466,6 @@ export function UploadSheet({
 	);
 }
 
-function CostList({
-	quote,
-	gasMist,
-	plan,
-	epochs,
-	keepLabel,
-	gas,
-}: {
-	quote: Quote | null;
-	gasMist: bigint | null;
-	plan: UploadPlan | null;
-	epochs: number | null;
-	keepLabel: string | null;
-	gas: ChainRead<bigint[]>;
-}) {
-	if (!quote || !plan || epochs === null)
-		return <div className="cost skel" aria-busy="true" />;
-	const transactions = quote.signatureTotal;
-	const period = `${keepLabel ? `${keepLabel}, ` : ""}${epochs} ${epochs === 1 ? "epoch" : "epochs"}`;
-	return (
-		<dl className="cost">
-			<div>
-				<dt>Encoded size</dt>
-				<dd>
-					{formatBytes(BigInt(plan.contentBytes))} →{" "}
-					{formatBytes(quote.cost.encodedSize)}
-				</dd>
-			</div>
-			<p className="note">Each blob carries 64 MB of fixed metadata.</p>
-			<div>
-				<dt>Storage, {period}</dt>
-				<dd>
-					<TokenAmount raw={quote.cost.storageFrost} context="detailed" /> WAL
-				</dd>
-			</div>
-			<div>
-				<dt>Write fee</dt>
-				<dd>
-					<TokenAmount raw={quote.cost.writeFrost} context="detailed" /> WAL
-				</dd>
-			</div>
-			<div>
-				<dt>Relay tip (SUI)</dt>
-				<dd>
-					<TokenAmount raw={quote.cost.tipMist} context="detailed" /> SUI
-				</dd>
-			</div>
-			<div>
-				<dt>
-					Network fees (SUI), {transactions}{" "}
-					{transactions === 1 ? "transaction" : "transactions"}
-				</dt>
-				<dd
-					title={gas.status === "error" ? errorMessage(gas.error) : undefined}
-				>
-					{gasMist !== null ? (
-						<>
-							≈ <TokenAmount raw={gasMist} context="detailed" /> SUI
-						</>
-					) : gas.status === "error" ? (
-						<span className="warn-text">could not estimate</span>
-					) : (
-						<span className="muted">estimating…</span>
-					)}
-				</dd>
-			</div>
-			<div className="tot">
-				<dt>Total</dt>
-				<dd>
-					<TokenAmount raw={quote.cost.walFrost} context="compact" /> WAL +{" "}
-					{gasMist !== null ? (
-						<TokenAmount raw={quote.cost.tipMist + gasMist} context="compact" />
-					) : (
-						<TokenAmount raw={quote.cost.tipMist} context="compact" />
-					)}{" "}
-					SUI{gasMist === null ? " + fees" : ""}
-				</dd>
-			</div>
-		</dl>
-	);
-}
-
-function PublishPicker({
-	read,
-	choices,
-	choice,
-	onChoose,
-	onRetry,
-	mode,
-}: {
-	read: ReturnType<typeof usePublishTargets>["read"];
-	choices: readonly PublishChoice[];
-	choice: PublishChoice | null;
-	onChoose: (key: string) => void;
-	onRetry: () => void;
-	mode: "blob" | "quilt" | null;
-}) {
-	if (read.status === "error")
-		return (
-			<p className="problem">
-				Could not read your Morse publications: {errorMessage(read.error)}{" "}
-				<button className="btn text sm" type="button" onClick={onRetry}>
-					Try again
-				</button>
-			</p>
-		);
-	if (read.status !== "ready")
-		return <p className="note">Reading your Morse publications…</p>;
-	if (choices.length === 0)
-		return (
-			<p className="note">
-				This wallet holds no publisher cap for a publication with a{" "}
-				{mode ?? "blob"} collection.
-			</p>
-		);
-	return (
-		<label className="pick">
-			<span className="sr-only">Publication and collection</span>
-			<select
-				value={choice ? choiceKey(choice) : ""}
-				onChange={(event) => onChoose(event.currentTarget.value)}
-			>
-				{choices.map((option) => (
-					<option key={choiceKey(option)} value={choiceKey(option)}>
-						{choiceLabel(option, choices)}
-					</option>
-				))}
-			</select>
-		</label>
-	);
-}
-
 /** "1 folder and 2 files, 97.3 MB.", as the design opens the sheet. */
 function selectionSummary(plan: UploadPlan): string {
 	const parts: string[] = [];
@@ -612,20 +476,4 @@ function selectionSummary(plan: UploadPlan): string {
 			`${plan.looseFiles} ${plan.looseFiles === 1 ? "file" : "files"}`,
 		);
 	return `${listText(parts)}, ${formatBytes(BigInt(plan.contentBytes))}.`;
-}
-
-function listText(items: readonly string[]): string {
-	if (items.length <= 1) return items.join("");
-	return `${items.slice(0, -1).join(", ")} and ${items.at(-1)}`;
-}
-
-/** The note under Upload: how the signatures come, from the real flow. */
-function signHelp(signatures: SignaturePlan | null): string {
-	const parts = [
-		"Your wallet asks once per item to register and once to certify the batch",
-	];
-	if (signatures && signatures.encryptedItems > 0)
-		parts.push("once per encrypted file to create its access policy");
-	if (signatures && signatures.entries > 0) parts.push("once per Morse entry");
-	return `${listText(parts)}.`;
 }

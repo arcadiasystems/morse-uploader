@@ -19,13 +19,13 @@ import { errorMessage } from "@/lib/error-message";
 import { formatBytes } from "@/lib/format-bytes";
 import { shortenAddress } from "@/lib/shorten-address";
 import type { ChainRead } from "@/lib/use-chain-read";
-import type { PickedFile } from "@/local/local-library";
-import { usePickedFiles } from "@/local/use-picked-files";
+import { type PickedFile, rootsFromPicked } from "@/local/local-library";
 import { useAutoExtend } from "@/manage/use-auto-extend";
 import type { Publications } from "@/morse/read-publications";
 import type { SharedFiles } from "@/morse/read-shared-files";
 import { useMorseReads } from "@/morse/use-morse-reads";
 import { NETWORKS, type NetworkConfig } from "@/network/networks";
+import { useStagingTray } from "@/staging/use-staging-tray";
 import { summarizeTransfers } from "@/transfers/summarize-transfers";
 import type { TransferBatch } from "@/transfers/transfer-job";
 import { useTransferQueue } from "@/transfers/use-transfer-queue";
@@ -61,9 +61,9 @@ import { paletteCommands } from "./palette/palette-commands";
 import type { BlobMatch } from "./palette/palette-match";
 import { type GoTarget, useShortcuts } from "./palette/shortcuts";
 import { Rail } from "./rail/rail";
+import { StagingTrayPanel } from "./staging/staging-tray";
 import { Topbar } from "./topbar";
 import { TransfersPanel } from "./transfers/transfers-panel";
-import { UploadSheet } from "./upload-sheet/upload-sheet";
 import { usePopover } from "./use-popover";
 
 /**
@@ -85,16 +85,7 @@ export function Shell() {
 	const [query, setQuery] = useState("");
 	const [sort, setSort] = useState<RowSort>(DEFAULT_SORT);
 	const [layout, setLayout] = useState<FilesLayout>("list");
-	const picked = usePickedFiles();
-	// Each opening is a new session, so the sheet reads prices again.
-	const [sheet, setSheet] = useState<{ session: number; open: boolean }>({
-		session: 0,
-		open: false,
-	});
-	const closeSheet = useCallback(
-		() => setSheet((current) => ({ ...current, open: false })),
-		[],
-	);
+	const tray = useStagingTray(network.id, address);
 
 	const refreshBlobs = blobs.refresh;
 	const refreshFunds = funds.refresh;
@@ -128,25 +119,26 @@ export function Shell() {
 		selected: Selection;
 	}>({ scope: selectionScope, selected: EMPTY_SELECTION });
 
-	function upload(files: PickedFile[]) {
-		picked.replace(files);
-		setSheet((current) => ({ session: current.session + 1, open: true }));
+	// Picks and drops land in the staging tray; nothing uploads until Sign and send.
+	function stage(files: PickedFile[]) {
+		// Staged files belong to a wallet: without one, the drop asks to connect.
+		if (address === null) profileMenu.open();
+		else tray.model.stage(rootsFromPicked(files, () => crypto.randomUUID()));
 	}
-	const pickers = useFilePickers(upload);
+	const pickers = useFilePickers(stage);
 	const [dropProblem, setDropProblem] = useState<string | null>(null);
 	const dragging = useWindowDrop({
 		onFiles: (files) => {
 			setDropProblem(null);
-			// Staged files belong to a wallet: without one, the drop asks to connect.
-			if (address === null) profileMenu.open();
-			else upload(files);
+			stage(files);
 		},
 		onProblem: setDropProblem,
 	});
 
-	function confirmUpload(batch: TransferBatch) {
+	function send(batch: TransferBatch) {
 		transfers.queue.enqueue(batch);
-		closeSheet();
+		// The queue holds the files now; the tray empties and keeps its settings.
+		tray.model.clear();
 		transfersPanel.open();
 	}
 
@@ -358,19 +350,20 @@ export function Shell() {
 					)}
 				</div>
 			</div>
-			<TransfersPanel panel={transfersPanel} transfers={transfers} />
-			{sheet.open && address !== null ? (
-				<UploadSheet
+			{address !== null &&
+			tray.state.status === "ready" &&
+			tray.state.roots.length > 0 ? (
+				<StagingTrayPanel
+					key={tray.state.key}
 					network={network}
 					owner={normalizeSuiAddress(address)}
-					library={picked.library}
-					selected={picked.selected}
+					tray={tray}
 					balances={funds.balances}
-					session={sheet.session}
-					onClose={closeSheet}
-					onConfirm={confirmUpload}
+					besidePanel={transfersPanel.isOpen}
+					onSend={send}
 				/>
 			) : null}
+			<TransfersPanel panel={transfersPanel} transfers={transfers} />
 			{bulk !== null && listed !== null ? (
 				<BulkSheetFor
 					bulk={bulk}

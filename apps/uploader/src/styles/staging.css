@@ -70,3 +70,389 @@
 	color: var(--fg);
 	background: var(--panel);
 }
+
+/* ---------- Staging tray (design/v2/app-staging.html) ---------- */
+/* Bottom right over the view. The middle scrolls when the settings open,
+   so the header and Sign and send stay in reach. */
+.tray {
+	position: fixed;
+	right: 22px;
+	bottom: 22px;
+	width: 420px;
+	max-height: calc(100dvh - var(--bar) - 44px);
+	display: flex;
+	flex-direction: column;
+	background: rgba(12, 13, 18, 0.92);
+	border: 1px solid var(--line-2);
+	border-radius: 18px;
+	backdrop-filter: blur(18px);
+	box-shadow: var(--shadow);
+	overflow: hidden;
+	z-index: 20;
+}
+/* With the inspector open, the tray sits beside its column. */
+body:has(aside.insp) .tray {
+	right: calc(var(--insp) + 22px);
+}
+/* With the transfers slide-over open, the tray steps aside where there is room. */
+@media (min-width: 1100px) {
+	.tray.beside,
+	body:has(aside.insp) .tray.beside {
+		right: calc(560px + 22px);
+	}
+}
+.tray .hd {
+	padding: 14px 16px;
+	border-bottom: 1px solid var(--line);
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+.tray.folded .hd {
+	border-bottom: 0;
+}
+.tray .hd h3 {
+	font-family: var(--disp);
+	font-size: 15px;
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	white-space: nowrap;
+}
+.tray .hd .count {
+	margin-left: auto;
+	font-family: var(--mono);
+	font-variant-numeric: tabular-nums;
+	font-size: 11px;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--fg-3);
+	white-space: nowrap;
+}
+.tray .fold {
+	flex: none;
+	width: 26px;
+	height: 26px;
+	margin-right: -6px;
+	display: grid;
+	place-items: center;
+	border: 0;
+	border-radius: 8px;
+	background: transparent;
+	color: var(--fg-3);
+	cursor: pointer;
+}
+.tray .fold:hover {
+	color: var(--fg);
+	background: var(--panel);
+}
+.tray .fold svg {
+	transform: rotate(90deg);
+}
+.tray.folded .fold svg {
+	transform: rotate(-90deg);
+}
+.tray .body {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: auto;
+	overscroll-behavior: contain;
+}
+
+/* Staged items: icon, name with what it becomes, size, remove. */
+.tray .its {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+.tray .it {
+	display: grid;
+	grid-template-columns: 22px minmax(0, 1fr) auto auto;
+	gap: 10px;
+	align-items: center;
+	padding: 9px 16px;
+	border-bottom: 1px solid var(--line);
+	font-size: 12.5px;
+}
+.tray .it .ic {
+	display: grid;
+	place-items: center;
+	color: var(--fg-3);
+}
+.tray .it .ic.violet {
+	color: var(--violet);
+}
+.tray .it .ic.warn {
+	color: var(--warn);
+}
+.tray .it .nm {
+	min-width: 0;
+}
+.tray .it .name {
+	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.tray .nm small {
+	display: block;
+	font-family: var(--mono);
+	font-size: 10.5px;
+	color: var(--fg-4);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.tray .nm small.warn {
+	color: var(--warn);
+}
+/* A folder's name opens its paths. */
+.tray .tw {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	max-width: 100%;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+.tray .tw .chev {
+	flex: none;
+	color: var(--fg-4);
+	display: grid;
+}
+.tray .tw .chev.on svg {
+	transform: rotate(90deg);
+}
+.tray .it .sz {
+	font-family: var(--mono);
+	font-variant-numeric: tabular-nums;
+	font-size: 11px;
+	color: var(--fg-3);
+}
+.tray .it .x {
+	width: 22px;
+	height: 22px;
+	display: grid;
+	place-items: center;
+	border: 0;
+	border-radius: 6px;
+	background: transparent;
+	color: var(--fg-4);
+	cursor: pointer;
+}
+.tray .it .x:hover {
+	color: var(--fg);
+	background: var(--panel);
+}
+.tray .paths {
+	list-style: none;
+	margin: 0;
+	padding: 6px 16px 10px 48px;
+	border-bottom: 1px solid var(--line);
+	font-family: var(--mono);
+	font-variant-numeric: tabular-nums;
+	font-size: 10.5px;
+	line-height: 1.8;
+	color: var(--fg-3);
+}
+.tray .paths li {
+	display: grid;
+	grid-template-columns: 12px minmax(0, 1fr) auto;
+	gap: 8px;
+}
+.tray .paths span:first-child {
+	color: var(--fg-4);
+}
+.tray .paths .path {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--fg-2);
+}
+.tray .paths .path.muted {
+	color: var(--fg-4);
+}
+.tray .paths .sz {
+	color: var(--fg-4);
+}
+
+/* Notes from the plan, the price check and saving. */
+.tray .notes:empty {
+	display: none;
+}
+.tray .notes {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 12px 16px 0;
+}
+.tray .note {
+	font-size: 12px;
+	color: var(--fg-3);
+}
+.tray .note.warn {
+	color: var(--warn);
+	background: var(--warn-tint);
+	border: 1px solid var(--warn-line);
+	border-radius: 10px;
+	padding: 8px 10px;
+}
+.tray .note.warn code {
+	font-size: 11px;
+	word-break: break-all;
+}
+.tray .tnote {
+	margin: 12px 16px 0;
+	font-size: 12px;
+	color: var(--fg-3);
+}
+.tray .ft .tnote {
+	flex: 1 0 100%;
+	margin: 0;
+}
+.tray .tnote.warn {
+	color: var(--warn);
+}
+
+/* The four settings as the design's tiles; a tile opens its editor below. */
+.tray .sets {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 8px;
+	margin: 0;
+	padding: 12px 16px;
+	border: 0;
+	border-bottom: 1px solid var(--line);
+	min-width: 0;
+}
+.tray .set {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	border: 1px solid var(--line);
+	border-radius: 10px;
+	padding: 8px 10px;
+	background: transparent;
+	color: var(--fg);
+	font: inherit;
+	font-size: 12px;
+	text-align: left;
+	cursor: pointer;
+}
+.tray .set:hover {
+	border-color: var(--line-2);
+}
+.tray .set.on {
+	border-color: var(--cyan-line);
+	background: var(--cyan-tint);
+}
+.tray .set small {
+	font-family: var(--mono);
+	font-size: 10px;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--fg-4);
+}
+.tray .set b {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 8px;
+	font-weight: 500;
+	min-width: 0;
+}
+.tray .set .v {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.tray .set em {
+	flex: none;
+	font-style: normal;
+	color: var(--cyan);
+	font-family: var(--mono);
+	font-size: 10px;
+	letter-spacing: 0.1em;
+}
+.tray .edit {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 12px 16px;
+	border-bottom: 1px solid var(--line);
+	background: rgba(255, 255, 255, 0.02);
+}
+.tray .edit fieldset {
+	border: 0;
+	margin: 0;
+	padding: 0;
+	min-width: 0;
+}
+.tray .edit .keep {
+	flex-wrap: wrap;
+}
+.tray .edit .keep label {
+	flex: 1 0 auto;
+	padding: 8px 10px;
+}
+
+/* The itemised cost, as the design's rows: label left, mono value right. */
+.tray .costs {
+	padding: 12px 16px;
+	border-bottom: 1px solid var(--line);
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+.tray .cost {
+	gap: 5px;
+	font-size: 12px;
+}
+.tray .cost dd {
+	font-size: 12px;
+}
+.tray .cost .note {
+	font-size: 11px;
+	color: var(--fg-4);
+}
+.tray .cost .tot {
+	font-weight: 500;
+	padding-top: 6px;
+}
+.tray .cost .tot dd {
+	font-size: 13px;
+}
+
+/* Sign and send, with the price line above it as the design orders them. */
+.tray .ft {
+	padding: 12px 16px;
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	flex-wrap: wrap;
+}
+.tray .ft .price {
+	flex: 1 0 100%;
+	order: -1;
+	font-family: var(--mono);
+	font-variant-numeric: tabular-nums;
+	font-size: 10px;
+	color: var(--fg-4);
+	letter-spacing: 0.06em;
+}
+.tray .ft .price sub {
+	font-size: 0.75em;
+	line-height: 0;
+	vertical-align: -0.25em;
+}
+.tray .ft .help {
+	flex: 1 0 100%;
+	font-size: 11px;
+	color: var(--fg-4);
+}

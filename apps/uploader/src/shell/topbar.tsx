@@ -21,7 +21,7 @@ interface TopbarProps {
 	paletteOpen: boolean;
 	transfers: TransfersSummary;
 	transfersPanel: Popover;
-	/** Opens the file picker; what is picked goes to the upload sheet. */
+	/** Opens the file picker; what is picked goes to the staging tray. */
 	onUpload: () => void;
 }
 

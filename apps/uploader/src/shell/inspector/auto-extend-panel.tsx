@@ -12,7 +12,7 @@ import {
 import type { AutoExtend, AutoExtendStatus } from "@/manage/use-auto-extend";
 import { explorerTxUrl } from "@/network/explorer-urls";
 import type { NetworkConfig } from "@/network/networks";
-import { SwitchRow } from "../upload-sheet/switch-row";
+import { SwitchRow } from "../switch-row";
 
 /** Whether the shown blob is one auto-extend renews, or the setting is shown for the profile. */
 export type AutoExtendReach = "this-blob" | "not-this-blob" | "profile";
