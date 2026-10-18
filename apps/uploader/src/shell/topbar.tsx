@@ -20,6 +20,8 @@ interface TopbarProps {
 	onPalette: () => void;
 	paletteOpen: boolean;
 	transfers: TransfersSummary;
+	/** Seconds of uploading left, for the transfers pill. */
+	transfersRemaining: number | null;
 	transfersPanel: Popover;
 	/** Opens the file picker; what is picked goes to the staging tray. */
 	onUpload: () => void;
@@ -36,6 +38,7 @@ export function Topbar({
 	onPalette,
 	paletteOpen,
 	transfers,
+	transfersRemaining,
 	transfersPanel,
 	onUpload,
 }: TopbarProps) {
@@ -70,7 +73,11 @@ export function Topbar({
 				>
 					<Icon name="search" size={16} />
 				</button>
-				<TransfersPill summary={transfers} panel={transfersPanel} />
+				<TransfersPill
+					summary={transfers}
+					remainingSeconds={transfersRemaining}
+					panel={transfersPanel}
+				/>
 				{address ? (
 					<BalancePill
 						popover={balanceMenu}

@@ -28,6 +28,7 @@ import { NETWORKS, type NetworkConfig } from "@/network/networks";
 import { useStagingTray } from "@/staging/use-staging-tray";
 import { summarizeTransfers } from "@/transfers/summarize-transfers";
 import type { TransferBatch } from "@/transfers/transfer-job";
+import { transfersStrip } from "@/transfers/transfer-view";
 import { useTransferQueue } from "@/transfers/use-transfer-queue";
 import { useSession } from "@/wallet/use-session";
 import {
@@ -100,6 +101,7 @@ export function Shell() {
 	}, [refreshBlobs, refreshFunds, refreshActivity, refreshMorse]);
 	const transfers = useTransferQueue(network.id, address, refreshChain);
 	const transfersSummary = summarizeTransfers(transfers.state);
+	const transfersRemaining = transfersStrip(transfers.state).remainingSeconds;
 	const actions = useWalletActions(network.id);
 	// The bulk sheet open now: an action on the selection, or Extend everything expiring.
 	const [bulk, setBulk] = useState<
@@ -289,6 +291,7 @@ export function Shell() {
 						onPalette={() => setPaletteOpen(true)}
 						paletteOpen={paletteOpen}
 						transfers={transfersSummary}
+						transfersRemaining={transfersRemaining}
 						transfersPanel={transfersPanel}
 						onUpload={pickers.openFiles}
 					/>

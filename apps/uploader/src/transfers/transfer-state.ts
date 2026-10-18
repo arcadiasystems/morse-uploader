@@ -99,6 +99,8 @@ export interface TransferState {
 	paused: boolean;
 	/** Something the queue could not do that is not one item's failure, such as saving for Finish. */
 	notice: string | null;
+	/** The last measured relay upload speed, in bytes per second; `null` before any. */
+	throughput: number | null;
 }
 
 export type TransferEvent =
@@ -153,6 +155,7 @@ export const INITIAL_TRANSFER_STATE: TransferState = {
 	items: [],
 	paused: false,
 	notice: null,
+	throughput: null,
 };
 
 export function transferReducer(
@@ -184,8 +187,8 @@ export function transferReducer(
 					bytesPerSecond: null,
 				},
 			}));
-		case "progressed":
-			return update(state, event.id, (item) =>
+		case "progressed": {
+			const next = update(state, event.id, (item) =>
 				item.status.kind === "running"
 					? {
 							...item,
@@ -197,6 +200,10 @@ export function transferReducer(
 						}
 					: item,
 			);
+			return event.bytesPerSecond === null
+				? next
+				: { ...next, throughput: event.bytesPerSecond };
+		}
 		case "encoded":
 			return update(state, event.id, (item) => ({
 				...item,

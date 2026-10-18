@@ -1,16 +1,20 @@
 import type { TransfersSummary } from "@/transfers/summarize-transfers";
+import { formatDuration } from "@/transfers/transfer-view";
 import type { Popover } from "../use-popover";
 
 /**
- * The top bar's transfers pill: how many transfers are under way and what
- * the queue is doing, with a ring for the latest batch's progress. It opens
- * the transfer queue.
+ * The top bar's transfers pill (handover item 3): how many transfers are
+ * under way and the time left, or what the queue waits for, with a ring
+ * for the latest batch's progress. It opens the transfers slide-over.
  */
 export function TransfersPill({
 	summary,
+	remainingSeconds,
 	panel,
 }: {
 	summary: TransfersSummary;
+	/** Seconds of uploading left at the measured speed; `null` before any speed is measured. */
+	remainingSeconds: number | null;
 	panel: Popover;
 }) {
 	const { active, failed, progress } = summary;
@@ -24,7 +28,7 @@ export function TransfersPill({
 			aria-haspopup="dialog"
 			aria-expanded={panel.isOpen}
 			aria-controls={panel.isOpen ? panel.id : undefined}
-			aria-label={`Transfers: ${spokenState(summary)}`}
+			aria-label={`Transfers: ${spokenState(summary, remainingSeconds)}`}
 			onClick={panel.toggle}
 		>
 			{active > 0 ? (
@@ -39,7 +43,10 @@ export function TransfersPill({
 			<span aria-hidden="true">
 				<CountText summary={summary} />
 				{active > 0 ? (
-					<span className="state"> · {stateText(summary)}</span>
+					<span className="state">
+						{" "}
+						· {stateText(summary, remainingSeconds)}
+					</span>
 				) : null}
 			</span>
 		</button>
@@ -62,7 +69,14 @@ function CountText({ summary }: { summary: TransfersSummary }) {
 	return <>No transfers</>;
 }
 
-function stateText({ now }: TransfersSummary): string {
+/**
+ * What the pill says after the count: the wallet step first, since it
+ * waits for the user; then the upload time left across the active items.
+ */
+function stateText(
+	{ now }: TransfersSummary,
+	remainingSeconds: number | null,
+): string {
 	switch (now.kind) {
 		case "idle":
 			return "idle";
@@ -73,20 +87,27 @@ function stateText({ now }: TransfersSummary): string {
 		case "retrying":
 			return "retrying";
 		case "uploading":
-			return now.secondsLeft === null ? "starting" : `${now.secondsLeft} s`;
+			return remainingSeconds === null
+				? "starting"
+				: formatDuration(remainingSeconds);
 		case "working":
-			return "working";
+			return remainingSeconds !== null && remainingSeconds > 0
+				? formatDuration(remainingSeconds)
+				: "working";
 	}
 }
 
-function spokenState(summary: TransfersSummary): string {
+function spokenState(
+	summary: TransfersSummary,
+	remainingSeconds: number | null,
+): string {
 	const { active, failed, now } = summary;
 	if (active === 0)
 		return failed > 0
 			? `${failed} stopped, open to retry or finish`
 			: "none in progress";
 	const count = active === 1 ? "1 in progress" : `${active} in progress`;
-	if (now.kind === "uploading" && now.secondsLeft !== null)
-		return `${count}, about ${now.secondsLeft} seconds left on the current upload`;
-	return `${count}, ${stateText(summary)}`;
+	if (now.kind === "uploading" && remainingSeconds !== null)
+		return `${count}, about ${formatDuration(remainingSeconds)} of uploading left`;
+	return `${count}, ${stateText(summary, remainingSeconds)}`;
 }
