@@ -110,6 +110,7 @@ export interface ChainBlob {
 	blobId: string;
 	size: bigint;
 	certifiedEpoch: number | null;
+	startEpoch: number;
 	endEpoch: number;
 	deletable: boolean;
 	attributes: Record<string, string>;
@@ -120,7 +121,7 @@ interface BlobJson {
 	size: string;
 	certified_epoch: number | null;
 	deletable: boolean;
-	storage: { end_epoch: number };
+	storage: { start_epoch: number; end_epoch: number };
 }
 
 /** u256 little-endian to URL-safe base64 without padding (PROTOCOL-NOTES section 7). */
@@ -190,6 +191,7 @@ export async function ownedBlobs(
 				blobId: blobIdFromDecimal(json.blob_id),
 				size: BigInt(json.size),
 				certifiedEpoch: json.certified_epoch,
+				startEpoch: json.storage.start_epoch,
 				endEpoch: json.storage.end_epoch,
 				deletable: json.deletable,
 				attributes: Object.fromEntries(
