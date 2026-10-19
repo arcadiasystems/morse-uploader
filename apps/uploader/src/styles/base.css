@@ -13,26 +13,34 @@
 	--fg-2: #c9cbd2;
 	--fg-3: #8a8d97;
 	--fg-4: #5c5f69;
-	/* Status: cyan certified, violet encrypted or in progress, amber expiring,
-	   red failed or expired, green verified. */
-	--cyan: #7df3e8;
-	--violet: #b388ff;
-	--pink: #f6a8e6;
-	--warn: #f0c66a;
-	--ok: #7df3a3;
-	--err: #ff8a8a;
-	--cyan-line: rgba(125, 243, 232, 0.3);
-	--cyan-tint: rgba(125, 243, 232, 0.08);
-	--violet-line: rgba(179, 136, 255, 0.4);
-	--violet-tint: rgba(179, 136, 255, 0.08);
-	--warn-line: rgba(240, 198, 106, 0.35);
-	--warn-tint: rgba(240, 198, 106, 0.07);
-	--ok-line: rgba(125, 243, 163, 0.3);
-	--ok-tint: rgba(125, 243, 163, 0.06);
-	--err-line: rgba(255, 138, 138, 0.35);
-	--err-tint: rgba(255, 138, 138, 0.07);
-	/* The violet-to-cyan refraction, only for the primary action and progress. */
-	--grad: linear-gradient(90deg, #b388ff, #7df3e8 60%, #f6a8e6);
+	/* The accent: Morse ultramarine and its lift on dark, and nothing else.
+	   Ultramarine fills the primary action and the active rail item, with
+	   white on it; on the field it is too dark for text or icons. The lift
+	   carries links, selected states, progress and the storage bar. */
+	--accent: #2b3be0;
+	--on-accent: #fff;
+	--accent-lift: #7d8bff;
+	/* The lift as hairlines: tags, a setting that is on, a focused field.
+	   The middle one also fills a step that is under way; the strongest
+	   dashes a drop field. */
+	--accent-line: rgba(125, 139, 255, 0.3);
+	--accent-line-2: rgba(125, 139, 255, 0.4);
+	--accent-line-3: rgba(125, 139, 255, 0.7);
+	/* Ultramarine washes: behind selected rows, chips and the busy pill, and
+	   the lighter one behind a drop field. */
+	--accent-tint: rgba(43, 59, 224, 0.12);
+	--accent-wash: rgba(43, 59, 224, 0.08);
+	/* Status, functional and muted: green verified or certified, amber
+	   expiring within 30 days, red failed or expired. */
+	--ok: #6fd3a6;
+	--warn: #e0b55a;
+	--err: #f08a8a;
+	--ok-line: rgba(111, 211, 166, 0.3);
+	--ok-tint: rgba(111, 211, 166, 0.06);
+	--warn-line: rgba(224, 181, 90, 0.35);
+	--warn-tint: rgba(224, 181, 90, 0.07);
+	--err-line: rgba(240, 138, 138, 0.35);
+	--err-tint: rgba(240, 138, 138, 0.07);
 	/* Floating surfaces: the inspector, sheets, popovers and slide-overs. */
 	--glass: rgba(12, 13, 18, 0.7);
 	--glass-strong: rgba(12, 13, 18, 0.94);
@@ -115,7 +123,7 @@ svg {
 	font-size: 11px;
 	letter-spacing: 0.16em;
 	text-transform: uppercase;
-	color: var(--cyan);
+	color: var(--accent-lift);
 }
 .eyebrow::before {
 	content: "//\00a0" / "";
@@ -123,7 +131,7 @@ svg {
 
 /* Keyboard focus is always visible; pointer clicks do not draw the ring. */
 :focus-visible {
-	outline: 2px solid var(--cyan);
+	outline: 2px solid var(--accent-lift);
 	outline-offset: 2px;
 }
 .sr-only {
@@ -138,7 +146,8 @@ svg {
 	border: 0;
 }
 
-/* Background glows behind the glass, as the design places them. */
+/* Background glows behind the glass, as the design places them: ultramarine
+   at the top left, a deeper ultramarine at the bottom right. */
 .glow {
 	position: fixed;
 	border-radius: 50%;
@@ -147,19 +156,19 @@ svg {
 	pointer-events: none;
 	z-index: 0;
 }
-.glow.violet {
+.glow.accent {
 	width: 640px;
 	height: 480px;
 	left: -200px;
 	top: -120px;
-	background: #5b3fd8;
+	background: var(--accent);
 }
-.glow.teal {
+.glow.deep {
 	width: 560px;
 	height: 480px;
 	right: -160px;
 	bottom: -200px;
-	background: #1ba79b;
+	background: #1b2480;
 }
 
 /* ---------- Buttons: outline by default, as the design's `.btn` ---------- */
@@ -191,10 +200,10 @@ svg {
 	color: var(--bg);
 	border-color: var(--fg);
 }
-/* The gradient: the one primary action of a surface. */
+/* Solid ultramarine: the one primary action of a surface. */
 .btn.primary {
-	background: var(--grad);
-	color: var(--bg);
+	background: var(--accent);
+	color: var(--on-accent);
 	border-color: transparent;
 	font-weight: 600;
 }
@@ -256,13 +265,10 @@ svg {
 	color: var(--ok);
 	border-color: var(--ok-line);
 }
-.tag.cyan {
-	color: var(--cyan);
-	border-color: var(--cyan-line);
-}
-.tag.violet {
-	color: var(--violet);
-	border-color: var(--violet-line);
+/* Encrypted, in progress, or a fact that is neither good nor bad news. */
+.tag.lift {
+	color: var(--accent-lift);
+	border-color: var(--accent-line);
 }
 .tag.amber {
 	color: var(--warn);
@@ -309,7 +315,7 @@ kbd {
 	}
 }
 
-/* ---------- The Trace mark ---------- */
+/* ---------- The Trace mark, alone or in the stacked lockup ---------- */
 .brand {
 	display: inline-flex;
 	align-items: center;
@@ -323,11 +329,19 @@ kbd {
 	width: 26px;
 	height: 26px;
 }
+/* The lockup: the Trace at 34px beside "morse" over "uploader". */
+.brand.lockup svg {
+	width: 34px;
+	height: 34px;
+}
 .brand .wm {
-	font-size: 19px;
-	letter-spacing: -0.02em;
+	display: flex;
+	flex-direction: column;
+	font-size: 17px;
+	line-height: 0.9;
+	letter-spacing: -0.035em;
 }
 .brand .wm em {
 	font-style: normal;
-	color: var(--cyan);
+	color: var(--accent-lift);
 }

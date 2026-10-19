@@ -7,9 +7,9 @@
 	left: calc(var(--rail) + 14px);
 	right: 14px;
 	bottom: 14px;
-	border: 1.5px dashed rgba(125, 243, 232, 0.6);
+	border: 1.5px dashed var(--accent-line-3);
 	border-radius: 18px;
-	background: rgba(125, 243, 232, 0.05);
+	background: var(--accent-wash);
 	backdrop-filter: blur(2px);
 	display: grid;
 	place-items: center;
@@ -178,8 +178,8 @@ body:has(aside.insp) .tray {
 	place-items: center;
 	color: var(--fg-3);
 }
-.tray .it .ic.violet {
-	color: var(--violet);
+.tray .it .ic.lift {
+	color: var(--accent-lift);
 }
 .tray .it .ic.warn {
 	color: var(--warn);
@@ -348,8 +348,8 @@ body:has(aside.insp) .tray {
 	border-color: var(--line-2);
 }
 .tray .set.on {
-	border-color: var(--cyan-line);
-	background: var(--cyan-tint);
+	border-color: var(--accent-line);
+	background: var(--accent-tint);
 }
 .tray .set small {
 	font-family: var(--mono);
@@ -375,7 +375,7 @@ body:has(aside.insp) .tray {
 .tray .set em {
 	flex: none;
 	font-style: normal;
-	color: var(--cyan);
+	color: var(--accent-lift);
 	font-family: var(--mono);
 	font-size: 10px;
 	letter-spacing: 0.1em;

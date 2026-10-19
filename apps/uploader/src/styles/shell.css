@@ -35,14 +35,17 @@
 	cursor: pointer;
 	flex: 0 0 auto;
 }
-.rail .ri:not([disabled]):hover {
+.rail .ri:not([disabled], .on):hover {
 	background: var(--panel);
 	color: var(--fg);
 }
+/* The current view, and a rail item whose panel or menu is open, sit on a
+   lighter panel with a lift icon, as in design/v2/recolour-overview.png.
+   Solid ultramarine would compete with the avatar and the Upload button. */
 .rail .ri.on,
 .rail .ri[aria-expanded="true"] {
 	background: var(--panel-2);
-	color: var(--cyan);
+	color: var(--accent-lift);
 }
 .rail .ri .b {
 	position: absolute;
@@ -51,8 +54,8 @@
 	width: 7px;
 	height: 7px;
 	border-radius: 50%;
-	background: var(--violet);
-	box-shadow: 0 0 8px var(--violet);
+	background: var(--accent-lift);
+	box-shadow: 0 0 8px var(--accent-lift);
 }
 /* A planned feature: dimmed, not clickable, and marked as coming. */
 .rail .ri.soon {
@@ -84,8 +87,8 @@
 	width: 22px;
 	height: 22px;
 	border-radius: 7px;
-	background: var(--grad);
-	color: var(--bg);
+	background: var(--accent);
+	color: var(--on-accent);
 	display: grid;
 	place-items: center;
 	font-family: var(--disp);
@@ -235,8 +238,8 @@ button.net:hover {
 	width: 7px;
 	height: 7px;
 	border-radius: 50%;
-	background: var(--cyan);
-	box-shadow: 0 0 10px var(--cyan);
+	background: var(--accent-lift);
+	box-shadow: 0 0 10px var(--accent-lift);
 	flex: 0 0 auto;
 }
 .net b {
@@ -276,8 +279,8 @@ button.net:hover {
 	cursor: pointer;
 }
 .tpill.busy {
-	border-color: var(--violet-line);
-	background: var(--violet-tint);
+	border-color: var(--accent-line-2);
+	background: var(--accent-tint);
 	color: var(--fg);
 }
 .tpill.failed {
@@ -326,7 +329,7 @@ button.net:hover {
 	border-radius: 12px;
 	border: 1px solid var(--line);
 	background: var(--panel);
-	color: var(--cyan);
+	color: var(--accent-lift);
 	display: grid;
 	place-items: center;
 	margin-bottom: 4px;

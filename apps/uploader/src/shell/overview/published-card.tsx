@@ -85,7 +85,7 @@ export function PublishedCard({
 								</span>
 								<span
 									className={
-										publication.role === "owner" ? "tag cyan" : "tag green"
+										publication.role === "owner" ? "tag lift" : "tag green"
 									}
 								>
 									{publication.role}

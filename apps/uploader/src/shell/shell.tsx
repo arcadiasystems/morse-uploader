@@ -279,8 +279,8 @@ export function Shell() {
 
 	return (
 		<>
-			<div className="glow violet" aria-hidden="true" />
-			<div className="glow teal" aria-hidden="true" />
+			<div className="glow accent" aria-hidden="true" />
+			<div className="glow deep" aria-hidden="true" />
 			<div className="app">
 				<Rail
 					route={route}

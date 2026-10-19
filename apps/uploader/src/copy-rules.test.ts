@@ -21,12 +21,12 @@ function sourceFiles(directory: string): string[] {
 	});
 }
 
-describe("copy rules", () => {
-	const files = sourceFiles(SOURCE_ROOT).map((path) => ({
-		path: relative(SOURCE_ROOT, path),
-		text: readFileSync(path, "utf8"),
-	}));
+const files = sourceFiles(SOURCE_ROOT).map((path) => ({
+	path: relative(SOURCE_ROOT, path),
+	text: readFileSync(path, "utf8"),
+}));
 
+describe("copy rules", () => {
 	it("finds the app's sources", () => {
 		expect(files.length).toBeGreaterThan(20);
 	});
@@ -241,6 +241,116 @@ describe("copy rules", () => {
 			files
 				.filter((file) => /(^|\/)(bulk|palette)\//.test(file.path))
 				.filter((file) => /\b1 year\b/i.test(file.text))
+				.map((file) => file.path),
+		).toEqual([]);
+	});
+});
+
+/**
+ * The palette rules from the handover of 2026-10-19: Morse ultramarine and
+ * its lift, and nothing else. The old violet, cyan and pink, their glows and
+ * the old status colours stay out, and so do gradient fills and gradient
+ * text; a gradient may only tint glass, with every colour translucent.
+ */
+const OLD_PALETTE: readonly (readonly [number, number, number])[] = [
+	[179, 136, 255], // violet
+	[125, 243, 232], // cyan
+	[246, 168, 230], // pink
+	[91, 63, 216], // the violet glow
+	[27, 167, 155], // the teal glow
+	[125, 243, 163], // the old green
+	[240, 198, 106], // the old amber
+	[255, 138, 138], // the old red
+];
+
+/** A colour as hex or as the start of rgb() or rgba(), in any case and spacing. */
+function colourPattern([red, green, blue]: readonly [
+	number,
+	number,
+	number,
+]): RegExp {
+	const hex = [red, green, blue]
+		.map((channel) => channel.toString(16).padStart(2, "0"))
+		.join("");
+	return new RegExp(
+		`#${hex}|rgba?\\(\\s*${red}\\s*,\\s*${green}\\s*,\\s*${blue}\\b`,
+		"i",
+	);
+}
+
+/**
+ * Each linear or radial gradient in `text`, with its arguments. Conic
+ * gradients draw pies with hard stops (the transfers ring), not blends.
+ */
+function gradients(text: string): string[] {
+	return [...text.matchAll(/(?:repeating-)?(?:linear|radial)-gradient\(/g)].map(
+		(match) => {
+			let depth = 1;
+			let end = match.index + match[0].length;
+			for (; depth > 0 && end < text.length; end++) {
+				if (text[end] === "(") depth++;
+				else if (text[end] === ")") depth--;
+			}
+			return text.slice(match.index, end);
+		},
+	);
+}
+
+const GRADIENT_COLOUR =
+	/rgba?\([^)]*\)|#[0-9a-f]{3,8}\b|var\(--[\w-]+\)|\btransparent\b/gi;
+
+function isTranslucent(colour: string): boolean {
+	return (
+		/^transparent$/i.test(colour) ||
+		/^rgba\([^)]*,\s*0?\.\d+\s*\)$/.test(colour)
+	);
+}
+
+describe("palette rules", () => {
+	it("holds the handover's accent and status colours in the tokens", () => {
+		const base = files.find((file) => file.path.endsWith("styles/base.css"));
+		for (const token of [
+			"--accent: #2b3be0;",
+			"--accent-lift: #7d8bff;",
+			"--ok: #6fd3a6;",
+			"--warn: #e0b55a;",
+			"--err: #f08a8a;",
+		])
+			expect(base?.text).toContain(token);
+	});
+
+	it("keeps every colour of the old palette out", () => {
+		const patterns = OLD_PALETTE.map(colourPattern);
+		expect(
+			files
+				.filter((file) => patterns.some((pattern) => pattern.test(file.text)))
+				.map((file) => file.path),
+		).toEqual([]);
+	});
+
+	it("names no token or class after the old palette", () => {
+		expect(
+			files
+				.filter((file) =>
+					/\b(cyan|violet|pink|teal)\b|--grad\b/i.test(file.text),
+				)
+				.map((file) => file.path),
+		).toEqual([]);
+	});
+
+	it("fills nothing with a gradient and sets no gradient text", () => {
+		const blends = files.flatMap((file) =>
+			gradients(file.text)
+				.filter((gradient) => {
+					const colours = gradient.match(GRADIENT_COLOUR) ?? [];
+					return new Set(colours).size > 1 && !colours.every(isTranslucent);
+				})
+				.map((gradient) => `${file.path}: ${gradient}`),
+		);
+		expect(blends).toEqual([]);
+		expect(
+			files
+				.filter((file) => /background-clip:\s*text/.test(file.text))
 				.map((file) => file.path),
 		).toEqual([]);
 	});

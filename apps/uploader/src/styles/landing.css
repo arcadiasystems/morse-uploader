@@ -16,11 +16,6 @@
 	gap: 28px;
 	padding: 24px 56px;
 }
-/* The design sets the wordmark's two words 10px apart. */
-.land .nav .brand .wm {
-	display: inline-flex;
-	gap: 10px;
-}
 .land .nav-link {
 	display: inline-flex;
 	align-items: center;
@@ -46,7 +41,7 @@
 	border-style: dashed;
 }
 .land .btn.coming .soon {
-	color: var(--cyan);
+	color: var(--accent-lift);
 }
 .land .narrow-only {
 	display: none;
@@ -73,10 +68,7 @@
 }
 .land .hero h1 em {
 	font-style: normal;
-	background: var(--grad);
-	-webkit-background-clip: text;
-	background-clip: text;
-	color: transparent;
+	color: var(--accent-lift);
 }
 .land .hero .lead {
 	color: var(--fg-2);
@@ -99,11 +91,12 @@
 	width: 150px;
 	height: 150px;
 	border-radius: 26px;
-	/* The design's glass: violet into cyan over the glow, lit from inside. */
+	/* The design's glass: ultramarine refracted into bone over the glow, lit
+	   from inside. */
 	background: linear-gradient(
 		135deg,
-		rgba(179, 136, 255, 0.26),
-		rgba(125, 243, 232, 0.12)
+		rgba(43, 59, 224, 0.38),
+		rgba(242, 239, 232, 0.08)
 	);
 	border: 1px solid rgba(255, 255, 255, 0.2);
 	box-shadow:
@@ -183,7 +176,7 @@
 .land .foot .sig {
 	font-family: var(--mono);
 	letter-spacing: 0.2em;
-	color: var(--cyan);
+	color: var(--accent-lift);
 }
 
 /* Links in running text: quietly underlined, brighter on hover. */
@@ -275,7 +268,7 @@
 	font-weight: 600;
 }
 .land .cmp td.ours {
-	color: var(--cyan);
+	color: var(--accent-lift);
 }
 .land .cmp tbody tr:last-child > * {
 	border-bottom: 0;

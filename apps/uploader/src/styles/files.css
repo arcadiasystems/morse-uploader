@@ -35,9 +35,9 @@
 	border-color: var(--line-2);
 }
 .filters .f.on {
-	border-color: var(--cyan);
+	border-color: var(--accent-lift);
 	color: var(--fg);
-	background: var(--cyan-tint);
+	background: var(--accent-tint);
 }
 .filters .f .n {
 	font-family: var(--mono);
@@ -63,8 +63,8 @@
 	font-size: 12.5px;
 }
 .ffield:focus-within {
-	border-color: var(--cyan-line);
-	outline: 2px solid var(--cyan);
+	border-color: var(--accent-line);
+	outline: 2px solid var(--accent-lift);
 	outline-offset: 2px;
 }
 .ffield input {
@@ -210,8 +210,8 @@
 	background: rgba(255, 255, 255, 0.03);
 }
 .tbl tbody .tr.sel {
-	background: rgba(125, 243, 232, 0.06);
-	box-shadow: inset 2px 0 0 var(--cyan);
+	background: var(--accent-tint);
+	box-shadow: inset 2px 0 0 var(--accent-lift);
 }
 .tr.exp {
 	opacity: 0.55;
@@ -244,18 +244,18 @@
 }
 /* Keyboard focus lands on the grid; the active row carries the ring. */
 .tbl:focus-visible {
-	outline: 2px solid var(--cyan);
+	outline: 2px solid var(--accent-lift);
 	outline-offset: 2px;
 }
 .tbl:focus-visible:has(tbody .sel) {
 	outline: none;
 }
 .tbl:focus-visible tbody .sel {
-	outline: 2px solid var(--cyan);
+	outline: 2px solid var(--accent-lift);
 	outline-offset: -2px;
 }
 
-/* The design's square checkbox: hairline, filled cyan when checked. */
+/* The design's square checkbox: hairline, filled with the lift when checked. */
 .cb {
 	appearance: none;
 	width: 14px;
@@ -268,16 +268,17 @@
 	display: block;
 }
 .cb:checked {
-	background: var(--cyan);
-	border-color: var(--cyan);
+	background: var(--accent-lift);
+	border-color: var(--accent-lift);
 }
 .cb:indeterminate {
 	background:
-		linear-gradient(var(--cyan), var(--cyan)) center / 8px 2px no-repeat;
-	border-color: var(--cyan);
+		linear-gradient(var(--accent-lift), var(--accent-lift)) center / 8px 2px
+		no-repeat;
+	border-color: var(--accent-lift);
 }
 .cb:focus-visible {
-	outline: 2px solid var(--cyan);
+	outline: 2px solid var(--accent-lift);
 	outline-offset: 2px;
 }
 
@@ -289,13 +290,12 @@
 	place-items: center;
 	color: var(--fg-3);
 }
+/* Quilts and encrypted blobs carry the lift; the glyph tells them apart. */
 .tr .ic.quilt,
-.fcardg .ic.quilt {
-	color: var(--violet);
-}
+.fcardg .ic.quilt,
 .tr .ic.enc,
 .fcardg .ic.enc {
-	color: var(--pink);
+	color: var(--accent-lift);
 }
 /* The disclosure triangle sits in the gap before the icon, so columns match the design. */
 .tr .tw {
@@ -349,7 +349,7 @@
 .life .bar i {
 	display: block;
 	height: 100%;
-	background: var(--cyan);
+	background: var(--accent-lift);
 }
 .life .bar.w i {
 	background: var(--warn);
@@ -357,8 +357,9 @@
 .life .bar.e i {
 	background: var(--err);
 }
-.life .bar.v i {
-	background: var(--violet);
+/* A blob still to finish: the lift, faded, as a step under way. */
+.life .bar.pending i {
+	background: var(--accent-line-2);
 }
 .tr .life small,
 .fcardg .life small {
@@ -455,8 +456,8 @@
 	border-color: var(--line-2);
 }
 .fcardg.sel {
-	border-color: var(--cyan);
-	background: rgba(125, 243, 232, 0.06);
+	border-color: var(--accent-lift);
+	background: var(--accent-tint);
 }
 .fcardg.exp {
 	opacity: 0.55;

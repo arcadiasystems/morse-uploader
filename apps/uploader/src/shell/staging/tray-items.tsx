@@ -51,7 +51,7 @@ function TrayItem({
 }: {
 	root: StagedRoot;
 	summary: { text: string; warn: boolean };
-	icon: { name: IconName; tone: "violet" | "dim" | "warn" };
+	icon: { name: IconName; tone: "lift" | "dim" | "warn" };
 	onRemove: () => void;
 }) {
 	const treeId = useId();
@@ -167,12 +167,12 @@ function iconOf(
 	root: StagedRoot,
 	folders: "quilt" | "per-file",
 	sealing: boolean,
-): { name: IconName; tone: "violet" | "dim" | "warn" } {
+): { name: IconName; tone: "lift" | "dim" | "warn" } {
 	if (!hasBytes(root)) return { name: "alert", tone: "warn" };
-	if (sealing) return { name: "lock", tone: "violet" };
+	if (sealing) return { name: "lock", tone: "lift" };
 	if (root.kind === "folder")
 		return folders === "quilt"
-			? { name: "quilt", tone: "violet" }
+			? { name: "quilt", tone: "lift" }
 			: { name: "folder", tone: "dim" };
 	return { name: fileIcon(root.name), tone: "dim" };
 }
