@@ -4,11 +4,12 @@ import "@/styles/shell.css";
 import "@/styles/menus.css";
 import "@/styles/overview.css";
 import "@/styles/files.css";
-import "@/styles/upload.css";
+import "@/styles/sheets.css";
 import "@/styles/transfers.css";
 import "@/styles/inspector.css";
 import "@/styles/bulk.css";
 import "@/styles/palette.css";
+import "@/styles/staging.css";
 
 export const metadata: Metadata = {
 	title: "Overview and files",

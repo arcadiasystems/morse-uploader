@@ -90,7 +90,7 @@ export function allFiles(library: LocalLibrary): LocalFile[] {
 }
 
 /** A path relative to its root folder: `site-export/assets/a.png` gives `assets/a.png`. */
-export function pathInFolder(file: LocalFile): string {
+export function pathInFolder(file: Pick<LocalFile, "path">): string {
 	const slash = file.path.indexOf("/");
 	return slash === -1 ? file.path : file.path.slice(slash + 1);
 }

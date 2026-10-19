@@ -1,7 +1,7 @@
 import { ulebLength } from "@/lib/uleb-length";
 
 /**
- * The size of a Seal ciphertext, so the upload sheet can price an encrypted
+ * The size of a Seal ciphertext, so the staging tray can price an encrypted
  * file before it is encrypted. It is the BCS `EncryptedObject` of
  * `@mysten/seal` 1.5.0 (`bcs.mjs`) with the defaults the app uses:
  * Boneh-Franklin BLS12-381 key encapsulation and AES-256-GCM with empty

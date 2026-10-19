@@ -12,7 +12,7 @@ export interface FilePickers {
 /**
  * The browser's file and folder pickers behind hidden inputs, for the
  * Upload button and the Overview's drop zone. What they return goes to the
- * upload sheet.
+ * staging tray.
  */
 export function useFilePickers(
 	onPicked: (picked: PickedFile[]) => void,

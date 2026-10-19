@@ -19,15 +19,16 @@ import { errorMessage } from "@/lib/error-message";
 import { formatBytes } from "@/lib/format-bytes";
 import { shortenAddress } from "@/lib/shorten-address";
 import type { ChainRead } from "@/lib/use-chain-read";
-import type { PickedFile } from "@/local/local-library";
-import { usePickedFiles } from "@/local/use-picked-files";
+import { type PickedFile, rootsFromPicked } from "@/local/local-library";
 import { useAutoExtend } from "@/manage/use-auto-extend";
 import type { Publications } from "@/morse/read-publications";
 import type { SharedFiles } from "@/morse/read-shared-files";
 import { useMorseReads } from "@/morse/use-morse-reads";
 import { NETWORKS, type NetworkConfig } from "@/network/networks";
+import { useStagingTray } from "@/staging/use-staging-tray";
 import { summarizeTransfers } from "@/transfers/summarize-transfers";
 import type { TransferBatch } from "@/transfers/transfer-job";
+import { transfersStrip } from "@/transfers/transfer-view";
 import { useTransferQueue } from "@/transfers/use-transfer-queue";
 import { useSession } from "@/wallet/use-session";
 import {
@@ -42,6 +43,9 @@ import { BulkExtendSheet, type ExtendScope } from "./bulk/bulk-extend-sheet";
 import { BulkPublishSheet } from "./bulk/bulk-publish-sheet";
 import { BulkShareSheet } from "./bulk/bulk-share-sheet";
 import { BulkVerifySheet } from "./bulk/bulk-verify-sheet";
+import { DropOverlay } from "./drop/drop-overlay";
+import { DropProblem } from "./drop/drop-problem";
+import { useWindowDrop } from "./drop/use-window-drop";
 import { useFilePickers } from "./file-pickers";
 import { type FilesJump, FilesView } from "./files/files-view";
 import type { FilesLayout } from "./files/filter-bar";
@@ -58,9 +62,9 @@ import { paletteCommands } from "./palette/palette-commands";
 import type { BlobMatch } from "./palette/palette-match";
 import { type GoTarget, useShortcuts } from "./palette/shortcuts";
 import { Rail } from "./rail/rail";
+import { StagingTrayPanel } from "./staging/staging-tray";
 import { Topbar } from "./topbar";
 import { TransfersPanel } from "./transfers/transfers-panel";
-import { UploadSheet } from "./upload-sheet/upload-sheet";
 import { usePopover } from "./use-popover";
 
 /**
@@ -78,20 +82,12 @@ export function Shell() {
 	const [route, navigate] = useAppRoute();
 	const profileMenu = usePopover();
 	const balanceMenu = usePopover();
-	const transfersPanel = usePopover();
+	// The slide-over stays open while the staging tray beside it is used.
+	const transfersPanel = usePopover({ keepOpenWithin: "[data-tray]" });
 	const [query, setQuery] = useState("");
 	const [sort, setSort] = useState<RowSort>(DEFAULT_SORT);
 	const [layout, setLayout] = useState<FilesLayout>("list");
-	const picked = usePickedFiles();
-	// Each opening is a new session, so the sheet reads prices again.
-	const [sheet, setSheet] = useState<{ session: number; open: boolean }>({
-		session: 0,
-		open: false,
-	});
-	const closeSheet = useCallback(
-		() => setSheet((current) => ({ ...current, open: false })),
-		[],
-	);
+	const tray = useStagingTray(network.id, address);
 
 	const refreshBlobs = blobs.refresh;
 	const refreshFunds = funds.refresh;
@@ -106,6 +102,7 @@ export function Shell() {
 	}, [refreshBlobs, refreshFunds, refreshActivity, refreshMorse]);
 	const transfers = useTransferQueue(network.id, address, refreshChain);
 	const transfersSummary = summarizeTransfers(transfers.state);
+	const transfersRemaining = transfersStrip(transfers.state).remainingSeconds;
 	const actions = useWalletActions(network.id);
 	// The bulk sheet open now: an action on the selection, or Extend everything expiring.
 	const [bulk, setBulk] = useState<
@@ -125,15 +122,33 @@ export function Shell() {
 		selected: Selection;
 	}>({ scope: selectionScope, selected: EMPTY_SELECTION });
 
-	function upload(files: PickedFile[]) {
-		picked.replace(files);
-		setSheet((current) => ({ session: current.session + 1, open: true }));
+	// Picks and drops land in the staging tray; nothing uploads until Sign and send.
+	function stage(files: PickedFile[]) {
+		// Staged files belong to a wallet: without one, the drop asks to connect.
+		if (address === null) profileMenu.open();
+		else tray.model.stage(rootsFromPicked(files, () => crypto.randomUUID()));
 	}
-	const pickers = useFilePickers(upload);
+	const pickers = useFilePickers(stage);
+	const [dropProblem, setDropProblem] = useState<string | null>(null);
+	const dragging = useWindowDrop({
+		onFiles: (files) => {
+			setDropProblem(null);
+			stage(files);
+		},
+		onProblem: setDropProblem,
+	});
 
-	function confirmUpload(batch: TransferBatch) {
+	/**
+	 * Queues a batch from Sign and send. The tray empties (keeping its
+	 * settings) and that is saved before anything is queued: a reload in
+	 * between brings back a tray that was not sent, never one that was, so
+	 * nothing can be sent twice. A save that fails is the tray's notice and
+	 * does not hold the upload back.
+	 */
+	async function send(batch: TransferBatch) {
+		tray.model.clear();
+		await tray.model.flush();
 		transfers.queue.enqueue(batch);
-		closeSheet();
 		transfersPanel.open();
 	}
 
@@ -284,6 +299,7 @@ export function Shell() {
 						onPalette={() => setPaletteOpen(true)}
 						paletteOpen={paletteOpen}
 						transfers={transfersSummary}
+						transfersRemaining={transfersRemaining}
 						transfersPanel={transfersPanel}
 						onUpload={pickers.openFiles}
 					/>
@@ -309,7 +325,6 @@ export function Shell() {
 								navigate({ view: "files", filter: "published" })
 							}
 							pickers={pickers}
-							onPicked={upload}
 						/>
 					) : (
 						<FilesView
@@ -346,19 +361,21 @@ export function Shell() {
 					)}
 				</div>
 			</div>
-			<TransfersPanel panel={transfersPanel} transfers={transfers} />
-			{sheet.open && address !== null ? (
-				<UploadSheet
+			{address !== null &&
+			tray.state.status === "ready" &&
+			tray.state.roots.length > 0 ? (
+				<StagingTrayPanel
+					key={tray.state.key}
 					network={network}
 					owner={normalizeSuiAddress(address)}
-					library={picked.library}
-					selected={picked.selected}
+					tray={tray}
 					balances={funds.balances}
-					session={sheet.session}
-					onClose={closeSheet}
-					onConfirm={confirmUpload}
+					besidePanel={transfersPanel.isOpen}
+					// `send` never rejects: flush reports a failed save as the tray's notice.
+					onSend={(batch) => void send(batch)}
 				/>
 			) : null}
+			<TransfersPanel panel={transfersPanel} transfers={transfers} />
 			{bulk !== null && listed !== null ? (
 				<BulkSheetFor
 					bulk={bulk}
@@ -418,6 +435,13 @@ export function Shell() {
 					network={network}
 					autoExtend={autoExtend}
 					onClose={() => setAutoExtendOpen(false)}
+				/>
+			) : null}
+			{dragging ? <DropOverlay connected={address !== null} /> : null}
+			{dropProblem !== null ? (
+				<DropProblem
+					message={dropProblem}
+					onDismiss={() => setDropProblem(null)}
 				/>
 			) : null}
 			{pickers.inputs}

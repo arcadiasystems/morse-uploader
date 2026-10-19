@@ -432,7 +432,8 @@ button.net:hover {
 	.top .cmd,
 	.net .rest,
 	.tpill.idle,
-	.tpill .word {
+	.tpill .word,
+	.tpill .state {
 		display: none;
 	}
 	.top .r {

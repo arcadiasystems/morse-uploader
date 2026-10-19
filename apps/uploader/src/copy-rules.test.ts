@@ -77,7 +77,6 @@ describe("copy rules", () => {
 			/extended this month/i, // chain keeps no extend history per blob
 			/via MCP/, // agents are not built
 			/Open Morse Press/, // no address to link to
-			/Drop anything, anywhere/, // R1 has one drop zone; drop anywhere is R3
 		];
 		expect(
 			files
@@ -95,15 +94,20 @@ describe("copy rules", () => {
 			"Folders keep their structure and upload as one quilt of up to 666 files.",
 		);
 		expect(drop).toContain("Up to 1 GiB per upload.");
-		const sheet = text("upload-sheet/upload-sheet.tsx");
-		// Items 2, 7, 8 and 14.
-		expect(sheet).toContain("Each blob carries 64 MB of fixed metadata.");
-		expect(sheet).toContain("Relay tip (SUI)");
-		expect(sheet).toContain("Network fees (SUI)");
-		expect(sheet).toContain(
+		// R3 makes the design's headline true: drops land anywhere and stage first.
+		expect(drop).toContain("Drop anything, anywhere");
+		expect(drop).toContain("They stage first; nothing is sent until you sign.");
+		// Items 2 and 7: the staging tray's itemised cost.
+		const cost = text("staging/cost-list.tsx");
+		expect(cost).toContain("Each blob carries 64 MB of fixed metadata.");
+		expect(cost).toContain("Relay tip (SUI)");
+		expect(cost).toContain("Network fees (SUI)");
+		// Item 8: how the signatures come, under Sign and send.
+		expect(text("staging/sign-help.ts")).toContain(
 			"Your wallet asks once per item to register and once to certify the batch",
 		);
-		expect(sheet).toContain(
+		// Item 14: what Seal keeps private, and what stays public.
+		expect(text("staging/tray-settings.tsx")).toContain(
 			"Client-side. Only wallets you allow can decrypt. The blob id, file name and size stay public.",
 		);
 	});
@@ -170,6 +174,46 @@ describe("copy rules", () => {
 			'"certify"',
 			'"record"',
 		]);
+	});
+
+	it("words drop anywhere, the tray and the transfers slide-over by the notes (items 4, 8, 9 and 10)", () => {
+		const text = (suffix: string) =>
+			(files.find((file) => file.path.endsWith(suffix))?.text ?? "").replace(
+				/\s+/g,
+				" ",
+			);
+		// The drop state as the design words it: drops stage, nothing uploads.
+		const overlay = text("drop/drop-overlay.tsx");
+		expect(overlay).toContain("Drop to stage");
+		expect(overlay).toContain(
+			"Folders keep their paths and become quilts. Nothing uploads until you sign.",
+		);
+		// One button with the real signature count, and prices from chain.
+		const tray = text("staging/staging-tray.tsx");
+		// The label is a template: "Sign and send · " then the computed count.
+		expect(tray).toContain("`Sign and send · $");
+		expect(tray).toContain("Price read from the Walrus system object");
+		// Item 4: Testnet offers what fits in 53 one-day epochs, Max included.
+		const periods = text("upload/periods.ts");
+		expect(periods).toContain('{ id: "7d", label: "7 days", days: 7 }');
+		expect(periods).toContain('{ id: "max", label: "Max", days: null }');
+		// Item 9: five segments, the register step between encode and upload.
+		expect(text("transfers/transfer-view.ts")).toContain(
+			'"encode", "register", "upload", "certify", "record", ] as const',
+		);
+		// Item 10: the relay times out, not a publisher.
+		expect(text("transfers/transfer-queue.ts")).toContain(
+			"The upload relay timed out.",
+		);
+		// Items 6 and 8: no year on Testnet, no single-signature batching.
+		expect(
+			files
+				.filter((file) => /(^|\/)(staging|drop|transfers)\//.test(file.path))
+				.filter((file) =>
+					/\bsign once\b|one signature for (all|everything)/i.test(file.text),
+				)
+				.map((file) => file.path),
+		).toEqual([]);
 	});
 
 	it("words the bulk bar and the palette by the notes (items 6, 11, 12 and 16)", () => {

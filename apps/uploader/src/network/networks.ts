@@ -19,7 +19,7 @@ export type WalCoinTypeSource =
 	| { kind: "chain" };
 
 /**
- * Whether the upload sheet can Seal-encrypt on a network. Encryption needs
+ * Whether the staging tray can Seal-encrypt on a network. Encryption needs
  * key servers that will later serve decryption keys to the browser without
  * a credential (PROTOCOL-NOTES section 11).
  */

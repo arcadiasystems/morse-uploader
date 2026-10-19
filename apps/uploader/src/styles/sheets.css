@@ -1,4 +1,6 @@
-/* The upload sheet and the Extend all sheet: modal glass over the dimmed field. */
+/* Modal sheets (bulk actions, auto-extend) as glass over the dimmed field,
+   and the controls they share with the staging tray: options, switches,
+   periods and the cost list. */
 .scrim {
 	position: fixed;
 	inset: 0;
@@ -90,45 +92,12 @@
 	word-break: break-all;
 }
 
-.tree {
-	list-style: none;
-	margin: 0;
-	font-family: var(--mono);
-	font-size: 12px;
-	line-height: 1.7;
-	color: var(--fg-2);
-	border: 1px solid var(--line);
-	border-radius: 10px;
-	padding: 10px 12px;
-	background: var(--bg-2);
-	max-height: 150px;
-	overflow: auto;
-	overflow-wrap: anywhere;
-}
-.tree ul {
-	list-style: none;
-	margin: 0;
-	padding-left: 12px;
-}
-.tree b {
-	color: var(--fg);
-	font-weight: 500;
-}
-.tree .to {
-	color: var(--cyan);
-	font-size: 11px;
-	margin-left: 6px;
-}
-/* Placeholders while prices are read. */
-.tree.skel,
+/* A placeholder while prices are read. */
 .cost.skel {
-	min-height: 96px;
+	min-height: 150px;
 	border: 1px solid var(--line);
 	border-radius: 10px;
 	background: var(--panel);
-}
-.cost.skel {
-	min-height: 150px;
 }
 
 .opts {
@@ -373,8 +342,7 @@
 	text-align: right;
 	white-space: nowrap;
 }
-.cost sub,
-.after sub {
+.cost sub {
 	font-size: 0.75em;
 	line-height: 0;
 	vertical-align: -0.25em;

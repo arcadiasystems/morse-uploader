@@ -12,7 +12,6 @@ import { errorMessage } from "@/lib/error-message";
 import { formatBytes } from "@/lib/format-bytes";
 import { formatDays, formatShortDate } from "@/lib/format-date";
 import type { ChainRead } from "@/lib/use-chain-read";
-import type { PickedFile } from "@/local/local-library";
 import { planBulkExtend } from "@/manage/bulk-extend";
 import type { MorseReads } from "@/morse/use-morse-reads";
 import type { NetworkConfig } from "@/network/networks";
@@ -39,7 +38,6 @@ interface OverviewProps {
 	onRetryActivity: () => void;
 	onShowPublished: () => void;
 	pickers: FilePickers;
-	onPicked: (files: PickedFile[]) => void;
 }
 
 /**
@@ -118,7 +116,7 @@ export function Overview(props: OverviewProps) {
 						onTopUp={props.onTopUp}
 					/>
 					<ExpiryTimelineCard network={network} listed={listed} />
-					<DropCard pickers={props.pickers} onPicked={props.onPicked} />
+					<DropCard pickers={props.pickers} />
 					<ActivityCard
 						network={network}
 						activity={props.activity}
