@@ -312,11 +312,11 @@ export function StorageLeft({ row }: { row: BlobRow }) {
 	);
 }
 
-/** Red under a week left, amber under 30 days, violet for a blob still to finish. */
+/** Red under a week left, amber under 30 days, a faded lift for a blob still to finish. */
 function lifeTone(row: BlobRow): string {
 	const { kind, daysLeft } = row.status;
 	if (kind === "expired") return "e";
-	if (kind === "registered") return "v";
+	if (kind === "registered") return "pending";
 	if (daysLeft < 7) return "e";
 	return kind === "expiring" ? "w" : "";
 }

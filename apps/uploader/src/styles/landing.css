@@ -46,7 +46,7 @@
 	border-style: dashed;
 }
 .land .btn.coming .soon {
-	color: var(--cyan);
+	color: var(--accent-lift);
 }
 .land .narrow-only {
 	display: none;
@@ -73,10 +73,7 @@
 }
 .land .hero h1 em {
 	font-style: normal;
-	background: var(--grad);
-	-webkit-background-clip: text;
-	background-clip: text;
-	color: transparent;
+	color: var(--accent-lift);
 }
 .land .hero .lead {
 	color: var(--fg-2);
@@ -183,7 +180,7 @@
 .land .foot .sig {
 	font-family: var(--mono);
 	letter-spacing: 0.2em;
-	color: var(--cyan);
+	color: var(--accent-lift);
 }
 
 /* Links in running text: quietly underlined, brighter on hover. */
@@ -275,7 +272,7 @@
 	font-weight: 600;
 }
 .land .cmp td.ours {
-	color: var(--cyan);
+	color: var(--accent-lift);
 }
 .land .cmp tbody tr:last-child > * {
 	border-bottom: 0;

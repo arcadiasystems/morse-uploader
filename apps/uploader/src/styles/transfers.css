@@ -195,11 +195,12 @@
 	background: rgba(255, 255, 255, 0.1);
 	overflow: hidden;
 }
+/* Done steps carry the lift; the step under way carries it faded, and pulses. */
 .tx .steps > span.done {
-	background: var(--cyan);
+	background: var(--accent-lift);
 }
 .tx .steps > span.now {
-	background: linear-gradient(90deg, var(--violet), rgba(255, 255, 255, 0.1));
+	background: var(--accent-line-2);
 }
 /* A running upload fills its segment as the bytes go. */
 .tx .steps > span.now:has(i) {
@@ -208,7 +209,7 @@
 .tx .steps > span i {
 	display: block;
 	height: 100%;
-	background: var(--violet);
+	background: var(--accent-lift);
 }
 .tx .steps > span.failed,
 .tx .steps > span.retrying {
@@ -263,7 +264,7 @@
 	margin-left: auto;
 }
 .tx .l3 .a {
-	color: var(--cyan);
+	color: var(--accent-lift);
 }
 .tx .l3 button.a {
 	border: 0;

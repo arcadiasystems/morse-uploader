@@ -32,11 +32,9 @@
 	color: var(--fg-3);
 	flex: 0 0 auto;
 }
-.insp .hd .ic.quilt {
-	color: var(--violet);
-}
+.insp .hd .ic.quilt,
 .insp .hd .ic.enc {
-	color: var(--pink);
+	color: var(--accent-lift);
 }
 .insp .hd > div {
 	min-width: 0;
@@ -110,14 +108,14 @@
 	overflow-wrap: anywhere;
 }
 .insp dd a {
-	color: var(--cyan);
+	color: var(--accent-lift);
 	text-decoration: underline;
 	text-underline-offset: 2px;
 }
 :is(.insp, .bulk-sheet) .cp {
 	font-family: var(--mono);
 	font-size: 11px;
-	color: var(--cyan);
+	color: var(--accent-lift);
 	margin-left: 6px;
 	cursor: pointer;
 	border: 0;
@@ -192,7 +190,7 @@
 .insp .lifebig .bar i {
 	display: block;
 	height: 100%;
-	background: var(--grad);
+	background: var(--accent-lift);
 }
 .insp .lifebig .bar.warn i {
 	background: var(--warn);
@@ -326,7 +324,7 @@
 	padding: 8px 10px;
 }
 :is(.insp, .bulk-sheet) .note a {
-	color: var(--cyan);
+	color: var(--accent-lift);
 	text-decoration: underline;
 	text-underline-offset: 2px;
 }
@@ -395,7 +393,7 @@
 }
 .insp .lock svg {
 	flex: 0 0 auto;
-	color: var(--pink);
+	color: var(--accent-lift);
 	margin-top: 1px;
 }
 .insp input[type="file"] {
@@ -413,8 +411,8 @@
 }
 /* A pill whose setting is on, such as Auto-extend. */
 .insp .btn.on {
-	border-color: var(--cyan-line);
-	color: var(--cyan);
+	border-color: var(--accent-line);
+	color: var(--accent-lift);
 }
 
 /* A quilt's files by path: the identifier, then its address in mono. */
@@ -451,7 +449,7 @@
 	overflow-wrap: anywhere;
 }
 .insp .files a:hover {
-	color: var(--cyan);
+	color: var(--accent-lift);
 	text-decoration: underline;
 	text-underline-offset: 2px;
 }

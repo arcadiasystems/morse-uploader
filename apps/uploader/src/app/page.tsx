@@ -18,8 +18,8 @@ export const metadata: Metadata = {
 export default function HomePage() {
 	return (
 		<>
-			<div className="glow violet" aria-hidden="true" />
-			<div className="glow teal" aria-hidden="true" />
+			<div className="glow accent" aria-hidden="true" />
+			<div className="glow deep" aria-hidden="true" />
 			<div className="land">
 				<TraceTile side="left" />
 				<TraceTile side="right" />

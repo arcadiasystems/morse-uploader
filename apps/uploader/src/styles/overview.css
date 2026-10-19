@@ -48,7 +48,7 @@
 	font-size: 12px;
 	font-weight: 500;
 	letter-spacing: 0.1em;
-	color: var(--cyan);
+	color: var(--accent-lift);
 	margin-left: 6px;
 }
 .card p {
@@ -72,11 +72,12 @@
 .card .sp {
 	flex: 1;
 }
+/* The design's glass card: ultramarine fading into the lift, both translucent. */
 .card.glass {
 	background: linear-gradient(
 		135deg,
-		rgba(179, 136, 255, 0.14),
-		rgba(125, 243, 232, 0.06)
+		rgba(43, 59, 224, 0.22),
+		rgba(125, 139, 255, 0.06)
 	);
 	border-color: rgba(255, 255, 255, 0.14);
 }
@@ -123,8 +124,8 @@
 	justify-content: center;
 }
 .dz.on {
-	border-color: rgba(125, 243, 232, 0.6);
-	background: rgba(125, 243, 232, 0.05);
+	border-color: var(--accent-line-3);
+	background: var(--accent-wash);
 }
 
 /* ---------- Activity and publications ---------- */

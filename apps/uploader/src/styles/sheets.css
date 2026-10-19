@@ -119,8 +119,8 @@
 	background: var(--panel);
 }
 .opt.on {
-	border-color: var(--cyan);
-	background: var(--cyan-tint);
+	border-color: var(--accent-lift);
+	background: var(--accent-tint);
 }
 .opt input {
 	position: absolute;
@@ -128,7 +128,7 @@
 	pointer-events: none;
 }
 .opt:has(input:focus-visible) {
-	outline: 2px solid var(--cyan);
+	outline: 2px solid var(--accent-lift);
 	outline-offset: 2px;
 }
 .opt i {
@@ -139,7 +139,7 @@
 	margin-top: 1px;
 }
 .opt.on i {
-	border: 6px solid var(--cyan);
+	border: 6px solid var(--accent-lift);
 }
 .opts:disabled .opt {
 	cursor: not-allowed;
@@ -222,14 +222,14 @@
 	background: var(--fg);
 }
 .toggle .sw.on {
-	background: var(--cyan);
+	background: var(--accent-lift);
 }
 .toggle .sw.on::after {
 	left: 19px;
 	background: var(--bg);
 }
 .toggle .sw-input:focus-visible + .sw {
-	outline: 2px solid var(--cyan);
+	outline: 2px solid var(--accent-lift);
 	outline-offset: 2px;
 }
 .toggle .sw-input:disabled + .sw {
@@ -273,9 +273,9 @@
 	min-height: 40px;
 }
 .keep label.on {
-	background: var(--cyan-tint);
+	background: var(--accent-tint);
 	color: var(--fg);
-	border-color: var(--cyan);
+	border-color: var(--accent-lift);
 }
 /* Periods beyond 53 epochs stay visible, struck through, with the reason below. */
 .keep label.off {
@@ -290,7 +290,7 @@
 	pointer-events: none;
 }
 .keep label:has(input:focus-visible) {
-	outline: 2px solid var(--cyan);
+	outline: 2px solid var(--accent-lift);
 	outline-offset: 2px;
 }
 .keep-group .note {
@@ -360,7 +360,7 @@
 .cost .tot dd {
 	margin-left: auto;
 	font-size: 14px;
-	color: var(--cyan);
+	color: var(--accent-lift);
 	white-space: normal;
 }
 .cost .warn-text {

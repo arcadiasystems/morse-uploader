@@ -141,7 +141,7 @@
 	font-weight: 500;
 }
 .prow .tick {
-	color: var(--cyan);
+	color: var(--accent-lift);
 	flex: 0 0 auto;
 }
 .prow .rm {
@@ -162,7 +162,7 @@
 }
 .pop .add {
 	align-self: flex-start;
-	color: var(--cyan);
+	color: var(--accent-lift);
 	padding: 0 6px;
 }
 .addp {
@@ -231,12 +231,12 @@
 	cursor: not-allowed;
 }
 .seg label.on {
-	background: var(--cyan-tint);
+	background: var(--accent-tint);
 	color: var(--fg);
-	border-color: var(--cyan);
+	border-color: var(--accent-lift);
 }
 .seg label:has(input:focus-visible) {
-	outline: 2px solid var(--cyan);
+	outline: 2px solid var(--accent-lift);
 	outline-offset: 2px;
 }
 .seg:disabled label {
@@ -277,7 +277,7 @@
 	font-size: 10.5px;
 	letter-spacing: 0.12em;
 	text-transform: uppercase;
-	color: var(--cyan);
+	color: var(--accent-lift);
 }
 .wbtn:not([disabled]):hover {
 	border-color: var(--line-3);
