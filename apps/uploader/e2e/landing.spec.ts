@@ -15,7 +15,7 @@ async function horizontalOverflow(
 }
 
 test.describe("landing page", () => {
-	test("renders the hero, the app shot, four features and the Console comparison", async ({
+	test("renders the hero, the app shot, four features and the two ways into Walrus", async ({
 		page,
 	}) => {
 		await page.setViewportSize(DESKTOP);
@@ -37,41 +37,37 @@ test.describe("landing page", () => {
 			)
 			.toBeGreaterThan(0);
 
-		await expect(page.getByRole("heading", { level: 3 })).toHaveText([
+		await expect(
+			page
+				.getByRole("region", { name: "What Morse Uploader does" })
+				.getByRole("heading", { level: 3 }),
+		).toHaveText([
 			"Nothing uploads by surprise",
 			"Every blob shows its time left",
 			"Folders stay folders",
 			"Verify, share, publish",
 		]);
 
-		await expect(
-			page.getByRole("heading", {
-				level: 2,
-				name: "Console is a hosted drive. Uploader is a client.",
-			}),
-		).toBeVisible();
-		const table = page.getByRole("table", {
-			name: "Walrus Console and Morse Uploader compared",
+		const ways = page.getByRole("region", {
+			name: "Walrus Console and Morse Uploader",
 		});
-		await expect(table.getByRole("columnheader")).toHaveText([
-			"Walrus Console",
-			"Morse Uploader",
-		]);
-		await expect(table.getByRole("rowheader")).toHaveText([
-			"Login",
-			"Keys and payment",
-			"Limits",
-			"Folders",
-			"Expiry",
-			"Verification",
-			"Existing blobs",
+		await expect(ways.getByRole("heading", { level: 3 })).toHaveText([
+			"A hosted drive on Walrus",
+			"A client for your wallet",
 		]);
 		await expect(
-			page.getByRole("link", { name: "storage epochs" }),
+			ways.getByRole("link", { name: "Read about Walrus Console" }),
+		).toHaveAttribute("href", "https://docs.wal.app/docs/console/overview");
+		await expect(
+			ways.getByRole("link", { name: "Open Morse Uploader" }),
+		).toHaveAttribute("href", "/app");
+		await expect(
+			ways.getByRole("link", { name: "storage epochs" }),
 		).toHaveAttribute(
 			"href",
 			"https://docs.wal.app/docs/console/storage-epochs",
 		);
+		await expect(page.getByRole("table")).toHaveCount(0);
 	});
 
 	test("the calls to action point to the app, the docs and the repository", async ({
@@ -88,9 +84,11 @@ test.describe("landing page", () => {
 			REPOSITORY_URL,
 		);
 		const main = page.getByRole("main");
-		await expect(
-			main.getByRole("link", { name: "Open Morse Uploader" }),
-		).toHaveAttribute("href", "/app");
+		// The hero and the uploader's card both open the app.
+		const openApp = main.getByRole("link", { name: "Open Morse Uploader" });
+		await expect(openApp).toHaveCount(2);
+		for (const link of await openApp.all())
+			await expect(link).toHaveAttribute("href", "/app");
 		await expect(
 			main.getByRole("link", { name: "Read the docs" }),
 		).toHaveAttribute("href", DOCS_URL);
@@ -158,20 +156,28 @@ test.describe("landing page", () => {
 		});
 	}
 
-	test("at 390 the comparison keeps its columns and scrolls inside its box", async ({
+	test("at 390 the two cards stack and each fits the screen", async ({
 		page,
 	}) => {
 		await page.setViewportSize(PHONE);
 		await page.goto("/");
-		const scroller = page.locator(".cmp-scroll");
-		const box = await scroller.evaluate((element) => ({
-			scrollWidth: element.scrollWidth,
-			clientWidth: element.clientWidth,
-		}));
-		expect(box.clientWidth).toBe(PHONE.width);
-		expect(box.scrollWidth).toBeGreaterThan(box.clientWidth);
-		const ours = page.getByRole("cell", { name: /Every Walrus blob/ });
-		await ours.scrollIntoViewIfNeeded();
-		await expect(ours).toBeInViewport();
+		const cards = page
+			.getByRole("region", { name: "Walrus Console and Morse Uploader" })
+			.getByRole("article");
+		await expect(cards).toHaveCount(2);
+		const boxes = await Promise.all(
+			(await cards.all()).map(async (card) => {
+				const box = await card.boundingBox();
+				if (!box) throw new Error("A card has no layout box");
+				return box;
+			}),
+		);
+		const [first, second] = boxes;
+		if (!first || !second) throw new Error("Expected two cards");
+		expect(second.y).toBeGreaterThanOrEqual(first.y + first.height);
+		for (const box of boxes) {
+			expect(box.x).toBeGreaterThanOrEqual(0);
+			expect(box.x + box.width).toBeLessThanOrEqual(PHONE.width);
+		}
 	});
 });

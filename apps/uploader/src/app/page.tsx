@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { AppShot } from "@/landing/app-shot";
-import { ConsoleComparison } from "@/landing/console-comparison";
 import { FeatureCards } from "@/landing/feature-cards";
 import { Hero } from "@/landing/hero";
 import { LandingFooter } from "@/landing/landing-footer";
 import { LandingNav } from "@/landing/landing-nav";
 import { TraceTile } from "@/landing/trace-tile";
+import { WalrusClientsSection } from "@/landing/walrus-clients-section";
 import "@/styles/landing.css";
 
 export const metadata: Metadata = {
@@ -28,7 +28,7 @@ export default function HomePage() {
 					<Hero />
 					<AppShot />
 					<FeatureCards />
-					<ConsoleComparison />
+					<WalrusClientsSection />
 				</main>
 				<LandingFooter />
 			</div>
