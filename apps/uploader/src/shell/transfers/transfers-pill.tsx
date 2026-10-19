@@ -36,7 +36,7 @@ export function TransfersPill({
 					className="ring"
 					aria-hidden="true"
 					style={{
-						background: `conic-gradient(var(--violet) 0 ${share}%, rgba(255, 255, 255, 0.12) ${share}% 100%)`,
+						background: `conic-gradient(var(--accent-lift) 0 ${share}%, rgba(255, 255, 255, 0.12) ${share}% 100%)`,
 					}}
 				/>
 			) : null}

@@ -84,7 +84,7 @@
 	color: var(--fg-3);
 }
 .pal .it.on .mk {
-	color: var(--cyan);
+	color: var(--accent-lift);
 }
 .pal .it .tt {
 	min-width: 0;

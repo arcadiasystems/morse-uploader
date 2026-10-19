@@ -10,15 +10,18 @@ import type { MorseReads } from "@/morse/use-morse-reads";
 import { explorerTxUrl } from "@/network/explorer-urls";
 import type { NetworkConfig } from "@/network/networks";
 
-/** The tag each kind of action wears, in the status colours. */
+/**
+ * The tag each kind of action wears, in the status colours: green for
+ * certified and recorded, the lift for encrypted, in progress and extended.
+ */
 const TAGS: Readonly<Record<ActivityKind, { label: string; tone: string }>> = {
-	register: { label: "registered", tone: "violet" },
-	certify: { label: "certified", tone: "cyan" },
-	extend: { label: "extended", tone: "cyan" },
+	register: { label: "registered", tone: "lift" },
+	certify: { label: "certified", tone: "green" },
+	extend: { label: "extended", tone: "lift" },
 	delete: { label: "deleted", tone: "dim" },
 	burn: { label: "burned", tone: "dim" },
 	publish: { label: "recorded", tone: "green" },
-	encrypt: { label: "encrypted", tone: "violet" },
+	encrypt: { label: "encrypted", tone: "lift" },
 	share: { label: "shared", tone: "" },
 	unshare: { label: "unshared", tone: "dim" },
 };
