@@ -212,6 +212,12 @@ export interface UseStorageCostEstimateResult {
 /** Load/work status for {@link useFileDownload}. */
 export type FileDownloadStatus = "idle" | "loading" | "ready" | "error";
 
+/**
+ * Why a share link cannot open the encrypted file it names: it carries no Seal
+ * material (`"missing"`), or its Seal prefix is not the file's (`"mismatch"`).
+ */
+export type ShareLinkSealErrorReason = "missing" | "mismatch";
+
 /** Return value of {@link useFileDownload}. */
 export interface UseFileDownloadResult {
 	/** Status of the on-chain metadata load. */
@@ -221,10 +227,20 @@ export interface UseFileDownloadResult {
 	readonly status: FileDownloadStatus;
 	/** Object URL for the fetched bytes; null until loaded. */
 	readonly objectUrl: string | null;
-	/** True when the share link carries Seal material (the file is encrypted). */
+	/**
+	 * True when the share link carries Seal material, so `load` decrypts. A file
+	 * with an on-chain Seal prefix opened from a link without that material
+	 * reads false here, and `load` fails with a {@link ShareLinkSealError}
+	 * instead of serving it.
+	 */
 	readonly encrypted: boolean;
 	/** True when the content type is a previewable image. */
 	readonly isImage: boolean;
+	/**
+	 * Why the last `load` or `download` failed. A {@link ShareLinkSealError}
+	 * when the file is encrypted on chain and the link cannot open it; render
+	 * any value with {@link downloadErrorMessage}.
+	 */
 	readonly error: unknown;
 	/** Fetch the bytes (public read or Seal decrypt) and build the object URL. */
 	readonly load: () => Promise<void>;
