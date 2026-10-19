@@ -16,9 +16,11 @@ test.describe("layout without a wallet", () => {
 	}) => {
 		await page.setViewportSize({ width: 390, height: 844 });
 		await page.goto("/");
-		await expect(
-			page.getByRole("link", { name: "Open Morse Uploader" }),
-		).toHaveAttribute("href", "/app");
+		// The hero and the uploader's card both open the app.
+		const openApp = page.getByRole("link", { name: "Open Morse Uploader" });
+		await expect(openApp).toHaveCount(2);
+		for (const link of await openApp.all())
+			await expect(link).toHaveAttribute("href", "/app");
 		const { scrollWidth, innerWidth } = await horizontalOverflow(page);
 		expect(scrollWidth).toBe(innerWidth);
 	});
