@@ -39,12 +39,10 @@
 	background: var(--panel);
 	color: var(--fg);
 }
-/* The current view is filled ultramarine; a rail item whose panel or menu
-   is open is lifted. */
-.rail .ri.on {
-	background: var(--accent);
-	color: var(--on-accent);
-}
+/* The current view, and a rail item whose panel or menu is open, sit on a
+   lighter panel with a lift icon, as in design/v2/recolour-overview.png.
+   Solid ultramarine would compete with the avatar and the Upload button. */
+.rail .ri.on,
 .rail .ri[aria-expanded="true"] {
 	background: var(--panel-2);
 	color: var(--accent-lift);
