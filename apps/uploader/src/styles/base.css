@@ -315,7 +315,7 @@ kbd {
 	}
 }
 
-/* ---------- The Trace mark ---------- */
+/* ---------- The Trace mark, alone or in the stacked lockup ---------- */
 .brand {
 	display: inline-flex;
 	align-items: center;
@@ -329,9 +329,17 @@ kbd {
 	width: 26px;
 	height: 26px;
 }
+/* The lockup: the Trace at 34px beside "morse" over "uploader". */
+.brand.lockup svg {
+	width: 34px;
+	height: 34px;
+}
 .brand .wm {
-	font-size: 19px;
-	letter-spacing: -0.02em;
+	display: flex;
+	flex-direction: column;
+	font-size: 17px;
+	line-height: 0.9;
+	letter-spacing: -0.035em;
 }
 .brand .wm em {
 	font-style: normal;
