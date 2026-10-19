@@ -1,13 +1,13 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { COMPARISON_ROWS, CONSOLE_SOURCES } from "./comparison";
+import { CONSOLE_SOURCES, WALRUS_CLIENTS } from "./walrus-clients";
 
 /**
  * The landing's copy against the handover rules and PROTOCOL-NOTES, on top
  * of the app-wide checks in src/copy-rules.test.ts: the numbers the notes
- * correct, the promises the app cannot keep yet, and a Console column that
- * says only what Console's own docs say.
+ * correct, the promises the app cannot keep yet, and a Console card that
+ * says only what Console's own docs say and never scores Console.
  */
 const SOURCE_ROOT = join(import.meta.dirname, "..");
 // Built from its code point so this file holds no em dash either.
@@ -32,13 +32,19 @@ function filesMatching(pattern: RegExp): string[] {
 		.map((file) => file.path);
 }
 
+function client(id: (typeof WALRUS_CLIENTS)[number]["id"]) {
+	const found = WALRUS_CLIENTS.find((entry) => entry.id === id);
+	if (!found) throw new Error(`No ${id} card on the landing`);
+	return found;
+}
+
 describe("landing copy rules", () => {
 	it("reads the page, its components and its styles", () => {
 		expect(landingFiles.map((file) => file.path)).toEqual(
 			expect.arrayContaining([
 				join("landing", "hero.tsx"),
 				join("landing", "feature-cards.tsx"),
-				join("landing", "comparison.ts"),
+				join("landing", "walrus-clients.ts"),
 				join("app", "page.tsx"),
 				join("styles", "landing.css"),
 			]),
@@ -66,19 +72,15 @@ describe("landing copy rules", () => {
 	});
 
 	it("says auto-extend runs only while the app is open (section 9, item 13)", () => {
-		const mentions = COMPARISON_ROWS.filter((row) =>
-			/auto-extend/i.test(row.uploader),
+		// Any mention must carry the limit in the same sentence.
+		expect(filesMatching(/auto-extend(?![^.]*while the app is open)/i)).toEqual(
+			[],
 		);
-		expect(mentions.length).toBeGreaterThan(0);
-		for (const row of mentions)
-			expect(row.uploader).toContain("while the app is open");
 	});
 
-	it("offers Seal per file and on Testnet only (section 11, items 14 and 15)", () => {
-		const mentions = COMPARISON_ROWS.filter((row) => /Seal/.test(row.uploader));
-		expect(mentions.length).toBeGreaterThan(0);
-		for (const row of mentions)
-			expect(row.uploader).toMatch(/per file on Testnet/);
+	it("makes no Seal promise for the uploader, which has Seal per file on Testnet only (section 11, items 14 and 15)", () => {
+		const uploader = client("uploader");
+		expect(`${uploader.body} ${uploader.bestFor}`).not.toMatch(/Seal/);
 	});
 
 	it("advertises nothing the app has not built (items 12 and 19)", () => {
@@ -90,23 +92,17 @@ describe("landing copy rules", () => {
 		).toEqual([]);
 	});
 
-	it("keeps the Console column to what Console's docs say", () => {
-		expect(COMPARISON_ROWS.map((row) => [row.topic, row.console])).toEqual([
+	it("keeps the Console card to what Console's docs say", () => {
+		const consoleCard = client("console");
+		expect(consoleCard.body.split(/(?<=\.) /)).toEqual([
 			// overview, "Accounts and sign-in"; FAQ, "How do you sign in?"
-			["Login", "Google or Apple account"],
-			// overview, "Storage limits": "Console manages WAL token handling on your behalf."
-			["Keys and payment", "Console manages WAL for you"],
-			// overview, "Storage limits"; FAQ, "What are the storage limits?"
-			["Limits", "5 GB per space, 5 folders, 100 MiB per upload"],
-			// overview, "Core concepts": "All folders are private and encrypted with Seal."
-			["Folders", "Encrypted private folders"],
-			// storage epochs, "Automatic extension"
-			["Expiry", "Auto-extended by Console"],
-			// overview, "Core concepts": "you upload a file, then poll its status"
-			["Verification", "Upload status polling"],
-			// FAQ, "Can Walrus Console see files you already uploaded with the Walrus CLI or SDK?"
-			["Existing blobs", "Only files uploaded through Console"],
+			"Sign in with Google or Apple.",
+			// overview, "Storage limits": "Console manages WAL token handling on your
+			// behalf."; storage epochs, "Automatic extension"; overview, "Core
+			// concepts": "All folders are private and encrypted with Seal."
+			"Console handles WAL and renews storage for you, and keeps every folder private and encrypted with Seal.",
 		]);
+		expect(consoleCard.action.href).toBe(CONSOLE_SOURCES[0].href);
 		expect(CONSOLE_SOURCES.map((source) => source.href)).toEqual([
 			"https://docs.wal.app/docs/console/overview",
 			"https://docs.wal.app/docs/console/faq",
@@ -114,9 +110,19 @@ describe("landing copy rules", () => {
 		]);
 	});
 
+	it("presents Console as a complement, never a rival", () => {
+		expect(WALRUS_CLIENTS.map((entry) => entry.id)).toEqual([
+			"console",
+			"uploader",
+		]);
+		expect(
+			filesMatching(
+				/\bvs\.?\s|versus|compared|better than|instead of Console|unlike Console|Console (can't|cannot|doesn't|does not|only)/i,
+			),
+		).toEqual([]);
+	});
+
 	it("drops the Console claims the notes leave unconfirmed (section 13, items 19 and 20)", () => {
 		expect(filesMatching(/Not in scope|No publishing/i)).toEqual([]);
-		expect(COMPARISON_ROWS.map((row) => row.topic)).not.toContain("Agents");
-		expect(COMPARISON_ROWS.map((row) => row.topic)).not.toContain("Publishing");
 	});
 });
