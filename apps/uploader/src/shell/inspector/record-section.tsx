@@ -50,8 +50,8 @@ export function RecordSection({
 	const encoding =
 		ENCODING_NAMES[blob.encodingType] ?? `type ${blob.encodingType}`;
 	return (
-		<section className="sec" aria-labelledby="drawer-record">
-			<h4 id="drawer-record">Record</h4>
+		<section className="sec" aria-labelledby="insp-record">
+			<h4 id="insp-record">Record</h4>
 			<dl>
 				{patch ? (
 					<>

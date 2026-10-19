@@ -5,10 +5,13 @@ import { CONTENT_TYPE_ATTRIBUTE } from "@/blobs/blob-attributes";
 import type { BlobRecord } from "@/blobs/blob-record";
 import { blobStatus } from "@/blobs/blob-status";
 import type { ListedBlobs } from "@/blobs/list-blobs";
-import { readQuiltPatchList } from "@/blobs/quilt-patch-list";
+import {
+	type QuiltPatchEntry,
+	readQuiltPatchList,
+} from "@/blobs/quilt-patch-list";
 import { readLiveBlob } from "@/blobs/read-blob-object";
 import { Icon, type IconName } from "@/components/icon";
-import type { Balances } from "@/funds/types";
+import type { Balances, WalrusPrices } from "@/funds/types";
 import { errorMessage } from "@/lib/error-message";
 import { formatBytes } from "@/lib/format-bytes";
 import { formatShortDate } from "@/lib/format-date";
@@ -21,47 +24,63 @@ import { explorerTxUrl } from "@/network/explorer-urls";
 import type { NetworkConfig } from "@/network/networks";
 import type { WalletActions } from "@/wallet/use-wallet-actions";
 import { DeleteSection } from "./delete-section";
-import { type DrawerTarget, targetRow } from "./drawer-target";
+import { DownloadButton } from "./download-button";
 import { EncryptedSection } from "./encrypted-section";
 import { FinishSection } from "./finish-section";
+import { type InspectorTarget, targetRow } from "./inspector-target";
 import { PreviewSection } from "./preview-section";
 import { PublishSection, type PublishSubject } from "./publish-section";
+import { QuiltFilesSection } from "./quilt-files-section";
 import { RecordSection } from "./record-section";
 import { ShareSection } from "./share-section";
 import { StorageSection } from "./storage-section";
 import { VerifySection } from "./verify-section";
 
-/** Sections the Walrus pane's toolbar can open the drawer at. */
-export type DrawerSection = "verify" | "storage" | "publish" | "share";
+/** Sections a row's menu, the palette or the action row can open the inspector at. */
+export type InspectorSection = "verify" | "storage" | "publish" | "share";
 
-/** What the drawer needs from the shell: signing, balances, auto-extend and a way to re-read. */
-export interface DrawerContext {
+/**
+ * A request to show a section, and optionally to start its action: run
+ * Verify, or open the extend panel. `request` grows with each ask, so the
+ * same section can be asked for twice.
+ */
+export interface InspectorRequest {
+	section: InspectorSection;
+	action: "verify" | "extend" | null;
+	request: number;
+}
+
+/** What the inspector needs from the shell: signing, balances, prices, auto-extend and a way to re-read. */
+export interface InspectorContext {
 	actions: WalletActions | null;
 	balances: ChainRead<Balances>;
+	prices: ChainRead<WalrusPrices>;
 	autoExtend: AutoExtend | null;
 	/** Something changed on chain: the list and balances read again. */
 	onChanged: () => void;
 }
 
 /**
- * The blob drawer (design/app-blob.html): preview, verification, record,
- * storage with extend and auto-extend, publish to Morse, share and delete,
- * for a blob, a quilt, or one file in a quilt. The record is read live from
- * chain when the drawer opens and after every change it makes.
+ * The inspector (design/v2/app.html): a persistent column for the
+ * selection, with actions, verification, storage with extend and
+ * auto-extend, the record, a quilt's files by path, share, publish and
+ * delete, plus Finish or the encrypted section where they apply. It shows
+ * a blob, a quilt, or one file in a quilt. The record is read live from
+ * chain when it opens and after every change it makes.
  */
-export function BlobDrawer({
+export function Inspector({
 	target,
 	network,
 	listed,
 	context,
-	focus,
+	request,
 	onClose,
 }: {
-	target: DrawerTarget;
+	target: InspectorTarget;
 	network: NetworkConfig;
 	listed: ListedBlobs;
-	context: DrawerContext;
-	focus: { section: DrawerSection; request: number } | null;
+	context: InspectorContext;
+	request: InspectorRequest | null;
 	onClose: () => void;
 }) {
 	const client = useCurrentClient();
@@ -70,38 +89,31 @@ export function BlobDrawer({
 	const objectId = row.blob.objectId;
 	// Kept here: Finish's own section goes once the blob reads as certified.
 	const [certifiedBy, setCertifiedBy] = useState<string | null>(null);
+	const [verifyRequest, setVerifyRequest] = useState(0);
+	const [extendOpen, setExtendOpen] = useState(false);
 	// Refreshed after each change, so the last record stays on screen meanwhile.
 	const { read: live, refresh: readAgain } = useChainRead(
 		`${network.id}:live:${objectId}`,
 		(signal) => readLiveBlob(client, objectId, signal),
 	);
-	const patchEntry = useChainRead(
-		target.kind === "patch"
-			? `${network.id}:patch:${row.blob.blobId}:${target.identifier}`
+	const isWholeQuilt = target.kind === "blob" && row.blob.isQuilt;
+	const quiltFiles = useChainRead(
+		target.kind === "patch" || isWholeQuilt
+			? `${network.id}:patches:${row.blob.blobId}`
 			: null,
-		async () => {
-			const entries = await readQuiltPatchList(
-				network.aggregatorUrl,
-				row.blob.blobId,
-			);
-			const identifier = target.kind === "patch" ? target.identifier : "";
-			const entry = entries.find(
-				(candidate) => candidate.identifier === identifier,
-			);
-			if (!entry)
-				throw new Error(
-					`The aggregator does not list ${identifier} in this quilt.`,
-				);
-			return entry;
-		},
-	).read;
+		() => readQuiltPatchList(network.aggregatorUrl, row.blob.blobId),
+	);
+	const patchFiles = quiltFiles.read;
 
+	// A request from outside (a row's menu, the palette) shows its section and starts its action.
 	useEffect(() => {
-		if (focus === null) return;
+		if (request === null) return;
+		if (request.action === "verify") setVerifyRequest((value) => value + 1);
+		if (request.action === "extend") setExtendOpen(true);
 		panel.current
-			?.querySelector(`#drawer-${focus.section}`)
+			?.querySelector(`#insp-${request.section}`)
 			?.scrollIntoView({ block: "start" });
-	}, [focus]);
+	}, [request]);
 
 	const gone = live.status === "ready" && live.data === null;
 	const blob: BlobRecord =
@@ -117,6 +129,12 @@ export function BlobDrawer({
 		context.onChanged();
 	}
 
+	function show(section: InspectorSection | "files" | "encrypted" | "finish") {
+		panel.current
+			?.querySelector(`#insp-${section}`)
+			?.scrollIntoView({ block: "start" });
+	}
+
 	function onKeyDown(event: KeyboardEvent<HTMLElement>) {
 		if (event.key === "Escape") {
 			event.stopPropagation();
@@ -124,11 +142,24 @@ export function BlobDrawer({
 		}
 	}
 
+	const patchEntry =
+		target.kind === "patch" && patchFiles.status === "ready"
+			? (patchFiles.data.find(
+					(entry) => entry.identifier === target.identifier,
+				) ?? null)
+			: null;
 	const patch =
 		target.kind === "patch"
 			? {
 					identifier: target.identifier,
-					entry: patchEntry.status === "ready" ? patchEntry.data : null,
+					entry: patchEntry,
+					// Why the patch id is not known, while it is not.
+					missing:
+						patchFiles.status === "error"
+							? "The aggregator could not list this quilt's files."
+							: patchFiles.status === "ready"
+								? `The aggregator does not list ${target.identifier} in this quilt.`
+								: "Reading this file's patch id from the aggregator…",
 				}
 			: null;
 	const name = patch ? patch.identifier : row.label;
@@ -146,10 +177,20 @@ export function BlobDrawer({
 	const registeredAtMs =
 		clock.epochStartMs +
 		(blob.registeredEpoch - clock.epoch) * clock.epochDurationMs;
+	const fileCount =
+		isWholeQuilt && patchFiles.status === "ready"
+			? patchFiles.data.length
+			: null;
+	const storagePricePerUnit =
+		context.prices.status === "ready"
+			? context.prices.data.storagePerUnit
+			: null;
+	const downloadable =
+		liveAndCertified && !blob.isEncrypted && (!blob.isQuilt || patch !== null);
 
 	return (
 		<aside
-			className="drawer"
+			className="insp"
 			ref={panel}
 			aria-label={`Details of ${name}`}
 			onKeyDown={onKeyDown}
@@ -157,7 +198,7 @@ export function BlobDrawer({
 			<div className="hd">
 				<span
 					className={
-						blob.isEncrypted ? "ico enc" : blob.isQuilt ? "ico dir" : "ico"
+						blob.isEncrypted ? "ic enc" : isWholeQuilt ? "ic quilt" : "ic"
 					}
 				>
 					<Icon name={headerIcon(blob, mediaType, patch !== null)} />
@@ -167,7 +208,22 @@ export function BlobDrawer({
 					<small>
 						{patch
 							? `file in quilt ${row.label}${mediaType ? ` · ${mediaType}` : ""}`
-							: `${blob.isEncrypted ? "Seal-encrypted" : (mediaType ?? (blob.isQuilt ? "quilt" : "blob"))} · ${formatBytes(blob.size)} · registered about ${formatShortDate(registeredAtMs, nowMs)}`}
+							: [
+									blob.isEncrypted
+										? "Seal-encrypted"
+										: isWholeQuilt
+											? "quilt"
+											: (mediaType ?? "blob"),
+									fileCount === null
+										? null
+										: fileCount === 1
+											? "1 file"
+											: `${fileCount} files`,
+									formatBytes(blob.size),
+									`uploaded about ${formatShortDate(registeredAtMs, nowMs)}`,
+								]
+									.filter((part) => part !== null)
+									.join(" · ")}
 					</small>
 				</div>
 				<button
@@ -198,7 +254,7 @@ export function BlobDrawer({
 				<section className="sec" aria-label="Record status">
 					<p className="note warn" role="alert">
 						Could not read this blob from chain: {errorMessage(live.error)} The
-						drawer shows the list's copy, which may be behind.{" "}
+						inspector shows the list's copy, which may be behind.{" "}
 						<button className="cp" type="button" onClick={readAgain}>
 							Try again
 						</button>
@@ -214,6 +270,75 @@ export function BlobDrawer({
 				</section>
 			) : (
 				<>
+					<section className="sec" aria-label="Actions">
+						<div className="acts">
+							{!certified && !expired && !patch ? (
+								<button
+									className="btn sm solid"
+									type="button"
+									onClick={() => show("finish")}
+								>
+									Finish
+								</button>
+							) : blob.isEncrypted && !patch ? (
+								<button
+									className="btn sm solid"
+									type="button"
+									onClick={() => show("encrypted")}
+								>
+									Decrypt
+								</button>
+							) : isWholeQuilt ? (
+								<button
+									className="btn sm solid"
+									type="button"
+									onClick={() => show("files")}
+								>
+									Files
+								</button>
+							) : (
+								<DownloadButton
+									url={downloadable ? url : null}
+									name={name}
+									mediaType={mediaType}
+								/>
+							)}
+							<button
+								className="btn sm"
+								type="button"
+								disabled={!liveAndCertified}
+								title={
+									liveAndCertified
+										? undefined
+										: "Only a certified blob with storage left has links to share."
+								}
+								onClick={() => show("share")}
+							>
+								Share
+							</button>
+							<button
+								className="btn sm"
+								type="button"
+								onClick={() => {
+									setExtendOpen(true);
+									show("storage");
+								}}
+							>
+								Extend
+							</button>
+							<button
+								className="btn sm"
+								type="button"
+								onClick={() => {
+									setVerifyRequest((value) => value + 1);
+									show("verify");
+								}}
+							>
+								Verify
+							</button>
+						</div>
+					</section>
+
 					{!certified && !expired && !patch ? (
 						<FinishSection
 							network={network}
@@ -233,16 +358,7 @@ export function BlobDrawer({
 							readable={liveAndCertified}
 							actions={context.actions}
 						/>
-					) : blob.isQuilt && !patch ? (
-						<section className="sec" aria-label="Preview">
-							<div className="thumb">
-								<span className="msg">
-									A quilt holds files. Open it in the list and select a file to
-									preview, share or publish it.
-								</span>
-							</div>
-						</section>
-					) : !liveAndCertified ? (
+					) : isWholeQuilt ? null : !liveAndCertified ? (
 						<section className="sec" aria-label="Preview">
 							<div className="thumb">
 								<span className="msg">
@@ -251,7 +367,7 @@ export function BlobDrawer({
 								</span>
 							</div>
 						</section>
-					) : url && name ? (
+					) : url ? (
 						<PreviewSection
 							source={{
 								url,
@@ -264,9 +380,7 @@ export function BlobDrawer({
 						<section className="sec" aria-label="Preview">
 							<div className="thumb">
 								<span className="msg" role="status">
-									{patchEntry.status === "error"
-										? "The aggregator could not list this quilt's files, so this file cannot be previewed yet."
-										: "Reading the quilt's file list…"}
+									{patch?.missing}
 								</span>
 							</div>
 						</section>
@@ -278,8 +392,25 @@ export function BlobDrawer({
 							blob={blob}
 							expired={expired}
 							scope={patch ? "quilt-file" : "blob"}
+							runRequest={verifyRequest}
 						/>
 					) : null}
+
+					<StorageSection
+						network={network}
+						blob={blob}
+						status={status}
+						clock={clock}
+						nowMs={nowMs}
+						actions={context.actions}
+						balances={context.balances}
+						storagePricePerUnit={storagePricePerUnit}
+						autoExtend={context.autoExtend}
+						scope={patch ? "quilt-file" : "blob"}
+						extendOpen={extendOpen}
+						onToggleExtend={() => setExtendOpen((open) => !open)}
+						onExtended={changed}
+					/>
 
 					<RecordSection
 						network={network}
@@ -307,30 +438,14 @@ export function BlobDrawer({
 						}
 					/>
 
-					<StorageSection
-						network={network}
-						blob={blob}
-						status={status}
-						clock={clock}
-						nowMs={nowMs}
-						actions={context.actions}
-						balances={context.balances}
-						autoExtend={context.autoExtend}
-						scope={patch ? "quilt-file" : "blob"}
-						onExtended={changed}
-					/>
-
-					<PublishSection
-						network={network}
-						subject={publishSubject(
-							blob,
-							liveAndCertified,
-							patch,
-							name,
-							mediaType,
-						)}
-						actions={context.actions}
-					/>
+					{isWholeQuilt && liveAndCertified ? (
+						<QuiltFilesSection
+							aggregatorUrl={network.aggregatorUrl}
+							quiltBlobId={blob.blobId}
+							files={patchFiles}
+							onRetry={quiltFiles.refresh}
+						/>
+					) : null}
 
 					{liveAndCertified ? (
 						<ShareSection
@@ -358,9 +473,23 @@ export function BlobDrawer({
 									: null
 							}
 							encrypted={blob.isEncrypted}
-							quilt={blob.isQuilt && !patch}
+							quilt={isWholeQuilt}
 						/>
 					) : null}
+
+					<PublishSection
+						network={network}
+						subject={publishSubject(
+							blob,
+							liveAndCertified,
+							patch,
+							patchFiles,
+							name,
+							mediaType,
+						)}
+						quilt={isWholeQuilt}
+						actions={context.actions}
+					/>
 
 					<DeleteSection
 						network={network}
@@ -390,7 +519,12 @@ function headerIcon(
 function publishSubject(
 	blob: BlobRecord,
 	liveAndCertified: boolean,
-	patch: { identifier: string; entry: { patchId: string } | null } | null,
+	patch: {
+		identifier: string;
+		entry: { patchId: string } | null;
+		missing: string;
+	} | null,
+	quiltFiles: ChainRead<readonly QuiltPatchEntry[]>,
 	name: string,
 	mediaType: string | null,
 ): PublishSubject {
@@ -415,16 +549,8 @@ function publishSubject(
 				"Morse only takes deletable blobs, so a publication can unpublish and correct. This blob is permanent.",
 		};
 	if (blob.isQuilt && !patch)
-		return {
-			kind: "blocked",
-			reason:
-				"A quilt goes into Morse file by file. Open the quilt and select a file to publish it.",
-		};
-	if (patch && !patch.entry)
-		return {
-			kind: "blocked",
-			reason: "Reading this file's patch id from the aggregator…",
-		};
+		return { kind: "quilt", blobObjectId: blob.objectId, files: quiltFiles };
+	if (patch && !patch.entry) return { kind: "blocked", reason: patch.missing };
 	return {
 		kind: "ready",
 		name,

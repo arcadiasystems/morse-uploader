@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from "react";
 import type { BlobRow } from "@/blobs/blob-row";
 import { formatBytes } from "@/lib/format-bytes";
 import { BlobIcon, BlobName, MenuButton, StorageLeft } from "./file-row";
@@ -15,6 +16,7 @@ export function FileGrid({
 	checked,
 	onCheck,
 	onMenu,
+	reveal,
 }: {
 	label: string;
 	rows: readonly BlobRow[];
@@ -23,9 +25,23 @@ export function FileGrid({
 	checked: ReadonlySet<string>;
 	onCheck: (objectId: string) => void;
 	onMenu: (key: string, trigger: HTMLButtonElement) => void;
+	/** A card to scroll into view and focus, from a jump; `request` grows with each. */
+	reveal: { key: string; request: number } | null;
 }) {
+	const list = useRef<HTMLUListElement>(null);
+	const revealed = useRef(0);
+	useLayoutEffect(() => {
+		if (reveal === null || reveal.request === revealed.current) return;
+		const card = list.current?.querySelector<HTMLElement>(
+			`[data-key="${CSS.escape(reveal.key)}"]`,
+		);
+		if (!card) return;
+		revealed.current = reveal.request;
+		card.scrollIntoView({ block: "center" });
+		card.querySelector<HTMLElement>(".open")?.focus({ preventScroll: true });
+	}, [reveal]);
 	return (
-		<ul className="cards" aria-label={label}>
+		<ul className="cards" aria-label={label} ref={list}>
 			{rows.map((row) => {
 				const { objectId } = row.blob;
 				const classes = [

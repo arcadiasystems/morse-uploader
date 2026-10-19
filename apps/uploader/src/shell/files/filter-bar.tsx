@@ -3,6 +3,7 @@ import type { RowSort } from "@/blobs/sort-rows";
 import { Icon } from "@/components/icon";
 import { routeHash } from "../app-route";
 import { FILE_FILTER_CONFIG } from "./file-filters";
+import { FilterField } from "./filter-field";
 
 export type FilesLayout = "list" | "grid";
 
@@ -21,16 +22,18 @@ const SORTS: readonly (RowSort & { label: string })[] = [
 const sortValue = (sort: RowSort) => `${sort.key}:${sort.direction}`;
 
 /**
- * The filter chips with their counts, the selection, sort, refresh and the
- * list or grid toggle. A count that cannot be real is left off, with the
- * reason in the chip's description.
+ * The filter chips with their counts, the filter box, sort, refresh and
+ * the list or grid toggle, and on Expiring, Extend everything expiring. A
+ * count that cannot be real is left off, with the reason in the chip's
+ * description.
  */
 export function FilterBar({
 	filter,
 	counts,
 	countNotes,
-	checked,
-	onClearChecked,
+	query,
+	onQueryChange,
+	queryDisabled,
 	sort,
 	onSort,
 	layout,
@@ -43,15 +46,16 @@ export function FilterBar({
 	counts: Readonly<Record<BlobFilter, number | null>>;
 	/** Why a count is missing, by filter. */
 	countNotes: Readonly<Partial<Record<BlobFilter, string | undefined>>>;
-	checked: number;
-	onClearChecked: () => void;
+	query: string;
+	onQueryChange: (query: string) => void;
+	queryDisabled: boolean;
 	sort: RowSort;
 	onSort: (sort: RowSort) => void;
 	layout: FilesLayout;
 	onLayout: (layout: FilesLayout) => void;
 	refreshing: boolean;
 	onRefresh: () => void;
-	/** Opens Extend all for the expiring blobs; `null` when it does not apply. */
+	/** Opens Extend everything expiring; `null` when it does not apply. */
 	extendExpiring: (() => void) | null;
 }) {
 	return (
@@ -81,27 +85,16 @@ export function FilterBar({
 				})}
 			</nav>
 			<span className="sp" />
-			{checked > 0 ? (
-				<span className="picked" aria-live="polite">
-					{checked} selected
-					<button
-						className="btn text sm"
-						type="button"
-						onClick={onClearChecked}
-					>
-						Clear
-					</button>
-				</span>
-			) : null}
 			{extendExpiring ? (
-				<button
-					className="btn primary sm"
-					type="button"
-					onClick={extendExpiring}
-				>
-					Extend these
+				<button className="btn sm" type="button" onClick={extendExpiring}>
+					Extend everything expiring
 				</button>
 			) : null}
+			<FilterField
+				query={query}
+				onQueryChange={onQueryChange}
+				disabled={queryDisabled}
+			/>
 			<label className="sortby">
 				<span aria-hidden="true">sort ·</span>
 				<span className="sr-only">Sort by</span>

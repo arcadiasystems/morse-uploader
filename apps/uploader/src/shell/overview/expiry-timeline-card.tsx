@@ -28,7 +28,7 @@ export function ExpiryTimelineCard({
 	);
 	const epoch = network.epochDays === 1 ? "1 day" : `${network.epochDays} days`;
 	return (
-		<div className="card span-8">
+		<div className="card span-8" id="expiry-timeline">
 			<h4 id="timeline-title">Expiry timeline · next 12 months</h4>
 			{timeline ? (
 				<div className="strip">

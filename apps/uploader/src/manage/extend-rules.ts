@@ -1,5 +1,4 @@
 import type { BlobRecord } from "@/blobs/blob-record";
-import type { BlobRow } from "@/blobs/blob-row";
 import type { EpochClock } from "@/blobs/epoch-clock";
 import { storageUnits } from "@/upload/encoded-size";
 
@@ -66,57 +65,4 @@ export interface ExtendItem {
 	frost: bigint;
 	/** The end epoch after the extend. */
 	newEndEpoch: number;
-}
-
-export interface ExtendPlan {
-	items: readonly ExtendItem[];
-	/** Blobs that could take fewer epochs than asked, because of the 53-epoch limit. */
-	capped: number;
-	/** Blobs left out, with why. */
-	skipped: readonly { row: BlobRow; blocker: ExtendBlocker }[];
-	totalFrost: bigint;
-}
-
-/**
- * Extends of `epochs` for each blob, each limited to what still fits within
- * the 53-epoch limit. Blobs that cannot be extended are listed as skipped.
- */
-export function planExtend(
-	rows: readonly BlobRow[],
-	epochs: number,
-	clock: Pick<EpochClock, "epoch">,
-	maxEpochsAhead: number,
-	storagePricePerUnit: bigint,
-): ExtendPlan {
-	const items: ExtendItem[] = [];
-	const skipped: { row: BlobRow; blocker: ExtendBlocker }[] = [];
-	let capped = 0;
-	let totalFrost = 0n;
-	for (const row of rows) {
-		const blocker = extendBlocker(row.blob, clock, maxEpochsAhead);
-		if (blocker) {
-			skipped.push({ row, blocker });
-			continue;
-		}
-		const headroom = extendHeadroom(
-			row.blob.endEpoch,
-			clock.epoch,
-			maxEpochsAhead,
-		);
-		const granted = Math.min(epochs, headroom);
-		if (granted < epochs) capped += 1;
-		const frost = extendFrost(
-			row.blob.encodedSize,
-			granted,
-			storagePricePerUnit,
-		);
-		totalFrost += frost;
-		items.push({
-			objectId: row.blob.objectId,
-			epochs: granted,
-			frost,
-			newEndEpoch: row.blob.endEpoch + granted,
-		});
-	}
-	return { items, capped, skipped, totalFrost };
 }

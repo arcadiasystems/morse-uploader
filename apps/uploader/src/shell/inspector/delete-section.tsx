@@ -60,7 +60,7 @@ export function DeleteSection({
 			{reason !== null || actions === null ? (
 				<>
 					<div className="acts">
-						<button className="btn text sm danger" type="button" disabled>
+						<button className="btn sm danger" type="button" disabled>
 							{label}
 						</button>
 					</div>
@@ -83,7 +83,7 @@ export function DeleteSection({
 				<div className="acts">
 					<button
 						ref={opener}
-						className="btn text sm danger"
+						className="btn sm danger"
 						type="button"
 						onClick={() => setOpen(true)}
 					>

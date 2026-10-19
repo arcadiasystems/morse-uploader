@@ -1,9 +1,6 @@
 import { useState } from "react";
-import { errorMessage } from "@/lib/error-message";
 import { formatBytes } from "@/lib/format-bytes";
-import { downloadFromAggregator } from "@/lib/save-bytes";
 import { type ChainRead, useChainRead } from "@/lib/use-chain-read";
-import { useClipboardCopy } from "@/lib/use-clipboard-copy";
 import { type PreviewPlan, previewPlan } from "@/manage/preview-plan";
 
 export interface PreviewSource {
@@ -16,9 +13,8 @@ export interface PreviewSource {
 }
 
 /**
- * The design's preview box with the file itself, read through the
- * aggregator: an image, or the start of a text file. Download and Open in
- * aggregator use the same URL.
+ * A preview of one file, read through the aggregator: an image, or the
+ * start of a text file. The inspector's Download action saves the file.
  */
 export function PreviewSection({ source }: { source: PreviewSource }) {
 	const plan = previewPlan(source.mediaType, source.size);
@@ -27,70 +23,7 @@ export function PreviewSection({ source }: { source: PreviewSource }) {
 			<div className="thumb">
 				<PreviewBody plan={plan} source={source} />
 			</div>
-			<PreviewActions source={source} />
 		</section>
-	);
-}
-
-/** Download, Copy link and Open in aggregator, as the design orders them. */
-function PreviewActions({ source }: { source: PreviewSource }) {
-	const [download, setDownload] = useState<
-		{ kind: "idle" } | { kind: "saving" } | { kind: "failed"; message: string }
-	>({ kind: "idle" });
-	const { state: copyState, copy } = useClipboardCopy();
-
-	async function onDownload() {
-		setDownload({ kind: "saving" });
-		try {
-			await downloadFromAggregator(source.url, source.name, source.mediaType);
-			setDownload({ kind: "idle" });
-		} catch (error) {
-			setDownload({ kind: "failed", message: errorMessage(error) });
-		}
-	}
-
-	return (
-		<>
-			<div className="acts">
-				<button
-					className="btn solid sm"
-					type="button"
-					disabled={download.kind === "saving"}
-					onClick={onDownload}
-				>
-					{download.kind === "saving" ? "Downloading…" : "Download"}
-				</button>
-				<button
-					className="btn sm"
-					type="button"
-					onClick={() => copy(source.url)}
-				>
-					{copyState === "copied" ? "Link copied" : "Copy link"}
-				</button>
-				<a
-					className="btn sm"
-					href={source.url}
-					target="_blank"
-					rel="noopener noreferrer"
-				>
-					Open in aggregator
-				</a>
-			</div>
-			{download.kind === "failed" ? (
-				<p className="note warn" role="alert">
-					Download failed: {download.message}
-				</p>
-			) : null}
-			{copyState === "failed" ? (
-				<p className="note" role="status">
-					The browser blocked the clipboard. Copy the link from Share below.
-				</p>
-			) : (
-				<span className="sr-only" role="status">
-					{copyState === "copied" ? "Link copied" : ""}
-				</span>
-			)}
-		</>
 	);
 }
 
@@ -228,7 +161,7 @@ function TextBody({
 		case "error":
 			return (
 				<span className="msg">
-					The aggregator did not serve this file. Try Open in aggregator.
+					The aggregator did not serve this file. Try its link under Share.
 				</span>
 			);
 		case "ready":

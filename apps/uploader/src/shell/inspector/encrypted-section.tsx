@@ -63,8 +63,8 @@ export function EncryptedSection({
 	const file = lookup.read.status === "ready" ? lookup.read.data : null;
 
 	return (
-		<section className="sec" aria-labelledby="drawer-encrypted">
-			<h4 id="drawer-encrypted">Encrypted</h4>
+		<section className="sec" aria-labelledby="insp-encrypted">
+			<h4 id="insp-encrypted">Encrypted</h4>
 			<p className="lock">
 				<Icon name="lock" />
 				<span>

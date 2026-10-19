@@ -14,6 +14,9 @@ import { explorerTxUrl } from "@/network/explorer-urls";
 import type { NetworkConfig } from "@/network/networks";
 import { SwitchRow } from "../upload-sheet/switch-row";
 
+/** Whether the shown blob is one auto-extend renews, or the setting is shown for the profile. */
+export type AutoExtendReach = "this-blob" | "not-this-blob" | "profile";
+
 /**
  * The profile's auto-extend setting (PROTOCOL-NOTES section 9 and section
  * 13, item 13). The copy states the limitation plainly: it runs only while
@@ -26,8 +29,11 @@ export function AutoExtendPanel({
 }: {
 	network: NetworkConfig;
 	autoExtend: AutoExtend;
-	/** Whether this blob is one auto-extend can renew. */
-	covers: boolean;
+	/**
+	 * Which blobs the line under the setting talks about: the inspector's
+	 * blob, which auto-extend renews or not, or the whole profile.
+	 */
+	covers: AutoExtendReach;
 }) {
 	const ids = useId();
 	const { settings, update, plan, status, renewNow } = autoExtend;
@@ -180,16 +186,22 @@ function epochCount(
 	return value >= range.min && value <= range.max ? value : null;
 }
 
+const SCOPE_TEXT: Readonly<Record<AutoExtendReach, string>> = {
+	"this-blob":
+		"It covers this blob and every other certified blob of this profile.",
+	"not-this-blob":
+		"It covers this profile's certified, unexpired blobs; this one is not among them.",
+	profile: "It covers every certified, unexpired blob of this profile.",
+};
+
 function PlanLine({
 	plan,
 	covers,
 }: {
 	plan: AutoExtendPlan | null;
-	covers: boolean;
+	covers: AutoExtendReach;
 }) {
-	const scope = covers
-		? "It covers this blob and every other certified blob of this profile."
-		: "It covers this profile's certified, unexpired blobs; this one is not among them.";
+	const scope = SCOPE_TEXT[covers];
 	if (plan === null) return <p className="note">{scope}</p>;
 	switch (plan.kind) {
 		case "off":

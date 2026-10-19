@@ -3,47 +3,56 @@ import { blobByObjectIdUrl } from "@/blobs/aggregator-urls";
 import type { BlobRow } from "@/blobs/blob-row";
 import { useClipboardCopy } from "@/lib/use-clipboard-copy";
 import type { NetworkConfig } from "@/network/networks";
-import type { DrawerSection } from "../drawer/blob-drawer";
-import type { DrawerTarget } from "../drawer/drawer-target";
+import type { InspectorRequest } from "../inspector/inspector";
+import type { InspectorTarget } from "../inspector/inspector-target";
 
-/** Actions a row's menu opens the details at, as the design's inspector orders them. */
-const SECTIONS: readonly { label: string; section: DrawerSection }[] = [
-	{ label: "Extend", section: "storage" },
-	{ label: "Share", section: "share" },
-	{ label: "Verify", section: "verify" },
-	{ label: "Publish to Morse", section: "publish" },
+/** What a row's menu asks the inspector for. */
+export type InspectorAsk = Omit<InspectorRequest, "request">;
+
+/** Actions a row's menu starts in the inspector, as the design's inspector orders them. */
+const ASKS: readonly { label: string; ask: InspectorAsk }[] = [
+	{ label: "Extend", ask: { section: "storage", action: "extend" } },
+	{ label: "Share", ask: { section: "share", action: null } },
+	{ label: "Verify", ask: { section: "verify", action: "verify" } },
+	{ label: "Publish to Morse", ask: { section: "publish", action: null } },
 ];
 
-/** What a quilt file's details can do; storage and verify belong to its quilt. */
-const FILE_SECTIONS: readonly DrawerSection[] = ["share", "publish"];
+/** What a quilt file's menu offers; storage and verify belong to its quilt. */
+const FILE_ASKS = ASKS.filter(
+	(item) => item.ask.section === "share" || item.ask.section === "publish",
+);
 
 /**
- * A row's overflow menu, anchored under its ⋯ button: open the details, or
- * jump to one of their sections, download through the aggregator, and copy
- * the blob id. Until R2's inspector, the details are the blob drawer.
+ * A row's overflow menu, anchored under its ⋯ button: open the inspector,
+ * or start one of its actions (Extend opens the extend panel, Verify runs
+ * the check), select the blob for the bulk bar (how a phone, which hides
+ * the checkboxes, starts a selection), download through the aggregator,
+ * and copy the blob id.
  * Arrow keys move between items; Escape and Tab close it and return focus.
  */
 export function RowMenu({
 	target,
 	anchor,
 	network,
+	selected,
+	onToggleSelected,
 	onOpen,
 	onClose,
 }: {
-	target: DrawerTarget;
+	target: InspectorTarget;
 	anchor: HTMLButtonElement;
 	network: NetworkConfig;
-	onOpen: (section: DrawerSection | null) => void;
+	/** Whether the row's blob is selected; a quilt file is selected with its quilt. */
+	selected: boolean;
+	onToggleSelected: () => void;
+	onOpen: (ask: InspectorAsk | null) => void;
 	onClose: (restoreFocus: boolean) => void;
 }) {
 	const menu = useRef<HTMLDivElement>(null);
 	const { state, copy } = useClipboardCopy();
 	const rect = anchor.getBoundingClientRect();
 	const row = target.kind === "blob" ? target.row : null;
-	const sections =
-		target.kind === "blob"
-			? SECTIONS
-			: SECTIONS.filter((item) => FILE_SECTIONS.includes(item.section));
+	const asks = target.kind === "blob" ? ASKS : FILE_ASKS;
 
 	useEffect(() => {
 		menu.current?.querySelector<HTMLElement>("[role=menuitem]")?.focus();
@@ -97,16 +106,28 @@ export function RowMenu({
 			<button type="button" role="menuitem" onClick={() => onOpen(null)}>
 				Details
 			</button>
-			{sections.map((item) => (
+			{asks.map((item) => (
 				<button
-					key={item.section}
+					key={item.label}
 					type="button"
 					role="menuitem"
-					onClick={() => onOpen(item.section)}
+					onClick={() => onOpen(item.ask)}
 				>
 					{item.label}
 				</button>
 			))}
+			{row ? (
+				<button
+					type="button"
+					role="menuitem"
+					onClick={() => {
+						onToggleSelected();
+						onClose(true);
+					}}
+				>
+					{selected ? "Unselect" : "Select"}
+				</button>
+			) : null}
 			{row && isDownloadable(row) ? (
 				<a
 					role="menuitem"
