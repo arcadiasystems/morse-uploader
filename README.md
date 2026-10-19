@@ -114,7 +114,7 @@ All hooks must be used inside `MorseFilesProvider`.
 |---|---|
 | `useMorseFiles(options)` | Build the handles from a connected wallet. Used once, above the provider. |
 | `useFileUpload()` | Upload one file: `upload({ file, epochs, recipients?, encrypt? })`. Encrypted when `encrypt` is set. Returns `{ fileId, blobId, encrypted, sealIdPrefix, sealNonce, shareLink }` and exposes a phase stepper. |
-| `useFileDownload(fileId, seal)` | Drive a download page: loads metadata, then `load()` / `download()` reads (public, `seal` null) or decrypts (encrypted, `seal` = `{ sealIdPrefix, sealNonce }`). |
+| `useFileDownload(fileId, seal)` | Drive a download page: loads metadata, then `load()` / `download()` reads (public, `seal` null) or decrypts (encrypted, `seal` = `{ sealIdPrefix, sealNonce }`). It first reads the file's Seal prefix from chain, so a file that has one, opened with `seal` null or with another file's prefix, fails with `ShareLinkSealError` instead of serving ciphertext. |
 | `useFileDecrypt()` | Lower-level decrypt: `decrypt({ file, sealIdPrefix, sealNonce })` returns plaintext bytes (one SessionKey signature, reused across files). |
 | `useRecipientFile(fileId)` | Load a `RecipientFile`'s on-chain metadata (name, contentType, size, members, blobId). |
 | `useStorageCostEstimate({ sizeBytes, epochs, encrypt })` | USD storage-cost estimate using Walrus [predictable pricing](https://blog.walrus.xyz/announcing-predictable-pricing-in-usd-on-walrus/) ($0.023/GB/month). |
@@ -124,6 +124,10 @@ All hooks must be used inside `MorseFilesProvider`.
 ### Rendering an upload error
 
 `uploadErrorMessage(error, network)` returns the SDK's `{ title, description, cause }` for any failure, with one rewrite: an insufficient-balance failure arrives as raw `@mysten/sui` text (a coin type, an address, two unscaled integers) that the SDK can only classify as a network problem. This restates it as "Not enough WAL", with the amounts in whole coins and the network's way of topping up. `MorseFileUploader` already uses it; call it directly if you render your own errors.
+
+### Rendering a download error
+
+`downloadErrorMessage(error)` does the same for `useFileDownload`'s `error`. A `ShareLinkSealError` means the file is encrypted and the link cannot open it: `reason` is `"missing"` when the link has no Seal material and `"mismatch"` when its prefix is not the file's. These are titled "Link is incomplete" and "Link does not match this file", and both ask the reader to get the full link from the sender. Everything else goes to the SDK's `formatUserMessage`. `MorseFileDownloader` already uses it.
 
 ## How encryption works
 

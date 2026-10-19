@@ -2,6 +2,22 @@
 
 All notable changes to `@arcadiasystems/morse-uploader` will be documented in this file. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **A share link that lost its Seal material served an encrypted file as if it were public.** `useFileDownload` decided whether to decrypt from the link alone, so a link that arrived without its `p` and `n` parameters (a chat client trimming the fragment, a URL copied by hand, a link rebuilt from the file id) read the bytes straight from Walrus and handed back ciphertext as the file, with no error anywhere. `load` and `download` now first read the file's Seal prefix from chain with the SDK's `getRecipientFileSealPrefix`, the only reliable sign that a file is encrypted (`members` is not one, because the owner is always a member). A file with an on-chain prefix opened from a link without Seal material now fails with a `ShareLinkSealError` and serves nothing, and `MorseFileDownloader` shows "Link is incomplete" with "This file is encrypted, and the link is missing the details needed to decrypt it. Ask the sender for the full link."
+- **A link whose Seal prefix is not the file's is refused before the wallet is asked to sign.** Such a link cannot decrypt the file, but it used to cost a SessionKey signature and then fail at the key servers with what reads as a permissions error, blaming the wallet for a damaged link. It now fails with `ShareLinkSealError` reason `"mismatch"`, shown as "Link does not match this file". The on-chain prefix is deliberately not substituted for the link's: the nonce is not on chain, so a link with one damaged field cannot be told apart from a link to a different file, and the uploader already refuses half-damaged links rather than guessing (see 0.2.0's `parseShareLink` fix).
+
+  A file with no on-chain prefix behaves as before. Files encrypted before the prefix was stored on chain have none, and their links still carry the Seal material, so a missing prefix does not prove a file is public and the link still decides.
+
+  The prefix is read only when the bytes are fetched, so a page that renders just the metadata pays nothing extra; a public download costs one more round trip and an encrypted one two. The read is aborted when the component unmounts, and an aborted fetch stops before reading bytes or prompting the wallet.
+
+### Added
+
+- **`downloadErrorMessage(error)`**, used by `MorseFileDownloader` and exported for custom UIs built on `useFileDownload`. It titles a `ShareLinkSealError` by its reason and defers everything else to the SDK's `formatUserMessage`, which would title it "Unexpected error".
+- **`ShareLinkSealError`**, with `reason: ShareLinkSealErrorReason` (`"missing" | "mismatch"`). `useFileDownload` sets it as `error` when the link cannot open an encrypted file.
+
 ## [0.3.0] - 2026-10-18
 
 Moves to `@arcadiasystems/morse-sdk` 0.9 and the Mysten lines it requires. The public API is unchanged. This is a minor bump because the new peer ranges exclude every version 0.2.x accepted, so upgrading means upgrading the SDK and all three Mysten packages with it.

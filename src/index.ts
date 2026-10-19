@@ -9,6 +9,7 @@
 
 export { DEFAULT_ENCRYPTION_OVERHEAD_BYTES } from "./constants/default-encryption-overhead-bytes.js";
 export { buildShareLink } from "./files/build-share-link.js";
+export { downloadErrorMessage } from "./files/download-error-message.js";
 export { epochDurationMs } from "./files/epoch-duration-ms.js";
 export { estimateStorageUsd } from "./files/estimate-storage-usd.js";
 export {
@@ -17,6 +18,7 @@ export {
 } from "./files/morse-files-provider.js";
 export { parseShareLink } from "./files/parse-share-link.js";
 export { resolveSealServers } from "./files/resolve-seal-servers.js";
+export { ShareLinkSealError } from "./files/share-link-seal-error.js";
 export type {
 	BuildShareLinkArgs,
 	CompletedFileUpload,
@@ -34,6 +36,7 @@ export type {
 	ParsedShareLink,
 	SealMaterial,
 	SetupStatus,
+	ShareLinkSealErrorReason,
 	UsdCostArgs,
 	UsdCostEstimate,
 	UseFileDecryptResult,
