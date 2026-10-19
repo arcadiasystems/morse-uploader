@@ -5,6 +5,7 @@ import {
 	blobUrl,
 	quiltPatchesUrl,
 	quiltPatchUrl,
+	quiltPathUrl,
 } from "./aggregator-urls";
 
 const TESTNET = NETWORKS.testnet.aggregatorUrl;
@@ -45,6 +46,25 @@ describe("aggregator URLs (PROTOCOL-NOTES section 10)", () => {
 			quiltPatchesUrl(TESTNET, "LoFCiFAn9m5X4kwNomSLtZ4qGx2IQHIeFExiHrnBHew"),
 		).toBe(
 			"https://aggregator.walrus-testnet.walrus.space/v1/quilts/LoFCiFAn9m5X4kwNomSLtZ4qGx2IQHIeFExiHrnBHew/patches",
+		);
+	});
+
+	it("addresses a quilt file by its path, the identifier as one segment", () => {
+		// Live Testnet, 2026-10-18: a bare slash answered 404, %2F answered 200
+		// with the same bytes as the patch id route (notes UNCONFIRMED item 7).
+		const quiltId = "kZ8U7GrABIM_IanO1KxnBjPnJeAOm9jXUi1orsJ3QvE";
+		expect(quiltPathUrl(TESTNET, quiltId, "assets/a.txt")).toBe(
+			`https://aggregator.walrus-testnet.walrus.space/v1/blobs/by-quilt-id/${quiltId}/assets%2Fa.txt`,
+		);
+	});
+
+	it("keeps ordinary file names readable", () => {
+		const quiltId = "kZ8U7GrABIM_IanO1KxnBjPnJeAOm9jXUi1orsJ3QvE";
+		expect(quiltPathUrl(MAINNET, quiltId, "index.html")).toBe(
+			`https://aggregator.walrus-mainnet.walrus.space/v1/blobs/by-quilt-id/${quiltId}/index.html`,
+		);
+		expect(quiltPathUrl(TESTNET, quiltId, "about me.txt")).toBe(
+			`https://aggregator.walrus-testnet.walrus.space/v1/blobs/by-quilt-id/${quiltId}/about%20me.txt`,
 		);
 	});
 });

@@ -19,7 +19,7 @@ const INSUFFICIENT_COIN =
 	/InsufficientCoinBalance|insufficient (coin )?balance/i;
 
 /**
- * A failed drawer action as the drawer says it: the wallet declined, the
+ * A failed action as the inspector and the bulk bar say it: the wallet declined, the
  * wallet cannot pay, storage nodes did not answer, or what chain reported.
  */
 export function describeActionError(error: unknown): string {

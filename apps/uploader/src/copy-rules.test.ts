@@ -77,7 +77,6 @@ describe("copy rules", () => {
 			/extended this month/i, // chain keeps no extend history per blob
 			/via MCP/, // agents are not built
 			/Open Morse Press/, // no address to link to
-			/Drop anything, anywhere/, // R1 has one drop zone; drop anywhere is R3
 		];
 		expect(
 			files
@@ -95,20 +94,25 @@ describe("copy rules", () => {
 			"Folders keep their structure and upload as one quilt of up to 666 files.",
 		);
 		expect(drop).toContain("Up to 1 GiB per upload.");
-		const sheet = text("upload-sheet/upload-sheet.tsx");
-		// Items 2, 7, 8 and 14.
-		expect(sheet).toContain("Each blob carries 64 MB of fixed metadata.");
-		expect(sheet).toContain("Relay tip (SUI)");
-		expect(sheet).toContain("Network fees (SUI)");
-		expect(sheet).toContain(
+		// R3 makes the design's headline true: drops land anywhere and stage first.
+		expect(drop).toContain("Drop anything, anywhere");
+		expect(drop).toContain("They stage first; nothing is sent until you sign.");
+		// Items 2 and 7: the staging tray's itemised cost.
+		const cost = text("staging/cost-list.tsx");
+		expect(cost).toContain("Each blob carries 64 MB of fixed metadata.");
+		expect(cost).toContain("Relay tip (SUI)");
+		expect(cost).toContain("Network fees (SUI)");
+		// Item 8: how the signatures come, under Sign and send.
+		expect(text("staging/sign-help.ts")).toContain(
 			"Your wallet asks once per item to register and once to certify the batch",
 		);
-		expect(sheet).toContain(
+		// Item 14: what Seal keeps private, and what stays public.
+		expect(text("staging/tray-settings.tsx")).toContain(
 			"Client-side. Only wallets you allow can decrypt. The blob id, file name and size stay public.",
 		);
 	});
 
-	it("uses the notes' wording in the blob drawer (items 11, 12, 13 and 16)", () => {
+	it("uses the notes' wording in the inspector (items 11, 12, 13 and 16)", () => {
 		// JSX wraps long copy over lines, so whitespace is folded before matching.
 		const text = (suffix: string) =>
 			(files.find((file) => file.path.endsWith(suffix))?.text ?? "").replace(
@@ -116,22 +120,24 @@ describe("copy rules", () => {
 				" ",
 			);
 		// Item 11: verify says what happened, never a node count.
-		expect(text("drawer/verify-section.tsx")).toContain(
+		expect(text("inspector/verify-section.tsx")).toContain(
 			"Bytes match the blob id. Rebuilt from storage nodes",
 		);
 		// Item 16: delete returns a Storage object; no WAL comes back.
-		const remove = text("drawer/delete-section.tsx");
+		const remove = text("inspector/delete-section.tsx");
 		expect(remove).toContain("returns its storage to your wallet");
 		expect(remove).toContain("No WAL is refunded.");
 		// Item 13 and section 9: auto-extend only runs while the app is open.
-		expect(text("drawer/auto-extend-panel.tsx")).toContain(
+		expect(text("inspector/auto-extend-panel.tsx")).toContain(
 			"Auto-extend runs while Morse Uploader is open. It asks your wallet to sign one transaction for all blobs that are close to expiry and never spends more than your WAL cap.",
 		);
-		// Item 12: a blob has no Walrus Site link, and the drawer says so.
-		expect(text("drawer/share-section.tsx")).toContain("No Walrus Site link");
+		// Item 12: a blob has no Walrus Site link, and the inspector says so.
+		expect(text("inspector/share-section.tsx")).toContain(
+			"No Walrus Site link",
+		);
 		// Item 5: the end is an epoch, with days as an estimate. Storage is
 		// valid while epoch < end_epoch (section 5), so it runs until that epoch starts.
-		expect(text("drawer/storage-section.tsx")).toContain(
+		expect(text("inspector/storage-section.tsx")).toContain(
 			"Paid until epoch {blob.endEpoch} starts",
 		);
 	});
@@ -168,5 +174,74 @@ describe("copy rules", () => {
 			'"certify"',
 			'"record"',
 		]);
+	});
+
+	it("words drop anywhere, the tray and the transfers slide-over by the notes (items 4, 8, 9 and 10)", () => {
+		const text = (suffix: string) =>
+			(files.find((file) => file.path.endsWith(suffix))?.text ?? "").replace(
+				/\s+/g,
+				" ",
+			);
+		// The drop state as the design words it: drops stage, nothing uploads.
+		const overlay = text("drop/drop-overlay.tsx");
+		expect(overlay).toContain("Drop to stage");
+		expect(overlay).toContain(
+			"Folders keep their paths and become quilts. Nothing uploads until you sign.",
+		);
+		// One button with the real signature count, and prices from chain.
+		const tray = text("staging/staging-tray.tsx");
+		// The label is a template: "Sign and send · " then the computed count.
+		expect(tray).toContain("`Sign and send · $");
+		expect(tray).toContain("Price read from the Walrus system object");
+		// Item 4: Testnet offers what fits in 53 one-day epochs, Max included.
+		const periods = text("upload/periods.ts");
+		expect(periods).toContain('{ id: "7d", label: "7 days", days: 7 }');
+		expect(periods).toContain('{ id: "max", label: "Max", days: null }');
+		// Item 9: five segments, the register step between encode and upload.
+		expect(text("transfers/transfer-view.ts")).toContain(
+			'"encode", "register", "upload", "certify", "record", ] as const',
+		);
+		// Item 10: the relay times out, not a publisher.
+		expect(text("transfers/transfer-queue.ts")).toContain(
+			"The upload relay timed out.",
+		);
+		// Items 6 and 8: no year on Testnet, no single-signature batching.
+		expect(
+			files
+				.filter((file) => /(^|\/)(staging|drop|transfers)\//.test(file.path))
+				.filter((file) =>
+					/\bsign once\b|one signature for (all|everything)/i.test(file.text),
+				)
+				.map((file) => file.path),
+		).toEqual([]);
+	});
+
+	it("words the bulk bar and the palette by the notes (items 6, 11, 12 and 16)", () => {
+		const text = (suffix: string) =>
+			(files.find((file) => file.path.endsWith(suffix))?.text ?? "").replace(
+				/\s+/g,
+				" ",
+			);
+		// Item 16: a bulk delete returns Storage objects; no WAL comes back.
+		const remove = text("bulk/bulk-delete-sheet.tsx");
+		expect(remove).toContain("returns their storage to your wallet");
+		expect(remove).toContain("No WAL is refunded.");
+		// Item 12: Walrus Sites deploy is not built, and the inspector says so.
+		expect(text("inspector/publish-section.tsx")).toContain(
+			"Walrus Sites deploy is coming",
+		);
+		// Item 11: bulk verify says what happens, never how many nodes answered.
+		const verify = text("bulk/bulk-verify-sheet.tsx");
+		expect(verify).toContain("rebuilt from storage nodes");
+		expect(verify).not.toMatch(/\b\d+ storage nodes\b/);
+		// Item 6: extends are bought in epochs within 53, never by the year.
+		const palette = text("palette/palette-commands.tsx");
+		expect(palette).toContain("by 1 epoch");
+		expect(
+			files
+				.filter((file) => /(^|\/)(bulk|palette)\//.test(file.path))
+				.filter((file) => /\b1 year\b/i.test(file.text))
+				.map((file) => file.path),
+		).toEqual([]);
 	});
 });

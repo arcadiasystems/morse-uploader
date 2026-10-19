@@ -17,31 +17,30 @@ import { fromHex } from "@mysten/sui/utils";
 import { expect, type Page, test } from "@playwright/test";
 import { sealCiphertextSize } from "../src/upload/seal-ciphertext-size";
 import { connect } from "./app-actions";
-import {
-	type ChainBlob,
-	ownedBlobs,
-	quiltPatchIdentifiers,
-	walCoinType,
-} from "./chain";
+import { type ChainBlob, quiltPatchIdentifiers, walCoinType } from "./chain";
 import { installTestWallet, KEY_ENV, keypairFromEnv } from "./test-wallet";
 import {
 	aggregatorBytes,
 	chainBlob,
-	confirm,
 	expectWalSpent,
-	openSheet,
-	openTransfers,
+	openSetting,
 	overflow,
 	predictedWal,
-	queueRow,
+	signAndSend,
 	spendTracker,
+	stageFiles,
+	stageFolder,
+	stagingTray,
+	trayItem,
 	waitForDone,
 } from "./upload-actions";
 
 /**
- * Real uploads on Testnet with the funded test wallet, each for one epoch
- * and a few bytes, checked against chain over Sui GraphQL (the app writes
- * over gRPC). Every test spends a little SUI and WAL; none deletes a blob.
+ * Real uploads on Testnet with the funded test wallet, staged in the tray
+ * and sent with Sign and send, each for one epoch and a few bytes, checked
+ * against chain over Sui GraphQL (the app writes over gRPC). Every test
+ * spends a little SUI and WAL; none deletes a blob. The transfers spec
+ * covers batches, Pause, Retry now and Finish.
  */
 const funded = keypairFromEnv();
 const NETWORK = "testnet";
@@ -78,16 +77,16 @@ test.describe("uploads on Testnet", () => {
 
 	test("uploads one small public file for one epoch", async () => {
 		const spend = await spendTracker(owner, wal);
-		const sheet = await openSheet(page, [
+		const tray = await stageFiles(page, [
 			file(
 				"hello-walrus.txt",
 				"Hello, Walrus. One epoch only.\n",
 				"text/plain",
 			),
 		]);
-		await expect(sheet.getByText("hello-walrus.txt")).toBeVisible();
-		const predicted = await predictedWal(sheet, 1);
-		await confirm(sheet, 2);
+		await expect(trayItem(tray, "hello-walrus.txt")).toContainText("1 blob");
+		const predicted = await predictedWal(tray, 1);
+		await signAndSend(page, 2);
 
 		const [item] = await waitForDone(page, ["hello-walrus.txt"]);
 		const blob = await chainBlob(owner, item?.blobId);
@@ -109,15 +108,14 @@ test.describe("uploads on Testnet", () => {
 			"about.txt": "About this quilt.\n",
 			"assets/a.txt": "An asset.\n",
 		});
-		await page.locator('input[data-picker="folder"]').setInputFiles(folder);
-		const sheet = await openSheet(page);
-		await expect(
-			sheet.getByText("→ 1 quilt, 3 files, paths kept"),
-		).toBeVisible();
-		const predicted = await predictedWal(sheet, 1);
-		await confirm(sheet, 2);
+		const tray = await stageFolder(page, folder);
+		await expect(trayItem(tray, "site/")).toContainText(
+			"3 files → 1 quilt, paths kept",
+		);
+		const predicted = await predictedWal(tray, 1);
+		await signAndSend(page, 2);
 
-		const [item] = await waitForDone(page, ["site/"]);
+		const [item] = await waitForDone(page, ["site"]);
 		const blob = await chainBlob(owner, item?.blobId);
 		expect(blob.certifiedEpoch).not.toBeNull();
 		expect(blob.endEpoch).toBe(blob.startEpoch + 1);
@@ -134,49 +132,20 @@ test.describe("uploads on Testnet", () => {
 		await expectListed(page, blob);
 	});
 
-	test("uploads two files as one blob each, certified in one transaction", async () => {
-		const spend = await spendTracker(owner, wal);
-		const folder = await writeFolder(test.info().outputPath("pair"), {
-			"first.txt": "First of two.\n",
-			"second.txt": "Second of two.\n",
-		});
-		await page.locator('input[data-picker="folder"]').setInputFiles(folder);
-		const sheet = await openSheet(page);
-		await sheet.getByText("One blob per file", { exact: true }).click();
-		await expect(sheet.getByText("pair/first.txt")).toBeVisible();
-		const predicted = await predictedWal(sheet, 1);
-		// Two registers and one certify for the batch.
-		await confirm(sheet, 3);
-
-		const items = await waitForDone(page, [
-			"pair/first.txt",
-			"pair/second.txt",
-		]);
-		const blobs = await Promise.all(
-			items.map((item) => chainBlob(owner, item.blobId)),
-		);
-		for (const blob of blobs) {
-			expect(blob.certifiedEpoch).not.toBeNull();
-			expect(blob.endEpoch).toBe(blob.startEpoch + 1);
-		}
-		expect(blobs.map((blob) => blob.attributes.name).sort()).toEqual([
-			"pair/first.txt",
-			"pair/second.txt",
-		]);
-		await expectWalSpent(spend, predicted);
-	});
-
 	test("encrypts a file with Seal, marks it and decrypts it back", async () => {
 		const plaintext = "Sealed on Testnet for one epoch.\n";
 		const spend = await spendTracker(owner, wal);
-		const sheet = await openSheet(page, [
+		const tray = await stageFiles(page, [
 			file("sealed-note.txt", plaintext, "text/plain"),
 		]);
-		await sheet.getByRole("switch", { name: /Encrypt with Seal/ }).check();
-		await expect(sheet.getByText("→ 1 encrypted blob")).toBeVisible();
-		const predicted = await predictedWal(sheet, 1);
+		await openSetting(tray, "Encryption");
+		await tray.getByRole("switch", { name: /Encrypt with Seal/ }).check();
+		await expect(trayItem(tray, "sealed-note.txt")).toContainText(
+			"1 encrypted blob",
+		);
+		const predicted = await predictedWal(tray, 1);
 		// Register, certify, and the RecipientFile that is the Seal access policy.
-		await confirm(sheet, 3);
+		await signAndSend(page, 3);
 
 		const [item] = await waitForDone(page, ["sealed-note.txt"]);
 		const blob = await chainBlob(owner, item?.blobId);
@@ -227,15 +196,19 @@ test.describe("uploads on Testnet", () => {
 
 	test("also publishes to a Morse blob collection the wallet writes to", async () => {
 		const spend = await spendTracker(owner, wal);
-		const sheet = await openSheet(page, [
+		const tray = await stageFiles(page, [
 			file(
 				"morse-note.md",
 				"# Published from Morse Uploader\n",
 				"text/markdown",
 			),
 		]);
-		await sheet.getByRole("switch", { name: /Also publish to Morse/ }).check();
-		const picker = sheet.getByRole("combobox", {
+		// The tray keeps its settings: the last upload turned Seal on.
+		await openSetting(tray, "Encryption");
+		await tray.getByRole("switch", { name: /Encrypt with Seal/ }).uncheck();
+		await openSetting(tray, "Also publish");
+		await tray.getByRole("switch", { name: /Also publish to Morse/ }).check();
+		const picker = tray.getByRole("combobox", {
 			name: "Publication and collection",
 		});
 		await expect(picker).toBeVisible({ timeout: 60_000 });
@@ -243,9 +216,9 @@ test.describe("uploads on Testnet", () => {
 			.locator("option", { hasText: `Claude Testnet Run · ${COLLECTION}` })
 			.first();
 		await picker.selectOption((await option.getAttribute("value")) ?? "");
-		const predicted = await predictedWal(sheet, 1);
+		const predicted = await predictedWal(tray, 1);
 		// Register, certify, and one addEntry.
-		await confirm(sheet, 3);
+		await signAndSend(page, 3);
 
 		const [item] = await waitForDone(page, ["morse-note.md"]);
 		const blob = await chainBlob(owner, item?.blobId);
@@ -288,63 +261,12 @@ test.describe("uploads on Testnet", () => {
 		});
 		expect(revision?.contentType).toBe("text/markdown");
 	});
-
-	test("offers Finish when certify fails after the upload, and Finish certifies", async () => {
-		const spend = await spendTracker(owner, wal);
-		// A test-only network fault: the second transaction the page submits,
-		// the certify, is dropped before it leaves the browser.
-		let submissions = 0;
-		await page.route(
-			"**/sui.rpc.v2.TransactionExecutionService/ExecuteTransaction",
-			(route) => {
-				submissions += 1;
-				return submissions === 2 ? route.abort("failed") : route.continue();
-			},
-		);
-		const sheet = await openSheet(page, [
-			file("finish-me.txt", "Certified by Finish.\n", "text/plain"),
-		]);
-		const predicted = await predictedWal(sheet, 1);
-		await confirm(sheet, 2);
-
-		const panel = await openTransfers(page);
-		await panel.getByRole("tab", { name: /Failed/ }).click();
-		const row = queueRow(page, "finish-me.txt");
-		await expect(row).toContainText("Certify failed", { timeout: 180_000 });
-		await expect(row).toContainText("Finish certifies it");
-		const objectId = await row.locator(".detail code").getAttribute("title");
-		expect(objectId).toMatch(/^0x[0-9a-f]{64}$/);
-		const before = (await ownedBlobs(NETWORK, owner)).find(
-			(blob) => blob.objectId === objectId,
-		);
-		expect(before?.certifiedEpoch).toBeNull();
-
-		await page.unroute(
-			"**/sui.rpc.v2.TransactionExecutionService/ExecuteTransaction",
-		);
-		await row.getByRole("button", { name: "Finish finish-me.txt" }).click();
-		const [item] = await waitForDone(page, ["finish-me.txt"]);
-		const blob = await chainBlob(owner, item?.blobId);
-		expect(blob.objectId).toBe(objectId);
-		expect(blob.certifiedEpoch).not.toBeNull();
-		expect(blob.endEpoch).toBe(blob.startEpoch + 1);
-		await expectWalSpent(spend, predicted);
-	});
-
-	test("has no horizontal overflow at 390 with the queue populated", async () => {
-		await page.setViewportSize({ width: 390, height: 844 });
-		const panel = await openTransfers(page);
-		await panel.getByRole("tab", { name: /Done/ }).click();
-		await expect(panel.locator("tr.q.done").first()).toBeVisible();
-		expect(await overflow(page)).toEqual({ fits: true });
-		await page.setViewportSize({ width: 1440, height: 900 });
-	});
 });
 
-test.describe("the upload sheet on a phone", () => {
+test.describe("the staging tray on a phone", () => {
 	test.skip(!funded, `Set ${KEY_ENV} to run the upload tests.`);
 
-	test("has no horizontal overflow at 390 with the sheet open; nothing is signed", async ({
+	test("has no horizontal overflow at 390 with a file staged; nothing is signed", async ({
 		page,
 	}) => {
 		const keypair = funded as Keypair;
@@ -352,15 +274,15 @@ test.describe("the upload sheet on a phone", () => {
 		await installTestWallet(page, [keypair]);
 		await page.goto("/app");
 		await connect(page, keypair.toSuiAddress());
-		const sheet = await openSheet(page, [
+		const tray = await stageFiles(page, [
 			file("mobile.txt", "Not uploaded.\n", "text/plain"),
 		]);
 		await expect(
-			sheet.getByRole("button", { name: /Upload · sign 2 times/ }),
+			tray.getByRole("button", { name: "Sign and send · 2 signatures" }),
 		).toBeVisible({ timeout: 60_000 });
 		expect(await overflow(page)).toEqual({ fits: true });
-		await sheet.getByRole("button", { name: "Cancel" }).click();
-		await expect(sheet).toBeHidden();
+		await tray.getByRole("button", { name: "Clear", exact: true }).click();
+		await expect(stagingTray(page)).toBeHidden();
 	});
 });
 
@@ -380,8 +302,12 @@ async function writeFolder(
 	return root;
 }
 
-/** The blob's row in Files, found by searching its blob id. */
+/** The blob's row in Files, found with the Files filter box by its blob id. */
 async function expectListed(page: Page, blob: ChainBlob): Promise<void> {
+	// The filter box lives on the Files view; the suite starts on the Overview.
+	await page.evaluate(() => {
+		window.location.hash = "#files";
+	});
 	const search = page.getByRole("searchbox", { name: /Search blobs/ });
 	await search.fill(blob.blobId);
 	await expect(

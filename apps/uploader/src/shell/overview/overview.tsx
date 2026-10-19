@@ -12,9 +12,7 @@ import { errorMessage } from "@/lib/error-message";
 import { formatBytes } from "@/lib/format-bytes";
 import { formatDays, formatShortDate } from "@/lib/format-date";
 import type { ChainRead } from "@/lib/use-chain-read";
-import type { PickedFile } from "@/local/local-library";
-import { MAX_EXTENDS_PER_TRANSACTION } from "@/manage/auto-extend";
-import { planExtend } from "@/manage/extend-rules";
+import { planBulkExtend } from "@/manage/bulk-extend";
 import type { MorseReads } from "@/morse/use-morse-reads";
 import type { NetworkConfig } from "@/network/networks";
 import type { FilePickers } from "../file-pickers";
@@ -40,7 +38,6 @@ interface OverviewProps {
 	onRetryActivity: () => void;
 	onShowPublished: () => void;
 	pickers: FilePickers;
-	onPicked: (files: PickedFile[]) => void;
 }
 
 /**
@@ -119,7 +116,7 @@ export function Overview(props: OverviewProps) {
 						onTopUp={props.onTopUp}
 					/>
 					<ExpiryTimelineCard network={network} listed={listed} />
-					<DropCard pickers={props.pickers} onPicked={props.onPicked} />
+					<DropCard pickers={props.pickers} />
 					<ActivityCard
 						network={network}
 						activity={props.activity}
@@ -225,16 +222,17 @@ function PaidThroughCard({
 	const { value, unit } = daysParts(firstEnd.daysLeft);
 	const plan =
 		prices.status === "ready" && expiringSoon.length > 0
-			? planExtend(
-					[...expiringSoon].sort((a, b) => a.blob.endEpoch - b.blob.endEpoch),
-					1,
-					listed.clock,
-					network.maxEpochsAhead,
-					prices.data.storagePerUnit,
-				)
+			? planBulkExtend({
+					rows: expiringSoon,
+					epochs: 1,
+					clock: listed.clock,
+					maxEpochsAhead: network.maxEpochsAhead,
+					pricePerUnit: prices.data.storagePerUnit,
+					capFrost: null,
+				})
 			: null;
-	const items = plan?.items.slice(0, MAX_EXTENDS_PER_TRANSACTION) ?? [];
-	const cost = items.reduce((sum, item) => sum + item.frost, 0n);
+	const items = plan?.items ?? [];
+	const cost = plan?.totalFrost ?? 0n;
 	return (
 		<div className="card span-4" data-first-end-epoch={firstEnd.endEpoch}>
 			<h4>Storage paid through</h4>
@@ -255,9 +253,7 @@ function PaidThroughCard({
 					>
 						{items.length === 0
 							? `Extend the ${expiringSoon.length}`
-							: items.length < expiringSoon.length
-								? `Extend the ${items.length} soonest by 1 epoch · `
-								: `Extend the ${items.length} by 1 epoch · `}
+							: `Extend the ${items.length} by 1 epoch · `}
 						{items.length === 0 ? null : (
 							<>
 								<TokenAmount raw={cost} context="compact" /> WAL

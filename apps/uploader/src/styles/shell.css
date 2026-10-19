@@ -149,6 +149,7 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
+/* The palette's field: it opens the command palette, as ⌘K does. */
 .top .cmd {
 	display: flex;
 	align-items: center;
@@ -163,32 +164,34 @@
 	max-width: 380px;
 	min-width: 0;
 	background: var(--panel);
+	text-align: left;
+	cursor: pointer;
 }
-.top .cmd input {
+.top .cmd:hover {
+	border-color: var(--line-2);
+}
+.top .cmd .ph {
 	flex: 1;
 	min-width: 0;
-	border: 0;
-	padding: 0;
-	background: transparent;
-	font-size: 13px;
-	color: var(--fg);
-}
-.top .cmd input::placeholder {
-	color: var(--fg-3);
-	opacity: 1;
-}
-.top .cmd input:disabled {
-	cursor: not-allowed;
-}
-.top .cmd input:focus-visible {
-	outline: none;
-}
-.top .cmd:focus-within {
-	outline: 2px solid var(--cyan);
-	outline-offset: 2px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 .top .cmd .keys {
 	margin-left: auto;
+}
+/* On phones the field gives way to an icon button. */
+.top .cmd-icon {
+	display: none;
+	width: 34px;
+	height: 34px;
+	border: 1px solid var(--line);
+	border-radius: 999px;
+	background: transparent;
+	color: var(--fg-2);
+	place-items: center;
+	cursor: pointer;
+	flex: 0 0 auto;
 }
 .top .r {
 	margin-left: auto;
@@ -429,11 +432,15 @@ button.net:hover {
 	.top .cmd,
 	.net .rest,
 	.tpill.idle,
-	.tpill .word {
+	.tpill .word,
+	.tpill .state {
 		display: none;
 	}
 	.top .r {
 		gap: 8px;
+	}
+	.top .cmd-icon {
+		display: grid;
 	}
 	.tpill,
 	.net {

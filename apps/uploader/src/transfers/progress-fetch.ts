@@ -39,7 +39,7 @@ export function createProgressFetch(
 			};
 			request.onerror = () => {
 				settle();
-				reject(new TypeError(`The request to ${url} failed.`));
+				reject(new TypeError(`The request to ${hostOf(url)} failed.`));
 			};
 			if (signal?.aborted) {
 				onAbort();
@@ -56,6 +56,15 @@ function requestBody(body: RequestInit["body"]): XMLHttpRequestBodyInit | null {
 	if (body instanceof ReadableStream)
 		throw new TypeError("Streaming request bodies cannot report progress.");
 	return body;
+}
+
+/**
+ * Where a request went, for the message a person reads: the relay's URL
+ * carries a long query string (blob id, nonce, transaction) that says
+ * nothing useful there.
+ */
+function hostOf(url: string): string {
+	return URL.canParse(url) ? new URL(url).host : url;
 }
 
 function parseHeaders(raw: string): Headers {

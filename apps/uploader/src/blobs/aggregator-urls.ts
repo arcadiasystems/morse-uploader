@@ -34,6 +34,21 @@ export function quiltPatchUrl(aggregatorUrl: string, patchId: string): string {
 	return `${aggregatorUrl}/v1/blobs/by-quilt-patch-id/${patchId}`;
 }
 
+/**
+ * One file in a quilt by its path, the identifier it was stored under. The
+ * identifier is one path segment, so its `/` are percent-encoded: checked
+ * live on 2026-10-18, a Testnet quilt's `assets/a.txt` answers 404 with a
+ * bare `/` and 200 with `%2F`, with the same bytes as its patch id route
+ * (PROTOCOL-NOTES UNCONFIRMED item 7).
+ */
+export function quiltPathUrl(
+	aggregatorUrl: string,
+	quiltBlobId: string,
+	identifier: string,
+): string {
+	return `${aggregatorUrl}/v1/blobs/by-quilt-id/${quiltBlobId}/${encodeURIComponent(identifier)}`;
+}
+
 /** A quilt's files: `[{ identifier, patch_id, tags }]`. */
 export function quiltPatchesUrl(
 	aggregatorUrl: string,

@@ -1,4 +1,5 @@
 import type { EpochClock } from "@/blobs/epoch-clock";
+import type { NetworkId } from "@/network/networks";
 
 /**
  * Storage periods mapped to Walrus epochs (PROTOCOL-NOTES section 5).
@@ -6,18 +7,37 @@ import type { EpochClock } from "@/blobs/epoch-clock";
  * partly used, so a period buys enough epochs to cover at least that long
  * from now: `ceil((now + period - epochStart) / epochDuration)`. Rounding
  * down would deliver less than the period.
+ *
+ * Each network offers the periods that make sense within 53 epochs (notes
+ * section 13, item 4): Testnet epochs last a day, so it offers 7 days, 30
+ * days and the most it stores ahead; Walrus Mainnet epochs last 14 days, so
+ * it keeps 30 days to 2 years, and 2 years only fits early in an epoch.
  */
 
 const DAY_MS = 86_400_000;
 
-export const PERIODS = [
-	{ id: "30d", label: "30 days", days: 30 },
-	{ id: "6m", label: "6 months", days: 182.5 },
-	{ id: "1y", label: "1 year", days: 365 },
-	{ id: "2y", label: "2 years", days: 730 },
-] as const;
+export type PeriodId = "7d" | "30d" | "6m" | "1y" | "2y" | "max";
 
-export type PeriodId = (typeof PERIODS)[number]["id"];
+interface PeriodSpec {
+	id: PeriodId;
+	label: string;
+	/** `null` buys the most epochs Walrus stores ahead. */
+	days: number | null;
+}
+
+const PERIODS: Readonly<Record<NetworkId, readonly PeriodSpec[]>> = {
+	testnet: [
+		{ id: "7d", label: "7 days", days: 7 },
+		{ id: "30d", label: "30 days", days: 30 },
+		{ id: "max", label: "Max", days: null },
+	],
+	mainnet: [
+		{ id: "30d", label: "30 days", days: 30 },
+		{ id: "6m", label: "6 months", days: 182.5 },
+		{ id: "1y", label: "1 year", days: 365 },
+		{ id: "2y", label: "2 years", days: 730 },
+	],
+};
 
 export type PeriodOption =
 	| {
@@ -57,17 +77,31 @@ export function storageEndMs(epochs: number, clock: EpochClock): number {
 }
 
 /**
- * Each period with the epochs it needs on this network. A period that needs
+ * The network's periods with the epochs each needs. A period that needs
  * more than `maxEpochsAhead` epochs (53 on both networks) does not fit:
- * `reserve_space` aborts beyond it.
+ * `reserve_space` aborts beyond it. Max is always `maxEpochsAhead` epochs,
+ * labelled with the whole days it covers, since the current epoch is
+ * already partly used.
  */
 export function periodOptions(
+	network: NetworkId,
 	clock: EpochClock,
 	maxEpochsAhead: number,
 	nowMs: number,
 ): PeriodOption[] {
 	const nextEpochStartMs = clock.epochStartMs + clock.epochDurationMs;
-	return PERIODS.map(({ id, label, days }) => {
+	return PERIODS[network].map(({ id, label, days }): PeriodOption => {
+		if (days === null) {
+			const endsAtMs = storageEndMs(maxEpochsAhead, clock);
+			const covered = Math.floor((endsAtMs - nowMs) / DAY_MS);
+			return {
+				id,
+				label: `${label} (about ${covered} days)`,
+				fits: true,
+				epochs: maxEpochsAhead,
+				endsAtMs,
+			};
+		}
 		const epochs = epochsForDays(days, clock, nowMs);
 		if (epochs <= maxEpochsAhead)
 			return {
@@ -86,4 +120,14 @@ export function periodOptions(
 			availableAtMs: atEpochStart <= maxEpochsAhead ? nextEpochStartMs : null,
 		};
 	});
+}
+
+/** Whether a stored value names one of the periods. */
+export function isPeriodId(value: unknown): value is PeriodId {
+	return (
+		typeof value === "string" &&
+		Object.values(PERIODS).some((periods) =>
+			periods.some((period) => period.id === value),
+		)
+	);
 }

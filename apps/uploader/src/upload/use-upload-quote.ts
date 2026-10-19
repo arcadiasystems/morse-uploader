@@ -12,7 +12,7 @@ import {
 import type { RelayTipConfig, WalrusPricing } from "./upload-cost";
 import type { SealSettings } from "./upload-plan";
 
-/** What the upload sheet prices with, read when it opens. */
+/** What an upload is priced with: read when the tray opens, and again before signing. */
 export interface QuoteInputs {
 	pricing: WalrusPricing;
 	clock: EpochClock;
@@ -22,7 +22,11 @@ export interface QuoteInputs {
 	seal: SealSettings | null;
 }
 
-async function readQuoteInputs(
+/**
+ * Live prices from the Walrus system object, the epoch clock, the relay tip
+ * and the Seal settings, read from chain now (PROTOCOL-NOTES section 4).
+ */
+export async function readQuoteInputs(
 	client: NetworkClient,
 	network: NetworkConfig,
 	signal: AbortSignal,
@@ -47,9 +51,9 @@ async function readQuoteInputs(
 }
 
 /**
- * Live prices, the epoch clock, the relay tip and the Seal settings, read
- * from chain each time the sheet opens (`session` changes) and when the tab
- * is shown again: prices can change at any moment (PROTOCOL-NOTES section 4).
+ * The quote inputs, read each time `session` changes (the tray opens) and
+ * when the tab is shown again: prices can change at any moment
+ * (PROTOCOL-NOTES section 4).
  */
 export function useQuoteInputs(
 	network: NetworkConfig,
@@ -70,7 +74,7 @@ export interface GasRequest {
 }
 
 /**
- * The simulated gas of each register transaction for the sheet's current
+ * The simulated gas of each register transaction for the tray's current
  * choices, re-run whenever they change. `null` reads nothing.
  */
 export function useRegisterGas(

@@ -202,14 +202,22 @@ test.describe("Files, read from chain", () => {
 		await expect(page.locator("header.top .ctx")).toContainText(short(address));
 	});
 
-	test("searches names, blob ids and object ids, ignoring case, from ⌘K", async ({
+	test("filters names, blob ids and object ids, ignoring case, from the Files filter box", async ({
 		page,
 	}) => {
 		const target = chain[0];
 		if (!target) throw new Error("The test wallet owns no blobs.");
+		// ⌘K opens the command palette; the filter box stays on the Files view.
 		await page.keyboard.press("ControlOrMeta+K");
+		await expect(
+			page.getByRole("dialog", { name: "Command palette" }),
+		).toBeVisible();
+		await page.keyboard.press("Escape");
+		await expect(
+			page.getByRole("dialog", { name: "Command palette" }),
+		).toBeHidden();
 		const search = page.getByRole("searchbox", { name: /Search blobs/ });
-		await expect(search).toBeFocused();
+		await expect(search).toBeVisible();
 
 		const objectFragment = target.objectId.slice(2, 14).toUpperCase();
 		await search.fill(objectFragment);
@@ -337,7 +345,7 @@ test.describe("Files, read from chain", () => {
 		await expect(row).toHaveAttribute("aria-expanded", "true");
 	});
 
-	test("selects rows from the keyboard, opens the drawer, and acts from the row menu", async ({
+	test("selects rows from the keyboard, opens the inspector, and acts from the row menu", async ({
 		page,
 	}) => {
 		const { epoch } = await walrusEpoch("testnet");
@@ -358,15 +366,15 @@ test.describe("Files, read from chain", () => {
 		const row = grid(page).locator(`tr[data-key="${target.objectId}"]`);
 		await expect(row).toHaveAttribute("aria-selected", "true");
 		await expect(row).toHaveClass(/\bsel\b/);
-		// Activating a row opens the blob drawer beside the list.
-		const panel = page.locator("aside.drawer");
+		// Activating a row opens the inspector beside the list.
+		const panel = page.locator("aside.insp");
 		await expect(panel).toBeVisible();
 		// The record's epochs line: "registered N · certified N · ends N".
 		await expect(panel).toContainText(`ends ${target.endEpoch}`, {
 			timeout: 60_000,
 		});
 
-		// The row menu: details at a section, Download, and the blob id.
+		// The row menu: the inspector's actions, Select, Download, and the blob id.
 		await row.locator("button.more").click();
 		const menu = page.getByRole("menu", { name: /^Actions for / });
 		await expect(menu).toBeVisible();
@@ -382,6 +390,7 @@ test.describe("Files, read from chain", () => {
 			"Share",
 			"Verify",
 			"Publish to Morse",
+			"Select",
 		])
 			await expect(menu.getByRole("menuitem", { name: action })).toBeEnabled();
 		await menu.getByRole("menuitem", { name: "Copy blob id" }).click();
@@ -394,14 +403,24 @@ test.describe("Files, read from chain", () => {
 		await page.getByRole("menuitem", { name: "Verify" }).click();
 		await expect(menu).toBeHidden();
 		await expect(
-			page.locator("aside.drawer #drawer-verify-title"),
+			page.locator("aside.insp #insp-verify-title"),
 		).toBeInViewport();
+		// The menu's Verify runs the check, not only shows the section.
+		await expect(page.locator("aside.insp #insp-verify .ver")).toContainText(
+			/Rebuilding the blob|Bytes match the blob id/,
+		);
 
-		// A row's checkbox selects it without opening anything.
+		// A row's checkbox selects it without opening anything, and raises the bulk bar.
 		await page.getByRole("button", { name: "Close details" }).click();
 		await row.getByRole("checkbox").check();
 		await expect(panel).toBeHidden();
-		await expect(page.getByText("1 selected")).toBeVisible();
+		await expect(
+			page.getByRole("toolbar", { name: "Selected blobs" }),
+		).toContainText("1 selected");
+		await page.getByRole("button", { name: "Clear the selection" }).click();
+		await expect(
+			page.getByRole("toolbar", { name: "Selected blobs" }),
+		).toBeHidden();
 
 		await grid(page).focus();
 		await page.keyboard.press("Escape");

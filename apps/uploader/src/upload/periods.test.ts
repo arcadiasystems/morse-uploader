@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { EpochClock } from "@/blobs/epoch-clock";
-import { epochsForDays, periodOptions, storageEndMs } from "./periods";
+import {
+	epochsForDays,
+	isPeriodId,
+	periodOptions,
+	storageEndMs,
+} from "./periods";
 
 const DAY_MS = 86_400_000;
 
@@ -18,20 +23,26 @@ const MAINNET: EpochClock = {
 };
 
 describe("periodOptions", () => {
-	it("offers only 30 days on Testnet, where 53 one-day epochs are the most", () => {
-		const options = periodOptions(TESTNET, 53, NOW);
+	it("offers 7 days, 30 days and Max on Testnet, where 53 one-day epochs are the most (notes item 4)", () => {
+		const options = periodOptions("testnet", TESTNET, 53, NOW);
 		expect(
-			options.map((option) => [option.id, option.fits, option.epochs]),
+			options.map((option) => [
+				option.id,
+				option.label,
+				option.fits,
+				option.epochs,
+			]),
 		).toEqual([
-			["30d", true, 31],
-			["6m", false, 184],
-			["1y", false, 366],
-			["2y", false, 731],
+			// 21 hours into the epoch: 7 days from now ends in the 8th epoch.
+			["7d", "7 days", true, 8],
+			["30d", "30 days", true, 31],
+			// 53 epochs from this one's start end on 8 December, 52 whole days away.
+			["max", "Max (about 52 days)", true, 53],
 		]);
 	});
 
 	it("maps the periods to 3, 14 and 27 epochs on Walrus Mainnet, matching the notes", () => {
-		const options = periodOptions(MAINNET, 53, NOW);
+		const options = periodOptions("mainnet", MAINNET, 53, NOW);
 		expect(
 			options.map((option) => [option.id, option.fits, option.epochs]),
 		).toEqual([
@@ -45,7 +56,7 @@ describe("periodOptions", () => {
 
 	it("drops 2 years on Walrus Mainnet more than 12 days into an epoch", () => {
 		const late = MAINNET.epochStartMs + 13 * DAY_MS;
-		const twoYears = periodOptions(MAINNET, 53, late)[3];
+		const twoYears = periodOptions("mainnet", MAINNET, 53, late)[3];
 		expect(twoYears).toEqual({
 			id: "2y",
 			label: "2 years",
@@ -56,18 +67,30 @@ describe("periodOptions", () => {
 		});
 	});
 
-	it("never offers 6 months or more on Testnet", () => {
-		const options = periodOptions(TESTNET, 53, NOW);
-		expect(
-			options.flatMap((option) => (option.fits ? [] : [option.availableAtMs])),
-		).toEqual([null, null, null]);
+	it("never offers a period past 53 epochs on Testnet", () => {
+		const options = periodOptions("testnet", TESTNET, 53, NOW);
+		expect(options.every((option) => option.fits && option.epochs <= 53)).toBe(
+			true,
+		);
 	});
 
 	it("estimates when the storage ends from the epoch start", () => {
-		const [thirtyDays] = periodOptions(TESTNET, 53, NOW);
+		const [, thirtyDays, max] = periodOptions("testnet", TESTNET, 53, NOW);
 		expect(
 			thirtyDays?.fits && new Date(thirtyDays.endsAtMs).toISOString(),
 		).toBe("2026-11-16T22:46:52.000Z");
+		expect(max?.fits && new Date(max.endsAtMs).toISOString()).toBe(
+			"2026-12-08T22:46:52.000Z",
+		);
+	});
+});
+
+describe("isPeriodId", () => {
+	it("knows every network's periods and nothing else", () => {
+		for (const id of ["7d", "30d", "6m", "1y", "2y", "max"])
+			expect(isPeriodId(id)).toBe(true);
+		expect(isPeriodId("3y")).toBe(false);
+		expect(isPeriodId(30)).toBe(false);
 	});
 });
 

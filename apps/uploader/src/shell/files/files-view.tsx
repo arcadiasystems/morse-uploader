@@ -13,19 +13,27 @@ import { useQuiltPatches } from "@/blobs/use-quilt-patches";
 import { errorMessage } from "@/lib/error-message";
 import type { ChainRead } from "@/lib/use-chain-read";
 import type { NetworkConfig } from "@/network/networks";
-import {
-	BlobDrawer,
-	type DrawerContext,
-	type DrawerSection,
-} from "../drawer/blob-drawer";
-import { drawerTarget } from "../drawer/drawer-target";
+import { BulkBar, type BulkSheetKind } from "../bulk/bulk-bar";
 import { EmptyState } from "../empty-state";
+import {
+	Inspector,
+	type InspectorContext,
+	type InspectorRequest,
+} from "../inspector/inspector";
+import { inspectorTarget } from "../inspector/inspector-target";
 import { FILE_FILTER_CONFIG } from "./file-filters";
 import { FileGrid } from "./file-grid";
 import { FileList } from "./file-list";
 import { type FilesLayout, FilterBar } from "./filter-bar";
 import { buildListItems } from "./list-items";
-import { RowMenu } from "./row-menu";
+import { type InspectorAsk, RowMenu } from "./row-menu";
+import {
+	type Selection,
+	selectedRows,
+	selectionInView,
+	setSelected,
+	toggleSelected,
+} from "./selection";
 
 const PLACEHOLDER_ROWS = [1, 2, 3, 4, 5, 6] as const;
 
@@ -34,7 +42,7 @@ interface FilesViewProps {
 	address: string | null;
 	filter: BlobFilter;
 	query: string;
-	onClearQuery: () => void;
+	onQueryChange: (query: string) => void;
 	sort: RowSort;
 	onSort: (sort: RowSort) => void;
 	onSortBy: (key: SortKey) => void;
@@ -48,25 +56,39 @@ interface FilesViewProps {
 	countNotes: Readonly<Partial<Record<BlobFilter, string | undefined>>>;
 	onRefresh: () => void;
 	onConnect: () => void;
-	drawer: DrawerContext;
-	/** Opens Extend all for the blobs expiring soon. */
+	inspector: InspectorContext;
+	/** Opens Extend everything expiring. */
 	onExtendExpiring: () => void;
+	/** The selected blobs, which survive filter and search changes. */
+	selection: Selection;
+	onSelectionChange: (change: (current: Selection) => Selection) => void;
+	/** Opens a bulk action's sheet for the selection. */
+	onBulk: (sheet: BulkSheetKind) => void;
+	/** A blob to select and show, from the command palette; `request` grows with each jump. */
+	jump: FilesJump | null;
+}
+
+/** A jump to a blob: select it, open the inspector (optionally at an action) and scroll to it. */
+export interface FilesJump {
+	objectId: string;
+	ask: InspectorAsk | null;
+	request: number;
 }
 
 /**
  * Files (design/v2/app.html): the wallet's blobs on the current network,
  * read from chain, with filter chips, sort, a list or grid, quilts that
- * open in place, a selection, and an overflow menu per row. Until R2's
- * inspector, a row's details open in the blob drawer beside the list.
- * Selection and open quilts belong to one wallet and network; the shell
- * remounts the view when either changes.
+ * open in place, a selection with the bulk bar, and an overflow menu per
+ * row. A row's details open in the inspector beside the list. Open quilts
+ * belong to one wallet and network; the shell remounts the view when
+ * either changes, and keeps the selection per wallet and network.
  */
 export function FilesView({
 	network,
 	address,
 	filter,
 	query,
-	onClearQuery,
+	onQueryChange,
 	sort,
 	onSort,
 	onSortBy,
@@ -78,20 +100,25 @@ export function FilesView({
 	countNotes,
 	onRefresh,
 	onConnect,
-	drawer,
+	inspector,
 	onExtendExpiring,
+	selection,
+	onSelectionChange,
+	onBulk,
+	jump,
 }: FilesViewProps) {
 	const { store, patches } = useQuiltPatches();
 	const view = useRef<HTMLElement>(null);
 	const [activeKey, setActiveKey] = useState<string | null>(null);
-	// Activating a row opens the drawer; closing it keeps the row active.
-	const [drawerOpen, setDrawerOpen] = useState(false);
-	const [focus, setFocus] = useState<{
-		section: DrawerSection;
+	// Activating a row opens the inspector; closing it keeps the row active.
+	const [inspectorOpen, setInspectorOpen] = useState(false);
+	const [request, setRequest] = useState<InspectorRequest | null>(null);
+	// The row to scroll into view: set by a jump, read by the list.
+	const [reveal, setReveal] = useState<{
+		key: string;
 		request: number;
 	} | null>(null);
 	const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
-	const [checked, setChecked] = useState<ReadonlySet<string>>(new Set());
 	const [menu, setMenu] = useState<{
 		key: string;
 		anchor: HTMLButtonElement;
@@ -119,22 +146,22 @@ export function FilesView({
 
 	function activate(key: string | null) {
 		setActiveKey(key);
-		setDrawerOpen(key !== null);
-		setFocus(null);
+		setInspectorOpen(key !== null);
+		setRequest(null);
 	}
 
-	function openDetails(key: string, section: DrawerSection | null) {
+	function openDetails(key: string, ask: InspectorAsk | null) {
 		setActiveKey(key);
-		setDrawerOpen(true);
-		setFocus(
-			section === null
+		setInspectorOpen(true);
+		setRequest(
+			ask === null
 				? null
-				: (current) => ({ section, request: (current?.request ?? 0) + 1 }),
+				: (current) => ({ ...ask, request: (current?.request ?? 0) + 1 }),
 		);
 	}
 
-	function closeDrawer() {
-		setDrawerOpen(false);
+	function closeInspector() {
+		setInspectorOpen(false);
 		view.current?.querySelector<HTMLElement>(".tbl")?.focus();
 	}
 
@@ -144,16 +171,35 @@ export function FilesView({
 		if (restoreFocus) anchor?.focus();
 	}
 
+	// A jump from the palette selects the blob, opens the inspector and
+	// scrolls the list to it; each request is handled once.
+	const handledJump = useRef(0);
+	useEffect(() => {
+		if (jump === null || jump.request === handledJump.current) return;
+		handledJump.current = jump.request;
+		setActiveKey(jump.objectId);
+		setInspectorOpen(true);
+		setRequest((current) =>
+			jump.ask === null
+				? null
+				: { ...jump.ask, request: (current?.request ?? 0) + 1 },
+		);
+		setReveal({ key: jump.objectId, request: jump.request });
+	}, [jump]);
+
 	function check(objectId: string) {
-		setChecked((current) => {
-			const next = new Set(current);
-			if (!next.delete(objectId)) next.add(objectId);
-			return next;
-		});
+		onSelectionChange((current) => toggleSelected(current, objectId));
 	}
 
+	// The header box selects or clears what the view lists; hidden selections stay.
 	function checkAll(on: boolean) {
-		setChecked(on ? new Set(rows.map((row) => row.blob.objectId)) : new Set());
+		onSelectionChange((current) =>
+			setSelected(
+				current,
+				rows.map((row) => row.blob.objectId),
+				on,
+			),
+		);
 	}
 
 	// File counts show on quilt rows, so every readable quilt's index is read
@@ -249,7 +295,7 @@ export function FilesView({
 				query={query.trim()}
 				note={counts[filter] === null ? (countNotes[filter] ?? null) : null}
 				networkLabel={network.walrusLabel}
-				onClearQuery={onClearQuery}
+				onClearQuery={() => onQueryChange("")}
 			/>
 		);
 	} else if (layout === "grid") {
@@ -259,9 +305,10 @@ export function FilesView({
 				rows={rows}
 				activeKey={activeKey}
 				onActivate={activate}
-				checked={checked}
+				checked={selection}
 				onCheck={check}
 				onMenu={(key, anchor) => setMenu({ key, anchor })}
+				reveal={reveal}
 			/>
 		);
 	} else {
@@ -274,28 +321,30 @@ export function FilesView({
 				onSort={onSortBy}
 				activeKey={activeKey}
 				onActivate={activate}
-				checked={checked}
+				checked={selection}
 				onCheck={check}
 				onCheckAll={checkAll}
 				onMenu={(key, anchor) => setMenu({ key, anchor })}
 				onToggle={toggleQuilt}
 				onRetryPatches={store.retry}
 				scroller={view}
+				reveal={reveal}
 				nowMs={listed.nowMs}
 			/>
 		);
 	}
 
-	const showDrawer = drawerOpen && active !== null && listed !== null;
+	const showInspector = inspectorOpen && active !== null && listed !== null;
 	return (
-		<div className={showDrawer ? "content insp" : "content"}>
+		<div className={showInspector ? "content with-insp" : "content"}>
 			<section className="view" ref={view} aria-label="Files">
 				<FilterBar
 					filter={filter}
 					counts={counts}
 					countNotes={countNotes}
-					checked={checked.size}
-					onClearChecked={() => setChecked(new Set())}
+					query={query}
+					onQueryChange={onQueryChange}
+					queryDisabled={listed === null || listed.rows.length === 0}
 					sort={sort}
 					onSort={onSort}
 					layout={layout}
@@ -305,32 +354,50 @@ export function FilesView({
 					extendExpiring={
 						filter === "expiring" &&
 						(counts.expiring ?? 0) > 0 &&
-						drawer.actions
+						inspector.actions
 							? onExtendExpiring
 							: null
 					}
 				/>
 				{content}
 			</section>
-			{showDrawer ? (
-				<BlobDrawer
+			{selection.size > 0 && listed !== null ? (
+				<BulkBar
+					network={network}
+					rows={selectedRows(selection, listed.rows)}
+					hidden={selectionInView(selection, rows).hidden}
+					clock={listed.clock}
+					storagePricePerUnit={
+						inspector.prices.status === "ready"
+							? inspector.prices.data.storagePerUnit
+							: null
+					}
+					canSign={inspector.actions !== null}
+					onOpen={onBulk}
+					onClear={() => onSelectionChange(() => new Set())}
+				/>
+			) : null}
+			{showInspector ? (
+				<Inspector
 					key={active.key}
-					target={drawerTarget(active)}
+					target={inspectorTarget(active)}
 					network={network}
 					listed={listed}
-					context={drawer}
-					focus={focus}
-					onClose={closeDrawer}
+					context={inspector}
+					request={request}
+					onClose={closeInspector}
 				/>
 			) : null}
 			{menu && menuItem ? (
 				<RowMenu
-					target={drawerTarget(menuItem)}
+					target={inspectorTarget(menuItem)}
 					anchor={menu.anchor}
 					network={network}
-					onOpen={(section) => {
+					selected={selection.has(menu.key)}
+					onToggleSelected={() => check(menu.key)}
+					onOpen={(ask) => {
 						setMenu(null);
-						openDetails(menu.key, section);
+						openDetails(menu.key, ask);
 					}}
 					onClose={closeMenu}
 				/>

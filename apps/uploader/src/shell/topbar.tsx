@@ -4,7 +4,6 @@ import type { NetworkConfig } from "@/network/networks";
 import type { TransfersSummary } from "@/transfers/summarize-transfers";
 import { BalancePill } from "./balance/balance-pill";
 import { NetworkChip } from "./network-chip";
-import { SearchField } from "./search-field";
 import { TransfersPill } from "./transfers/transfers-pill";
 import type { Popover } from "./use-popover";
 
@@ -17,17 +16,18 @@ interface TopbarProps {
 	address: string | null;
 	funds: Funds;
 	balanceMenu: Popover;
-	query: string;
-	onQueryChange: (query: string) => void;
-	/** Search is off until there are listed blobs to search. */
-	searchDisabled: boolean;
+	/** Opens the command palette, as ⌘K does. */
+	onPalette: () => void;
+	paletteOpen: boolean;
 	transfers: TransfersSummary;
+	/** Seconds of uploading left, for the transfers pill. */
+	transfersRemaining: number | null;
 	transfersPanel: Popover;
-	/** Opens the file picker; what is picked goes to the upload sheet. */
+	/** Opens the file picker; what is picked goes to the staging tray. */
 	onUpload: () => void;
 }
 
-/** The view title and context, search, transfers, balances and the upload action. */
+/** The view title and context, the palette's field, transfers, balances and the upload action. */
 export function Topbar({
 	title,
 	context,
@@ -35,10 +35,10 @@ export function Topbar({
 	address,
 	funds,
 	balanceMenu,
-	query,
-	onQueryChange,
-	searchDisabled,
+	onPalette,
+	paletteOpen,
 	transfers,
+	transfersRemaining,
 	transfersPanel,
 	onUpload,
 }: TopbarProps) {
@@ -48,13 +48,36 @@ export function Topbar({
 				<h1>{title}</h1>
 				<span className="ctx">{context}</span>
 			</div>
-			<SearchField
-				query={query}
-				onQueryChange={onQueryChange}
-				disabled={searchDisabled}
-			/>
+			<button
+				className="cmd"
+				type="button"
+				aria-haspopup="dialog"
+				aria-expanded={paletteOpen}
+				aria-keyshortcuts="Meta+K Control+K"
+				onClick={onPalette}
+			>
+				<span aria-hidden="true">⌕</span>
+				<span className="ph">Search blobs, quilts, ids, or type a command</span>
+				<span className="keys" aria-hidden="true">
+					<kbd>⌘K</kbd>
+				</span>
+			</button>
 			<div className="r">
-				<TransfersPill summary={transfers} panel={transfersPanel} />
+				<button
+					className="cmd-icon"
+					type="button"
+					aria-label="Search and commands"
+					aria-haspopup="dialog"
+					aria-expanded={paletteOpen}
+					onClick={onPalette}
+				>
+					<Icon name="search" size={16} />
+				</button>
+				<TransfersPill
+					summary={transfers}
+					remainingSeconds={transfersRemaining}
+					panel={transfersPanel}
+				/>
 				{address ? (
 					<BalancePill
 						popover={balanceMenu}
