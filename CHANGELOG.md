@@ -2,7 +2,9 @@
 
 All notable changes to `@arcadiasystems/morse-uploader` will be documented in this file. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.4.0] - 2026-10-20
+
+Downloads now tell an encrypted file from a public one by its on-chain Seal prefix instead of trusting the share link, and uploads refuse a file too large for the relay's tip cap before reading it. Peer dependencies are unchanged. This is a minor bump because it adds public exports and narrows `walrusWriteConfig.uploadRelay.sendTip` from `unknown`, so a value `@mysten/walrus` would not accept no longer type-checks.
 
 ### Fixed
 
