@@ -12,11 +12,20 @@ All notable changes to `@arcadiasystems/morse-uploader` will be documented in th
   A file with no on-chain prefix behaves as before. Files encrypted before the prefix was stored on chain have none, and their links still carry the Seal material, so a missing prefix does not prove a file is public and the link still decides.
 
   The prefix is read only when the bytes are fetched, so a page that renders just the metadata pays nothing extra; a public download costs one more round trip and an encrypted one two. The read is aborted when the component unmounts, and an aborted fetch stops before reading bytes or prompting the wallet.
+- **A file too large for the relay's tip cap was read, encrypted and encoded before the upload failed, and the failure read as a network issue.** The Walrus Mainnet relay's tip grows with the blob's encoded size, so `sendTip.max` also caps the file size: 10,000,000 MIST, the cap the README and the example use, allows 42,327,820 bytes (40.37 MiB). `@mysten/walrus` enforces the cap only when it builds the register transaction, after encoding the whole file, and the SDK passed its "Tip amount (N) exceeds the maximum allowed tip (M)" on as a `TransportError`, which `uploadErrorMessage` titled "Network issue". `useFileUpload` now reads the relay's `/v1/tip-config` first, derives the largest file the cap allows with the SDK's encoded-size formula, and refuses a larger file with a `FileTooLargeError` before reading it. `MorseFileUploader` shows "File too large" with the file's size, the limit and the cap.
+
+  An encrypted file that fits, but that Seal's envelope takes over the limit, is refused after encryption and before Walrus encodes it, since the envelope's size depends on the key servers. A cap below the tip for even the smallest file (the example's 1,000,000 MIST before 0.2.0) now fails with a `ConfigurationError` saying so. Testnet's relay charges a flat 105 MIST, so there the cap sets no size limit. Each upload through a relay with a `sendTip.max` costs one extra request for the tip config; without a relay or a cap, nothing is requested.
 
 ### Added
 
 - **`downloadErrorMessage(error)`**, used by `MorseFileDownloader` and exported for custom UIs built on `useFileDownload`. It titles a `ShareLinkSealError` by its reason and defers everything else to the SDK's `formatUserMessage`, which would title it "Unexpected error".
 - **`ShareLinkSealError`**, with `reason: ShareLinkSealErrorReason` (`"missing" | "mismatch"`). `useFileDownload` sets it as `error` when the link cannot open an encrypted file.
+- **`FileTooLargeError`**, with `sizeBytes`, `afterEncryption` and `limit: UploadSizeLimit` (`maxBytes`, `maxTipMist`). `useFileUpload` throws it when a file is too large for the relay's tip cap, and `uploadErrorMessage` titles it "File too large".
+- **`uploadRelay` on `MorseFilesHandles`**, the relay `walrusWrite` sends blobs through. `useMorseFiles` sets it from `walrusWriteConfig.uploadRelay` when it builds the write adapter. It stays unset for a prebuilt `walrusWrite`, whose relay the package cannot see, so the size check is skipped and the SDK's own tip check still applies. Hand-built handles can set it to get the check.
+
+### Changed
+
+- **`walrusWriteConfig.uploadRelay.sendTip` is typed** as `@mysten/walrus`'s `UploadRelayConfig["sendTip"]` instead of `unknown`, and the relay options are exported as `UploadRelayOptions`. Every value `@mysten/walrus` accepts still type-checks; the package now reads `max` from it.
 
 ## [0.3.0] - 2026-10-18
 

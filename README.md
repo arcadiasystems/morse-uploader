@@ -60,6 +60,7 @@ function FilesApp({ account }) {
       uploadRelay: {
         host: "https://upload-relay.testnet.walrus.space",
         // Caps the per-upload tip the Walrus Mainnet relay charges, in MIST (0.01 SUI).
+        // The tip grows with file size, so this also caps the file: see "Notes on Walrus".
         sendTip: { max: 10_000_000 },
       },
     },
@@ -113,7 +114,7 @@ All hooks must be used inside `MorseFilesProvider`.
 | Hook | Purpose |
 |---|---|
 | `useMorseFiles(options)` | Build the handles from a connected wallet. Used once, above the provider. |
-| `useFileUpload()` | Upload one file: `upload({ file, epochs, recipients?, encrypt? })`. Encrypted when `encrypt` is set. Returns `{ fileId, blobId, encrypted, sealIdPrefix, sealNonce, shareLink }` and exposes a phase stepper. |
+| `useFileUpload()` | Upload one file: `upload({ file, epochs, recipients?, encrypt? })`. Encrypted when `encrypt` is set. Returns `{ fileId, blobId, encrypted, sealIdPrefix, sealNonce, shareLink }` and exposes a phase stepper. Refuses a file too large for the relay's tip cap with `FileTooLargeError` before reading it. |
 | `useFileDownload(fileId, seal)` | Drive a download page: loads metadata, then `load()` / `download()` reads (public, `seal` null) or decrypts (encrypted, `seal` = `{ sealIdPrefix, sealNonce }`). It first reads the file's Seal prefix from chain, so a file that has one, opened with `seal` null or with another file's prefix, fails with `ShareLinkSealError` instead of serving ciphertext. |
 | `useFileDecrypt()` | Lower-level decrypt: `decrypt({ file, sealIdPrefix, sealNonce })` returns plaintext bytes (one SessionKey signature, reused across files). |
 | `useRecipientFile(fileId)` | Load a `RecipientFile`'s on-chain metadata (name, contentType, size, members, blobId). |
@@ -123,7 +124,7 @@ All hooks must be used inside `MorseFilesProvider`.
 
 ### Rendering an upload error
 
-`uploadErrorMessage(error, network)` returns the SDK's `{ title, description, cause }` for any failure, with one rewrite: an insufficient-balance failure arrives as raw `@mysten/sui` text (a coin type, an address, two unscaled integers) that the SDK can only classify as a network problem. This restates it as "Not enough WAL", with the amounts in whole coins and the network's way of topping up. `MorseFileUploader` already uses it; call it directly if you render your own errors.
+`uploadErrorMessage(error, network)` returns the SDK's `{ title, description, cause }` for any failure, with two exceptions. An insufficient-balance failure arrives as raw `@mysten/sui` text (a coin type, an address, two unscaled integers) that the SDK can only classify as a network problem. This restates it as "Not enough WAL", with the amounts in whole coins and the network's way of topping up. A `FileTooLargeError` (see [Notes on Walrus](#notes-on-walrus)) is titled "File too large", with the file's size, the limit and the tip cap. `MorseFileUploader` already uses it; call it directly if you render your own errors.
 
 ### Rendering a download error
 
@@ -156,6 +157,7 @@ const parsed = parseShareLink(window.location.href);
 
 - Storage is a **lease**, capped at 53 epochs ahead on both networks. An epoch is ~1 day on testnet and ~2 weeks on mainnet.
 - Blobs are raw bytes with no filename or MIME type; this package stores the name and content type in the on-chain file record so downloads come back correctly named and typed.
+- **The relay's tip cap is also a file-size cap.** The Walrus Mainnet relay charges a tip that grows with the blob's encoded size (its `/v1/tip-config` asks for 40 MIST per encoded KiB), and `@mysten/walrus` refuses a tip above `sendTip.max`. At the 10,000,000 MIST cap above, the largest file is 42,327,820 bytes (40.37 MiB). `useFileUpload` reads the relay's tip config before each upload and refuses a larger file with a `FileTooLargeError` before reading it, rather than letting the SDK encode the whole file first. An encrypted file is checked again after encryption, since Seal's envelope adds a few hundred bytes. Raise `sendTip.max` to allow larger files. Testnet's relay charges a flat 105 MIST, so there the cap sets no size limit. Handles built around a prebuilt `walrusWrite` have no `uploadRelay`, so this check is skipped, and the SDK's own check still refuses the tip before anything is signed.
 
 ## Seal on mainnet
 

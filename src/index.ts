@@ -12,6 +12,7 @@ export { buildShareLink } from "./files/build-share-link.js";
 export { downloadErrorMessage } from "./files/download-error-message.js";
 export { epochDurationMs } from "./files/epoch-duration-ms.js";
 export { estimateStorageUsd } from "./files/estimate-storage-usd.js";
+export { FileTooLargeError } from "./files/file-too-large-error.js";
 export {
 	MorseFilesProvider,
 	type MorseFilesProviderProps,
@@ -26,6 +27,7 @@ export type {
 	FileDecryptStatus,
 	FileDownloadStatus,
 	FilePhase,
+	FileTooLargeErrorArgs,
 	FileUploadInput,
 	FileUploadStatus,
 	LoadStatus,
@@ -37,6 +39,8 @@ export type {
 	SealMaterial,
 	SetupStatus,
 	ShareLinkSealErrorReason,
+	UploadRelayOptions,
+	UploadSizeLimit,
 	UsdCostArgs,
 	UsdCostEstimate,
 	UseFileDecryptResult,
