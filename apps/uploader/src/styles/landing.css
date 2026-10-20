@@ -212,68 +212,63 @@
 	box-shadow: 0 60px 120px rgba(0, 0, 0, 0.6);
 }
 
-/* ---------- Console comparison ---------- */
-.land .cmp {
+/* ---------- Two ways into Walrus: Console and the uploader ----------
+   Two equal cards, no scoring: Console is Walrus's own product and the
+   uploader complements it. */
+.land .ways {
 	max-width: 1200px;
 	margin: 70px auto 0;
 	padding: 0 28px 90px;
 }
-.land .cmp h2 {
+.land .ways-head {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin-bottom: 22px;
+}
+.land .ways h2 {
 	font-family: var(--disp);
 	font-weight: 400;
 	font-size: 40px;
 	letter-spacing: -0.03em;
-	margin-bottom: 18px;
+	line-height: 1.1;
+	text-wrap: balance;
 }
-/* Rounded by clipping, with no outer rule, as the design renders. */
-.land .cmp-frame {
-	border-radius: 16px;
-	overflow: hidden;
+.land .ways-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 14px;
+}
+.land .way {
+	border: 1px solid var(--line);
+	border-radius: 18px;
 	background: var(--panel);
+	padding: 28px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
 }
-.land .cmp table {
-	width: 100%;
-	border-collapse: collapse;
-	table-layout: fixed;
-	font-size: 14px;
+.land .way h3 {
+	font-family: var(--disp);
+	font-size: 24px;
+	font-weight: 700;
+	letter-spacing: -0.02em;
 }
-/* Column widths as the design lays them out at 1440. */
-.land .cmp thead tr > :first-child {
-	width: 18.1%;
-}
-.land .cmp thead tr > :nth-child(2) {
-	width: 36.2%;
-}
-.land .cmp th,
-.land .cmp td {
-	padding: 12px 16px;
-	border-bottom: 1px solid var(--line);
-	text-align: left;
-	vertical-align: top;
-}
-.land .cmp thead th {
-	font-family: var(--mono);
-	font-size: 10px;
-	letter-spacing: 0.16em;
-	text-transform: uppercase;
-	font-weight: 500;
-	/* One step brighter than the design's label grey, for AA contrast. */
-	color: var(--fg-3);
-}
-.land .cmp td {
+.land .way p:not(.eyebrow) {
+	font-size: 15px;
+	line-height: 1.55;
 	color: var(--fg-2);
+	max-width: 52ch;
 }
-.land .cmp tbody th {
+.land .way p.best {
 	color: var(--fg);
-	font-weight: 600;
 }
-.land .cmp td.ours {
-	color: var(--accent-lift);
+/* The buttons sit on one line across both cards, whatever the copy length. */
+.land .way .btn {
+	align-self: flex-start;
+	margin-top: auto;
 }
-.land .cmp tbody tr:last-child > * {
-	border-bottom: 0;
-}
-.land .cmp-source {
+.land .ways-note {
 	margin-top: 14px;
 	font-size: 12.5px;
 	color: var(--fg-3);
@@ -322,24 +317,20 @@
 	.land .feats {
 		grid-template-columns: 1fr;
 	}
-	.land .cmp {
+	.land .ways {
 		padding: 0 20px 48px;
 	}
-	/* The table keeps its three columns and scrolls sideways in its own box,
-	   which runs to the screen edges so the page itself never scrolls sideways. */
-	.land .cmp-scroll {
-		overflow-x: auto;
-		margin: 0 -20px;
-		padding: 0 20px;
+	.land .ways h2 {
+		font-size: 32px;
 	}
-	.land .cmp-frame {
-		min-width: 640px;
+	.land .ways-grid {
+		grid-template-columns: minmax(0, 1fr);
 	}
-	.land .cmp thead tr > :first-child {
-		width: 24%;
+	.land .way {
+		padding: 22px;
 	}
-	.land .cmp thead tr > :nth-child(2) {
-		width: 35%;
+	.land .way .btn {
+		align-self: stretch;
 	}
 	.land .foot {
 		padding: 20px;
