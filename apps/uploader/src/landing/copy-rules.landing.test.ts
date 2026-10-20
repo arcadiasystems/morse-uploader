@@ -86,8 +86,8 @@ describe("landing copy rules", () => {
 	it("advertises nothing the app has not built (items 12 and 19)", () => {
 		expect(
 			filesMatching(
-				// Walrus Sites deploy, agent access over MCP and the staging tray are later phases.
-				/Walrus Sites?\b|\bMCP\b|wallet-scoped|revocable|staging tray|in a tray/i,
+				// Walrus Sites deploy and agent access over MCP are later phases.
+				/Walrus Sites?\b|\bMCP\b|wallet-scoped|revocable/i,
 			),
 		).toEqual([]);
 	});

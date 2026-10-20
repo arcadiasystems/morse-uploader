@@ -5,7 +5,7 @@ interface Feature {
 }
 
 /**
- * What the app does today, one card each: the upload sheet, the storage
+ * What the app does today, one card each: the staging tray, the storage
  * clock, quilts and the drawer's verify, share and publish. Signature counts
  * and limits follow PROTOCOL-NOTES section 13.
  */
@@ -13,7 +13,7 @@ const FEATURES: readonly Feature[] = [
 	{
 		label: "Price, then sign",
 		title: "Nothing uploads by surprise",
-		body: "Drops open a sheet priced live from chain. Nothing leaves the browser until you confirm, and your wallet signs at least twice per upload.",
+		body: "Drops wait in a staging tray, priced live from chain. Nothing leaves the browser until you confirm, and your wallet signs at least twice per upload.",
 	},
 	{
 		label: "Storage clock",
