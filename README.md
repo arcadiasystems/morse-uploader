@@ -13,13 +13,13 @@ Headless-first React components and hooks for encrypted file sharing on Sui and 
 npm install @arcadiasystems/morse-uploader
 ```
 
-Peer dependencies (install in your app, pinned to the same ranges as `@arcadiasystems/morse-sdk` so you do not end up with duplicate Sui/Walrus/Seal instances):
+Peer dependencies (install in your app, at versions `@arcadiasystems/morse-sdk` also accepts, so you do not end up with duplicate Sui/Walrus/Seal instances):
 
 ```sh
-npm install react react-dom @arcadiasystems/morse-sdk@~0.10.0 @mysten/sui@~2.36.0 @mysten/walrus@~1.2.35 @mysten/seal@~1.5.0
+npm install react react-dom @arcadiasystems/morse-sdk@~0.10.0 @mysten/sui@2.36.0 @mysten/walrus@1.2.35 @mysten/seal@1.5.0
 ```
 
-The `@arcadiasystems/morse-sdk` peer range is `>=0.9.0 <0.11.0`, so an app already on 0.9.x can keep it.
+The `@mysten` packages are pinned exactly because the next patches, `@mysten/seal` 1.5.1 and `@mysten/walrus` 1.2.36, need `@mysten/sui` 2.37 or newer, so `~` ranges make npm refuse the install. The `@arcadiasystems/morse-sdk` peer range is `>=0.9.0 <0.11.0`, so an app already on 0.9.x can keep it.
 
 ## Quick start
 
