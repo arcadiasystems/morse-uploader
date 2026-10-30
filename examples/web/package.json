@@ -9,7 +9,7 @@
 		"preview": "vite preview"
 	},
 	"dependencies": {
-		"@arcadiasystems/morse-sdk": "0.9.0",
+		"@arcadiasystems/morse-sdk": "0.10.0",
 		"@mysten/dapp-kit": "1.1.17",
 		"@mysten/seal": "1.5.0",
 		"@mysten/sui": "2.36.0",
