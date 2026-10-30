@@ -2,7 +2,6 @@ import type { RecipientFile } from "@arcadiasystems/morse-sdk";
 import { useCurrentClient } from "@mysten/dapp-kit-react";
 import { isValidSuiAddress, normalizeSuiAddress } from "@mysten/sui/utils";
 import { useEffect, useId, useState } from "react";
-import { blobUrl } from "@/blobs/aggregator-urls";
 import type { BlobRecord } from "@/blobs/blob-record";
 import { Icon } from "@/components/icon";
 import { errorMessage } from "@/lib/error-message";
@@ -19,25 +18,37 @@ import {
 import { findRecipientFile } from "@/morse/find-recipient-file";
 import {
 	addRecipient,
-	decryptWithRecipientFile,
-	sessionKeyFor,
+	type OpenStep,
+	openWithRecipientFile,
 } from "@/morse/recipient-file-access";
+import type { OpenedBlob } from "@/morse/seal-access";
 import { explorerObjectUrl, explorerTxUrl } from "@/network/explorer-urls";
 import type { NetworkConfig } from "@/network/networks";
 import type { WalletActions } from "@/wallet/use-wallet-actions";
 
-type Decrypting =
+type Opening =
 	| { kind: "idle" }
-	| { kind: "working"; step: string }
+	| { kind: "working"; step: OpenStep }
 	| { kind: "failed"; message: string }
-	| { kind: "done"; bytes: Uint8Array<ArrayBuffer> };
+	| {
+			kind: "done";
+			opened: OpenedBlob["kind"];
+			bytes: Uint8Array<ArrayBuffer>;
+	  };
+
+const STEP_NOTES: Record<OpenStep, string> = {
+	checking: "Checking the blob against its RecipientFile…",
+	signing: "Sign the message in your wallet…",
+	decrypting: "Asking Seal key servers for the key…",
+};
 
 /**
  * An encrypted blob (PROTOCOL-NOTES section 11): the lock, its Morse
  * RecipientFile, decrypt on download for wallets the file allows, and, for
- * the file's owner, adding a recipient. Decrypting asks the wallet to sign a
- * message (no transaction, nothing paid), then Seal's key servers check that
- * the wallet is a member before they release the key.
+ * the file's owner, adding a recipient. Decrypting first checks the blob
+ * against its RecipientFile's Seal prefix (`seal-access`), then asks the
+ * wallet to sign a message (no transaction, nothing paid), and Seal's key
+ * servers check that the wallet is a member before they release the key.
  */
 export function EncryptedSection({
 	network,
@@ -142,37 +153,23 @@ function Decrypt({
 	actions: WalletActions;
 }) {
 	const client = useCurrentClient();
-	const [state, setState] = useState<Decrypting>({ kind: "idle" });
+	const [state, setState] = useState<Opening>({ kind: "idle" });
 	const member = file.members.some((address) => address === actions.address);
 
-	async function decrypt() {
+	async function openFile() {
 		try {
-			setState({ kind: "working", step: "Sign the message in your wallet…" });
-			const sessionKey = await sessionKeyFor({
+			const opened = await openWithRecipientFile({
 				client,
-				network: network.id,
+				network,
+				blobId,
+				fileId: file.id,
 				address: actions.address,
 				signPersonalMessage: actions.signPersonalMessage,
+				onStep: (step) => setState({ kind: "working", step }),
 			});
-			setState({ kind: "working", step: "Reading the ciphertext…" });
-			const response = await fetch(blobUrl(network.aggregatorUrl, blobId));
-			if (!response.ok)
-				throw new Error(`The aggregator answered ${response.status}.`);
-			const ciphertext = new Uint8Array(await response.arrayBuffer());
-			setState({
-				kind: "working",
-				step: "Asking Seal key servers for the key…",
-			});
-			const plaintext = await decryptWithRecipientFile({
-				client,
-				network: network.id,
-				fileId: file.id,
-				ciphertext,
-				sessionKey,
-			});
-			const bytes = new Uint8Array(plaintext);
+			const bytes = new Uint8Array(opened.bytes);
 			saveBytes(bytes, file.name, file.contentType);
-			setState({ kind: "done", bytes });
+			setState({ kind: "done", opened: opened.kind, bytes });
 		} catch (error) {
 			setState({ kind: "failed", message: describeActionError(error) });
 		}
@@ -192,22 +189,28 @@ function Decrypt({
 					type="button"
 					disabled={state.kind === "working"}
 					aria-busy={state.kind === "working"}
-					onClick={decrypt}
+					onClick={openFile}
 				>
 					{state.kind === "working"
-						? "Decrypting…"
+						? state.step === "checking"
+							? "Checking…"
+							: "Decrypting…"
 						: state.kind === "done"
-							? "Decrypt and download again"
+							? state.opened === "public"
+								? "Download again"
+								: "Decrypt and download again"
 							: "Decrypt and download"}
 				</button>
 			</div>
 			<p className="hint">
-				Your wallet signs a message, not a transaction: nothing is paid. One
-				signature covers decrypts for 10 minutes.
+				The blob is checked against its RecipientFile first, so you sign only
+				for a file Morse Uploader can decrypt. Your wallet signs a message, not
+				a transaction: nothing is paid. One signature covers decrypts for 10
+				minutes.
 			</p>
 			{state.kind === "working" ? (
 				<p className="note" role="status">
-					{state.step}
+					{STEP_NOTES[state.step]}
 				</p>
 			) : state.kind === "failed" ? (
 				<p className="note warn" role="alert">
@@ -215,22 +218,36 @@ function Decrypt({
 				</p>
 			) : state.kind === "done" ? (
 				<>
-					<p className="note ok" role="status">
-						Decrypted in this browser and saved as {file.name}.
-					</p>
-					<DecryptedPreview bytes={state.bytes} file={file} />
+					{state.opened === "public" ? (
+						<p className="note warn" role="status">
+							This file is not encrypted: its RecipientFile has no Seal prefix
+							and the blob is not Seal ciphertext, so anyone with its blob id
+							can read it. Saved as {file.name}, with nothing signed.
+						</p>
+					) : (
+						<p className="note ok" role="status">
+							Decrypted in this browser and saved as {file.name}.
+						</p>
+					)}
+					<OpenedPreview
+						bytes={state.bytes}
+						opened={state.opened}
+						file={file}
+					/>
 				</>
 			) : null}
 		</>
 	);
 }
 
-/** The decrypted file, shown like any preview; it never leaves the browser. */
-function DecryptedPreview({
+/** The opened file, shown like any preview; decrypted bytes never leave the browser. */
+function OpenedPreview({
 	bytes,
+	opened,
 	file,
 }: {
 	bytes: Uint8Array<ArrayBuffer>;
+	opened: OpenedBlob["kind"];
 	file: RecipientFile;
 }) {
 	const mediaType = mediaTypeOf(file.contentType, file.name);
@@ -258,8 +275,11 @@ function DecryptedPreview({
 	if (plan.kind === "image" && imageUrl)
 		return (
 			<div className="thumb">
-				{/* biome-ignore lint/performance/noImgElement: the image is decrypted in the browser, not served by a host. */}
-				<img src={imageUrl} alt={`Decrypted ${file.name}`} />
+				{/* biome-ignore lint/performance/noImgElement: the image is an object URL of bytes in this browser, not served by a host. */}
+				<img
+					src={imageUrl}
+					alt={opened === "decrypted" ? `Decrypted ${file.name}` : file.name}
+				/>
 			</div>
 		);
 	return null;
