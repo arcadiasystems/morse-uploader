@@ -2,6 +2,17 @@
 
 All notable changes to `@arcadiasystems/morse-uploader` will be documented in this file. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-10-30
+
+Accepts `@arcadiasystems/morse-sdk` 0.10. No code changed: none of 0.10's breaking changes reach this package, and the Mysten peer ranges are the same as 0.4.0's.
+
+### Changed
+
+- **Peer dependency.** `@arcadiasystems/morse-sdk` `>=0.9.0 <0.11.0` (was `>=0.9.0 <0.10.0`), so an app can install SDK 0.10 next to this package without a peer conflict, and an app on 0.9.x can take this release without moving the SDK. The README peer install now names `@arcadiasystems/morse-sdk@~0.10.0`.
+- **On SDK 0.10, download and upload errors read the way the SDK now words them.** `downloadErrorMessage` and `uploadErrorMessage` hand every SDK error to `formatUserMessage`, so the copy follows the SDK the app installed. A missing blob is still titled "Content unavailable", but its description is now "Walrus has no stored copy of this content. (id: ...)" with the bare blob id, instead of 0.9's "The Walrus blob is not retrievable. The storage operator may be having issues, or the blob expired. (id: Walrus aggregator: blob ... not found)". A `BlobExpiredError` is titled "Content expired" and names both epochs. The download hooks read through `walrusRead.readBlob`, never `readBlobByObjectId`, so the default aggregator adapter never raises one; only a custom `walrusRead` that raises it shows that message.
+- **Nothing else 0.10 broke reaches this package.** It implements no `PublicationReader`, so the new required `isPublisherCapRevoked` does not apply. It never tests a Walrus read failure's class (`NoBlobMetadataReceivedError` is now a `TransportError`, `BlobNotCertifiedError` a `NotFoundError`) and never reads `NotFoundError.identifier`. It does not import `BlobExpiredError`, which 0.9 does not export.
+- **The dev dependency and the example** pin `@arcadiasystems/morse-sdk` 0.10.0, so CI tests the newest version the range admits. 0.9.0, the lower bound, was checked locally: lint, typecheck, the test suite, build and `check:exports` pass, and the built entries load in Node.
+
 ## [0.4.0] - 2026-10-20
 
 Downloads now tell an encrypted file from a public one by its on-chain Seal prefix instead of trusting the share link, and uploads refuse a file too large for the relay's tip cap before reading it. Peer dependencies are unchanged. This is a minor bump because it adds public exports and narrows `walrusWriteConfig.uploadRelay.sendTip` from `unknown`, so a value `@mysten/walrus` would not accept no longer type-checks.

@@ -5,7 +5,7 @@
     "": {
       "name": "@arcadiasystems/morse-uploader",
       "devDependencies": {
-        "@arcadiasystems/morse-sdk": "0.9.0",
+        "@arcadiasystems/morse-sdk": "0.10.0",
         "@arethetypeswrong/cli": "^0.18.1",
         "@biomejs/biome": "2.4.7",
         "@mysten/seal": "1.5.0",
@@ -26,7 +26,7 @@
         "vitest": "^2.1.0",
       },
       "peerDependencies": {
-        "@arcadiasystems/morse-sdk": ">=0.9.0 <0.10.0",
+        "@arcadiasystems/morse-sdk": ">=0.9.0 <0.11.0",
         "@mysten/seal": ">=1.5.0 <1.6.0",
         "@mysten/sui": ">=2.36.0 <2.37.0",
         "@mysten/walrus": ">=1.2.35 <1.3.0",
@@ -42,7 +42,7 @@
       "name": "@arcadiasystems/morse-uploader-example-web",
       "version": "0.0.0",
       "dependencies": {
-        "@arcadiasystems/morse-sdk": "0.9.0",
+        "@arcadiasystems/morse-sdk": "0.10.0",
         "@mysten/dapp-kit": "1.1.17",
         "@mysten/seal": "1.5.0",
         "@mysten/sui": "2.36.0",
@@ -76,7 +76,7 @@
 
     "@andrewbranch/untar.js": ["@andrewbranch/untar.js@1.0.3", "", {}, "sha512-Jh15/qVmrLGhkKJBdXlK1+9tY4lZruYjsgkDFj08ZmDiWVBLJcqkok7Z0/R0In+i1rScBpJlSvrTS2Lm41Pbnw=="],
 
-    "@arcadiasystems/morse-sdk": ["@arcadiasystems/morse-sdk@0.9.0", "", { "peerDependencies": { "@mysten/seal": ">=1.5.0 <1.6.0", "@mysten/sui": ">=2.36.0 <2.37.0", "@mysten/walrus": ">=1.2.35 <1.3.0" } }, "sha512-BV2oVV0ICBwicNsv5oydpxQVxMVPlnL4niEJ4F9H304ehUDbnPaJErFuYTK6GkRS+9ZF3cTDTlkNwyr6L/o5nA=="],
+    "@arcadiasystems/morse-sdk": ["@arcadiasystems/morse-sdk@0.10.0", "", { "peerDependencies": { "@mysten/seal": ">=1.5.0 <1.6.0", "@mysten/sui": ">=2.36.0 <2.37.0", "@mysten/walrus": ">=1.2.35 <1.3.0" } }, "sha512-oLiIIwT/m+URZB39EP6wfuckRg9EssdGT54sensagROMhk4+M+T+vixTdOckwh3VSKmOYk5TLad90E80OEBcmQ=="],
 
     "@arcadiasystems/morse-uploader-example-web": ["@arcadiasystems/morse-uploader-example-web@workspace:examples/web"],
 
