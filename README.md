@@ -1,6 +1,6 @@
 # @arcadiasystems/morse-uploader
 
-Headless-first React components and hooks for encrypted file sharing on Sui and Walrus, built on [`@arcadiasystems/morse-sdk`](https://github.com/arcadiasystems/morse-dcms) 0.8. Upload a file to Walrus, optionally encrypt it for a set of recipient wallets so only they can decrypt, and share a link. The connected wallet pays for and signs everything.
+Headless-first React components and hooks for encrypted file sharing on Sui and Walrus, built on [`@arcadiasystems/morse-sdk`](https://github.com/arcadiasystems/morse-dcms) 0.9 or 0.10. Upload a file to Walrus, optionally encrypt it for a set of recipient wallets so only they can decrypt, and share a link. The connected wallet pays for and signs everything.
 
 - **Headless-first**: composable hooks for every step (`useMorseFiles`, `useFileUpload`, `useFileDownload`, `useFileDecrypt`, `useRecipientFile`), plus an optional styled component set.
 - **Recipient-scoped encryption**: each file carries its own recipient set; an encrypted upload to N recipients is **2 wallet popups**, regardless of N. The connected wallet is always a recipient, so the owner can always decrypt. Public (unencrypted) uploads need no recipients.
@@ -13,12 +13,13 @@ Headless-first React components and hooks for encrypted file sharing on Sui and 
 npm install @arcadiasystems/morse-uploader
 ```
 
-Peer dependencies (install in your app, pinned to the same ranges as `@arcadiasystems/morse-sdk` so you do not end up with duplicate Sui/Walrus/Seal instances):
+Peer dependencies (install in your app, at versions `@arcadiasystems/morse-sdk` also accepts, so you do not end up with duplicate Sui/Walrus/Seal instances):
 
 ```sh
-npm install react react-dom @arcadiasystems/morse-sdk@~0.8.1 \
-  @mysten/sui@~2.16.2 @mysten/walrus@~1.1.6 @mysten/seal@~1.1.3
+npm install react react-dom @arcadiasystems/morse-sdk@~0.10.0 @mysten/sui@2.36.0 @mysten/walrus@1.2.35 @mysten/seal@1.5.0
 ```
+
+The `@mysten` packages are pinned exactly because the next patches, `@mysten/seal` 1.5.1 and `@mysten/walrus` 1.2.36, need `@mysten/sui` 2.37 or newer, so `~` ranges make npm refuse the install. The `@arcadiasystems/morse-sdk` peer range is `>=0.9.0 <0.11.0`, so an app already on 0.9.x can keep it.
 
 ## Quick start
 
@@ -61,6 +62,7 @@ function FilesApp({ account }) {
       uploadRelay: {
         host: "https://upload-relay.testnet.walrus.space",
         // Caps the per-upload tip the Walrus Mainnet relay charges, in MIST (0.01 SUI).
+        // The tip grows with file size, so this also caps the file: see "Notes on Walrus".
         sendTip: { max: 10_000_000 },
       },
     },
@@ -114,8 +116,8 @@ All hooks must be used inside `MorseFilesProvider`.
 | Hook | Purpose |
 |---|---|
 | `useMorseFiles(options)` | Build the handles from a connected wallet. Used once, above the provider. |
-| `useFileUpload()` | Upload one file: `upload({ file, epochs, recipients?, encrypt? })`. Encrypted when `encrypt` is set. Returns `{ fileId, blobId, encrypted, sealIdPrefix, sealNonce, shareLink }` and exposes a phase stepper. |
-| `useFileDownload(fileId, seal)` | Drive a download page: loads metadata, then `load()` / `download()` reads (public, `seal` null) or decrypts (encrypted, `seal` = `{ sealIdPrefix, sealNonce }`). |
+| `useFileUpload()` | Upload one file: `upload({ file, epochs, recipients?, encrypt? })`. Encrypted when `encrypt` is set. Returns `{ fileId, blobId, encrypted, sealIdPrefix, sealNonce, shareLink }` and exposes a phase stepper. Refuses a file too large for the relay's tip cap with `FileTooLargeError` before reading it. |
+| `useFileDownload(fileId, seal)` | Drive a download page: loads metadata, then `load()` / `download()` reads (public, `seal` null) or decrypts (encrypted, `seal` = `{ sealIdPrefix, sealNonce }`). It first reads the file's Seal prefix from chain, so a file that has one, opened with `seal` null or with another file's prefix, fails with `ShareLinkSealError` instead of serving ciphertext. |
 | `useFileDecrypt()` | Lower-level decrypt: `decrypt({ file, sealIdPrefix, sealNonce })` returns plaintext bytes (one SessionKey signature, reused across files). |
 | `useRecipientFile(fileId)` | Load a `RecipientFile`'s on-chain metadata (name, contentType, size, members, blobId). |
 | `useStorageCostEstimate({ sizeBytes, epochs, encrypt })` | USD storage-cost estimate using Walrus [predictable pricing](https://blog.walrus.xyz/announcing-predictable-pricing-in-usd-on-walrus/) ($0.023/GB/month). |
@@ -124,7 +126,11 @@ All hooks must be used inside `MorseFilesProvider`.
 
 ### Rendering an upload error
 
-`uploadErrorMessage(error, network)` returns the SDK's `{ title, description, cause }` for any failure, with one rewrite: an insufficient-balance failure arrives as raw `@mysten/sui` text (a coin type, an address, two unscaled integers) that the SDK can only classify as a network problem. This restates it as "Not enough WAL", with the amounts in whole coins and the network's way of topping up. `MorseFileUploader` already uses it; call it directly if you render your own errors.
+`uploadErrorMessage(error, network)` returns the SDK's `{ title, description, cause }` for any failure, with two exceptions. An insufficient-balance failure arrives as raw `@mysten/sui` text (a coin type, an address, two unscaled integers) that the SDK can only classify as a network problem. This restates it as "Not enough WAL", with the amounts in whole coins and the network's way of topping up. A `FileTooLargeError` (see [Notes on Walrus](#notes-on-walrus)) is titled "File too large", with the file's size, the limit and the tip cap. `MorseFileUploader` already uses it; call it directly if you render your own errors.
+
+### Rendering a download error
+
+`downloadErrorMessage(error)` does the same for `useFileDownload`'s `error`. A `ShareLinkSealError` means the file is encrypted and the link cannot open it: `reason` is `"missing"` when the link has no Seal material and `"mismatch"` when its prefix is not the file's. These are titled "Link is incomplete" and "Link does not match this file", and both ask the reader to get the full link from the sender. Everything else goes to the SDK's `formatUserMessage`. `MorseFileDownloader` already uses it.
 
 ## How encryption works
 
@@ -153,6 +159,7 @@ const parsed = parseShareLink(window.location.href);
 
 - Storage is a **lease**, capped at 53 epochs ahead on both networks. An epoch is ~1 day on testnet and ~2 weeks on mainnet.
 - Blobs are raw bytes with no filename or MIME type; this package stores the name and content type in the on-chain file record so downloads come back correctly named and typed.
+- **The relay's tip cap is also a file-size cap.** The Walrus Mainnet relay charges a tip that grows with the blob's encoded size (its `/v1/tip-config` asks for 40 MIST per encoded KiB), and `@mysten/walrus` refuses a tip above `sendTip.max`. At the 10,000,000 MIST cap above, the largest file is 42,327,820 bytes (40.37 MiB). `useFileUpload` reads the relay's tip config before each upload and refuses a larger file with a `FileTooLargeError` before reading it, rather than letting the SDK encode the whole file first. An encrypted file is checked again after encryption, since Seal's envelope adds a few hundred bytes. Raise `sendTip.max` to allow larger files. Testnet's relay charges a flat 105 MIST, so there the cap sets no size limit. Handles built around a prebuilt `walrusWrite` have no `uploadRelay`, so this check is skipped, and the SDK's own check still refuses the tip before anything is signed.
 
 ## Seal on mainnet
 
@@ -191,7 +198,7 @@ credential is not meant to be public.
 
 - **Listing a wallet's files needs an indexer (deferred).** A `RecipientFile` is a shared Sui object with no owner-indexable field, so there is no direct "list my files" query. morse-sdk ships pure reconciliation helpers (`reconcileRecipientFilesOwnedBy`, `reconcileRecipientFilesAccessibleBy`) that turn a raw event stream into the current file set, but it deliberately does not fetch events. A production listing requires a Sui event source (a dedicated indexer; `suix_queryEvents` has since been retired by public fullnodes, so an event source now means Sui GraphQL or a dedicated indexer). This package does not ship a listing UI yet for that reason; it is planned once an indexer is in place.
 - **Seal material is not on-chain.** The Seal identity needed to decrypt (prefix + nonce) is persisted out-of-band (in the share link, here). It is not recoverable from the chain or from an event listing, so a future indexer-backed list can surface encrypted files' metadata but cannot, by itself, decrypt them; decryption still requires the share-link material. Persist `sealIdPrefix`/`sealNonce` in your own store if you need list-and-open UX.
-- **dapp-kit needs a JSON-RPC endpoint that still exists.** This package talks gRPC, which the public fullnodes still serve. dapp-kit 1.0.6 talks JSON-RPC only, and Mysten's public fullnodes have retired it: the preflight answers without an `access-control-allow-origin` header, so a browser call fails with `TypeError: Failed to fetch` from `@mysten/sui/jsonRpc` while dapp-kit serializes the transaction, before the wallet opens. Point `SuiClientProvider` at an endpoint that still serves JSON-RPC (your own node, a provider, or a public one such as `https://sui-rpc.publicnode.com`). Nothing in this package changes; the failure is in the wallet layer.
+- **dapp-kit needs a JSON-RPC endpoint that still exists.** This package talks gRPC, which the public fullnodes still serve. dapp-kit 1.1.17, the last `@mysten/dapp-kit` release (Mysten has [deprecated](https://sdk.mystenlabs.com/sui/migrations/sui-2.0/dapp-kit) it for this reason), talks JSON-RPC only, and Mysten's public fullnodes have retired it: the preflight answers without an `access-control-allow-origin` header, so a browser call fails with `TypeError: Failed to fetch` from `@mysten/sui/jsonRpc` while dapp-kit serializes the transaction, before the wallet opens. Point `SuiClientProvider` at an endpoint that still serves JSON-RPC (your own node, a provider, or a public one such as `https://sui-rpc.publicnode.com`). Nothing in this package changes; the failure is in the wallet layer.
 - **RPC consistency (use a dedicated RPC).** The SDK builds/reads over a gRPC client while the wallet (dapp-kit) executes over its own JSON-RPC client. When those are different nodes, they can sit at different checkpoints, so the certify step occasionally fails with an object-version conflict ("needs to be rebuilt"). For reliable uploads, point both at one **dedicated RPC**: set dapp-kit's `SuiClientProvider` URL and pass a `SuiGrpcClient` on the matching endpoint via `useMorseFiles({ suiClient })`. This is an RPC-infrastructure property, not a bug in the package logic.
 - **Mainnet works, but encrypted files there need your own Seal key servers.** Testnet pins an open allowlist, so `network: "testnet"` needs no setup. Mainnet pins none, because every mainnet Seal operator is commercial. Without `sealKeyServers`, `handles.seal` is `null`: unencrypted upload and download still work, and the encrypted hooks reject with a message saying so. See [Seal on mainnet](#seal-on-mainnet).
 - **Storage is a lease.** Walrus storage is capped at 53 epochs ahead and expires; this is not permanent storage.

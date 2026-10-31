@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MorseFilesProvider } from "../files/morse-files-provider.js";
@@ -57,8 +58,8 @@ describe("MorseFileUploader", () => {
 });
 
 describe("MorseFileDownloader", () => {
-	it("renders metadata and a download action for a public file", async () => {
-		const handles = {
+	function downloaderHandles(sealPrefix: Uint8Array | null) {
+		return {
 			reader: {
 				getRecipientFile: vi.fn().mockResolvedValue({
 					id: "0xfile",
@@ -68,15 +69,19 @@ describe("MorseFileDownloader", () => {
 					members: [],
 					blobId: "blob",
 				}),
+				getRecipientFileSealPrefix: vi.fn().mockResolvedValue(sealPrefix),
 			},
-			walrusRead: {},
+			walrusRead: { readBlob: vi.fn() },
 			seal: {},
 			signer: {},
 			client: {},
 			config: {},
 			address: "0xme",
 		} as unknown as MorseFilesHandles;
-		const Wrapper = provider(handles);
+	}
+
+	it("renders metadata and a download action for a public file", async () => {
+		const Wrapper = provider(downloaderHandles(null));
 		render(
 			<Wrapper>
 				<MorseFileDownloader fileId={"0xfile" as never} />
@@ -84,5 +89,22 @@ describe("MorseFileDownloader", () => {
 		);
 		await waitFor(() => expect(screen.getByText("note.txt")).toBeTruthy());
 		expect(screen.getByRole("button", { name: "Download" })).toBeTruthy();
+	});
+
+	it("asks for the full link when an encrypted file's link has no Seal material", async () => {
+		const user = userEvent.setup();
+		const handles = downloaderHandles(new Uint8Array([1, 2, 3]));
+		const Wrapper = provider(handles);
+		render(
+			<Wrapper>
+				<MorseFileDownloader fileId={"0xfile" as never} />
+			</Wrapper>,
+		);
+		await user.click(await screen.findByRole("button", { name: "Download" }));
+
+		const alert = await screen.findByRole("alert");
+		expect(alert.textContent).toContain("Link is incomplete");
+		expect(alert.textContent).toContain("Ask the sender for the full link.");
+		expect(handles.walrusRead.readBlob).not.toHaveBeenCalled();
 	});
 });
