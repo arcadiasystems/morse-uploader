@@ -2,6 +2,14 @@
 
 All notable changes to `@arcadiasystems/morse-uploader` will be documented in this file. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.2] - 2026-10-31
+
+Narrows the `@mysten/seal` and `@mysten/walrus` peers to the releases that run on `@mysten/sui` 2.36, so the README's peer install resolves again. No code changed.
+
+### Fixed
+
+- **The README's peer install failed with `ERESOLVE`.** Mysten has since published `@mysten/seal` 1.5.1 and 1.5.2, which peer on `@mysten/sui` `^2.37.0` and `^2.38.0`, and `@mysten/walrus` 1.2.36 and 1.2.37, which do the same. The `@mysten/sui` peer stops below 2.37, but the seal peer (`<1.6.0`) and the walrus peer (`<1.3.0`) still admitted those releases. The README's `@mysten/seal@~1.5.0` therefore resolved seal 1.5.2, and installing 0.4.1 next to SDK 0.10.0 the way the README said failed. The peers are now `@mysten/seal` `>=1.5.0 <1.5.1` (was `>=1.5.0 <1.6.0`) and `@mysten/walrus` `>=1.2.35 <1.2.36` (was `>=1.2.35 <1.3.0`): seal 1.5.0 and walrus 1.2.35 are the only releases in the old ranges that accept sui 2.36. The `@mysten/sui` and `@arcadiasystems/morse-sdk` peers are unchanged. The README peer install now pins the `@mysten` packages exactly: `npm install react react-dom @arcadiasystems/morse-sdk@~0.10.0 @mysten/sui@2.36.0 @mysten/walrus@1.2.35 @mysten/seal@1.5.0`. SDK 0.10.0's own seal and walrus peers are still `<1.6.0` and `<1.3.0`, so next to it an install that leaves the `@mysten` versions to npm still pulls in seal 1.5.2 and fails the same way; install them as the README does.
+
 ## [0.4.1] - 2026-10-30
 
 Accepts `@arcadiasystems/morse-sdk` 0.10. No code changed: none of 0.10's breaking changes reach this package, and the Mysten peer ranges are the same as 0.4.0's.

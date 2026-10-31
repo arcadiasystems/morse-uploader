@@ -1,6 +1,6 @@
 {
 	"name": "@arcadiasystems/morse-uploader",
-	"version": "0.4.1",
+	"version": "0.4.2",
 	"description": "Headless-first React components and hooks for encrypted file sharing on Sui and Walrus, built on morse-sdk.",
 	"license": "MIT",
 	"author": "Arcadia Systems",
@@ -78,9 +78,9 @@
 	},
 	"peerDependencies": {
 		"@arcadiasystems/morse-sdk": ">=0.9.0 <0.11.0",
-		"@mysten/seal": ">=1.5.0 <1.6.0",
+		"@mysten/seal": ">=1.5.0 <1.5.1",
 		"@mysten/sui": ">=2.36.0 <2.37.0",
-		"@mysten/walrus": ">=1.2.35 <1.3.0",
+		"@mysten/walrus": ">=1.2.35 <1.2.36",
 		"react": ">=18.0.0",
 		"react-dom": ">=18.0.0"
 	},
