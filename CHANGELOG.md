@@ -2,6 +2,63 @@
 
 All notable changes to `@arcadiasystems/morse-uploader` will be documented in this file. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.2] - 2026-10-31
+
+Narrows the `@mysten/seal` and `@mysten/walrus` peers to the releases that run on `@mysten/sui` 2.36, so the README's peer install resolves again. No code changed.
+
+### Fixed
+
+- **The README's peer install failed with `ERESOLVE`.** Mysten has since published `@mysten/seal` 1.5.1 and 1.5.2, which peer on `@mysten/sui` `^2.37.0` and `^2.38.0`, and `@mysten/walrus` 1.2.36 and 1.2.37, which do the same. The `@mysten/sui` peer stops below 2.37, but the seal peer (`<1.6.0`) and the walrus peer (`<1.3.0`) still admitted those releases. The README's `@mysten/seal@~1.5.0` therefore resolved seal 1.5.2, and installing 0.4.1 next to SDK 0.10.0 the way the README said failed. The peers are now `@mysten/seal` `>=1.5.0 <1.5.1` (was `>=1.5.0 <1.6.0`) and `@mysten/walrus` `>=1.2.35 <1.2.36` (was `>=1.2.35 <1.3.0`): seal 1.5.0 and walrus 1.2.35 are the only releases in the old ranges that accept sui 2.36. The `@mysten/sui` and `@arcadiasystems/morse-sdk` peers are unchanged. The README peer install now pins the `@mysten` packages exactly: `npm install react react-dom @arcadiasystems/morse-sdk@~0.10.0 @mysten/sui@2.36.0 @mysten/walrus@1.2.35 @mysten/seal@1.5.0`. SDK 0.10.0's own seal and walrus peers are still `<1.6.0` and `<1.3.0`, so next to it an install that leaves the `@mysten` versions to npm still pulls in seal 1.5.2 and fails the same way; install them as the README does.
+
+## [0.4.1] - 2026-10-30
+
+Accepts `@arcadiasystems/morse-sdk` 0.10. No code changed: none of 0.10's breaking changes reach this package, and the Mysten peer ranges are the same as 0.4.0's.
+
+### Changed
+
+- **Peer dependency.** `@arcadiasystems/morse-sdk` `>=0.9.0 <0.11.0` (was `>=0.9.0 <0.10.0`), so an app can install SDK 0.10 next to this package without a peer conflict, and an app on 0.9.x can take this release without moving the SDK. The README peer install now names `@arcadiasystems/morse-sdk@~0.10.0`.
+- **On SDK 0.10, download and upload errors read the way the SDK now words them.** `downloadErrorMessage` and `uploadErrorMessage` hand every SDK error to `formatUserMessage`, so the copy follows the SDK the app installed. A missing blob is still titled "Content unavailable", but its description is now "Walrus has no stored copy of this content. (id: ...)" with the bare blob id, instead of 0.9's "The Walrus blob is not retrievable. The storage operator may be having issues, or the blob expired. (id: Walrus aggregator: blob ... not found)". A `BlobExpiredError` is titled "Content expired" and names both epochs. The download hooks read through `walrusRead.readBlob`, never `readBlobByObjectId`, so the default aggregator adapter never raises one; only a custom `walrusRead` that raises it shows that message.
+- **Nothing else 0.10 broke reaches this package.** It implements no `PublicationReader`, so the new required `isPublisherCapRevoked` does not apply. It never tests a Walrus read failure's class (`NoBlobMetadataReceivedError` is now a `TransportError`, `BlobNotCertifiedError` a `NotFoundError`) and never reads `NotFoundError.identifier`. It does not import `BlobExpiredError`, which 0.9 does not export.
+- **The dev dependency and the example** pin `@arcadiasystems/morse-sdk` 0.10.0, so CI tests the newest version the range admits. 0.9.0, the lower bound, was checked locally: lint, typecheck, the test suite, build and `check:exports` pass, and the built entries load in Node.
+
+## [0.4.0] - 2026-10-20
+
+Downloads now tell an encrypted file from a public one by its on-chain Seal prefix instead of trusting the share link, and uploads refuse a file too large for the relay's tip cap before reading it. Peer dependencies are unchanged. This is a minor bump because it adds public exports and narrows `walrusWriteConfig.uploadRelay.sendTip` from `unknown`, so a value `@mysten/walrus` would not accept no longer type-checks.
+
+### Fixed
+
+- **A share link that lost its Seal material served an encrypted file as if it were public.** `useFileDownload` decided whether to decrypt from the link alone, so a link that arrived without its `p` and `n` parameters (a chat client trimming the fragment, a URL copied by hand, a link rebuilt from the file id) read the bytes straight from Walrus and handed back ciphertext as the file, with no error anywhere. `load` and `download` now first read the file's Seal prefix from chain with the SDK's `getRecipientFileSealPrefix`, the only reliable sign that a file is encrypted (`members` is not one, because the owner is always a member). A file with an on-chain prefix opened from a link without Seal material now fails with a `ShareLinkSealError` and serves nothing, and `MorseFileDownloader` shows "Link is incomplete" with "This file is encrypted, and the link is missing the details needed to decrypt it. Ask the sender for the full link."
+- **A link whose Seal prefix is not the file's is refused before the wallet is asked to sign.** Such a link cannot decrypt the file, but it used to cost a SessionKey signature and then fail at the key servers with what reads as a permissions error, blaming the wallet for a damaged link. It now fails with `ShareLinkSealError` reason `"mismatch"`, shown as "Link does not match this file". The on-chain prefix is deliberately not substituted for the link's: the nonce is not on chain, so a link with one damaged field cannot be told apart from a link to a different file, and the uploader already refuses half-damaged links rather than guessing (see 0.2.0's `parseShareLink` fix).
+
+  A file with no on-chain prefix behaves as before. Files encrypted before the prefix was stored on chain have none, and their links still carry the Seal material, so a missing prefix does not prove a file is public and the link still decides.
+
+  The prefix is read only when the bytes are fetched, so a page that renders just the metadata pays nothing extra; a public download costs one more round trip and an encrypted one two. The read is aborted when the component unmounts, and an aborted fetch stops before reading bytes or prompting the wallet.
+- **A file too large for the relay's tip cap was read, encrypted and encoded before the upload failed, and the failure read as a network issue.** The Walrus Mainnet relay's tip grows with the blob's encoded size, so `sendTip.max` also caps the file size: 10,000,000 MIST, the cap the README and the example use, allows 42,327,820 bytes (40.37 MiB). `@mysten/walrus` enforces the cap only when it builds the register transaction, after encoding the whole file, and the SDK passed its "Tip amount (N) exceeds the maximum allowed tip (M)" on as a `TransportError`, which `uploadErrorMessage` titled "Network issue". `useFileUpload` now reads the relay's `/v1/tip-config` first, derives the largest file the cap allows with the SDK's encoded-size formula, and refuses a larger file with a `FileTooLargeError` before reading it. `MorseFileUploader` shows "File too large" with the file's size, the limit and the cap.
+
+  An encrypted file that fits, but that Seal's envelope takes over the limit, is refused after encryption and before Walrus encodes it, since the envelope's size depends on the key servers. A cap below the tip for even the smallest file (the example's 1,000,000 MIST before 0.2.0) now fails with a `ConfigurationError` saying so. Testnet's relay charges a flat 105 MIST, so there the cap sets no size limit. Each upload through a relay with a `sendTip.max` costs one extra request for the tip config; without a relay or a cap, nothing is requested.
+
+### Added
+
+- **`downloadErrorMessage(error)`**, used by `MorseFileDownloader` and exported for custom UIs built on `useFileDownload`. It titles a `ShareLinkSealError` by its reason and defers everything else to the SDK's `formatUserMessage`, which would title it "Unexpected error".
+- **`ShareLinkSealError`**, with `reason: ShareLinkSealErrorReason` (`"missing" | "mismatch"`). `useFileDownload` sets it as `error` when the link cannot open an encrypted file.
+- **`FileTooLargeError`**, with `sizeBytes`, `afterEncryption` and `limit: UploadSizeLimit` (`maxBytes`, `maxTipMist`). `useFileUpload` throws it when a file is too large for the relay's tip cap, and `uploadErrorMessage` titles it "File too large".
+- **`uploadRelay` on `MorseFilesHandles`**, the relay `walrusWrite` sends blobs through. `useMorseFiles` sets it from `walrusWriteConfig.uploadRelay` when it builds the write adapter. It stays unset for a prebuilt `walrusWrite`, whose relay the package cannot see, so the size check is skipped and the SDK's own tip check still applies. Hand-built handles can set it to get the check.
+
+### Changed
+
+- **`walrusWriteConfig.uploadRelay.sendTip` is typed** as `@mysten/walrus`'s `UploadRelayConfig["sendTip"]` instead of `unknown`, and the relay options are exported as `UploadRelayOptions`. Every value `@mysten/walrus` accepts still type-checks; the package now reads `max` from it.
+
+## [0.3.0] - 2026-10-18
+
+Moves to `@arcadiasystems/morse-sdk` 0.9 and the Mysten lines it requires. The public API is unchanged. This is a minor bump because the new peer ranges exclude every version 0.2.x accepted, so upgrading means upgrading the SDK and all three Mysten packages with it.
+
+### Changed
+
+- **Peer dependencies.** `@arcadiasystems/morse-sdk` `>=0.9.0 <0.10.0` (was `>=0.8.1 <0.9.0`), `@mysten/sui` `>=2.36.0 <2.37.0` (was `>=2.16.2 <2.17.0`), `@mysten/walrus` `>=1.2.35 <1.3.0` (was `>=1.1.6 <1.2.0`), `@mysten/seal` `>=1.5.0 <1.6.0` (was `>=1.1.3 <1.2.0`). These are the SDK's own peer ranges, so an app resolves one copy of each. The README peer install is now `npm install react react-dom @arcadiasystems/morse-sdk@~0.9.0 @mysten/sui@~2.36.0 @mysten/walrus@~1.2.35 @mysten/seal@~1.5.0`.
+- **`useFileDecrypt` now checks that the signer belongs to the session address itself.** `@mysten/seal` 1.5 removed that check from `SessionKey.create` to support address aliases. `useFileDecrypt` caches the session per address, so handles whose `signer` and `address` disagree would have cost a wallet popup, failed at the key servers, and stayed cached, failing every later decrypt for that address the same way. The hook now rejects before creating the session, with the same `UserError` class and leading message Seal used to throw, and without prompting the wallet or caching anything. Behaviour therefore matches 0.2.x. Handles from `useMorseFiles` always agree, because the SDK's `WalletStandardSigner` requires the account key to derive to its address, so only hand-built handles can reach the check. A signer whose key is an alias of the address stays unsupported, as it was before.
+- **Everything else upstream changed needs nothing from consumers.** Seal 1.3 turned `verifyKeyServers` off by default, but the uploader always builds Seal through the SDK's `DefaultSealAdapter`, which now sets it to `true`, so key servers are still verified on first use. The `@mysten/sui` 2.26 `ObjectError` change is absorbed by the SDK's reader. The insufficient-balance text `uploadErrorMessage` rewrites is unchanged in sui 2.36, and walrus 1.2.35 still types the relay's `sendTip` as `{ max: number }`, so the README's `sendTip: { max: 10_000_000 }` stands.
+- **The example** pins the same versions, plus `@mysten/dapp-kit` 1.1.17 and `@mysten/walrus-wasm` 0.3.1, the line walrus 1.2.35 uses. dapp-kit 1.1.17 is the last release of that package: Mysten has deprecated it because it supports JSON-RPC only, so the README's note on pointing it at a JSON-RPC endpoint still applies.
+
 ## [0.2.1] - 2026-10-17
 
 README fixes only. The README ships in the package, so these needed a release; no code changed.
