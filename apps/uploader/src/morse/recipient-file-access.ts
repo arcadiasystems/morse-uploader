@@ -1,10 +1,11 @@
 import type { SessionKey } from "@mysten/seal";
-import { fromHex } from "@mysten/sui/utils";
+import { blobUrl } from "@/blobs/aggregator-urls";
 import type { NetworkClient } from "@/network/create-network-client";
-import type { NetworkId } from "@/network/networks";
+import type { NetworkConfig, NetworkId } from "@/network/networks";
 import type { WalletExecutor } from "@/transfers/wallet-executor";
 import { loadMorseSdk } from "./load-morse-sdk";
 import { createMorseWalletAdapter } from "./morse-wallet-adapter";
+import { type OpenedBlob, openBlob } from "./seal-access";
 
 /**
  * Seal decryption for wallets a RecipientFile allows (PROTOCOL-NOTES
@@ -29,7 +30,7 @@ const sessions = new Map<string, SessionKey>();
  * one. It is scoped to Morse's original package, which Seal binds into
  * every ciphertext under the RecipientFile policy.
  */
-export async function sessionKeyFor({
+async function sessionKeyFor({
 	client,
 	network,
 	address,
@@ -60,62 +61,77 @@ export async function sessionKeyFor({
 	return session;
 }
 
-/** The ciphertext was not made under this RecipientFile's Seal prefix. */
-export class WrongPolicyError extends Error {
-	constructor() {
-		super(
-			"This blob was encrypted under a different access policy than its RecipientFile, so it cannot be decrypted with it.",
-		);
-		this.name = "WrongPolicyError";
-	}
+/** Where opening a blob has got to, for the inspector to say. */
+export type OpenStep = "checking" | "signing" | "decrypting";
+
+/**
+ * Opens a blob through its RecipientFile by the rule in `seal-access`: the
+ * file's Seal prefix and the blob's bytes are read first, and the wallet
+ * signs a session key only for ciphertext under that prefix. A file with no
+ * prefix whose bytes are not Seal ciphertext comes back as it is, unsigned.
+ * @throws {SealAccessError} When the rule refuses the blob.
+ */
+export async function openWithRecipientFile({
+	client,
+	network,
+	blobId,
+	fileId,
+	address,
+	signPersonalMessage,
+	onStep,
+}: {
+	client: NetworkClient;
+	network: NetworkConfig;
+	blobId: string;
+	fileId: string;
+	address: string;
+	signPersonalMessage: SignPersonalMessage;
+	onStep: (step: OpenStep) => void;
+}): Promise<OpenedBlob> {
+	onStep("checking");
+	const sdk = await loadMorseSdk();
+	const config = sdk.morseConfig({ network: network.id });
+	const id = sdk.toRecipientFileId(fileId);
+	return openBlob({
+		readPrefix: () =>
+			sdk.RpcRecipientFilesReader.fromConfig(client, {
+				packageId: config.packageId,
+			}).getRecipientFileSealPrefix(id),
+		readBytes: () => readBlobBytes(network.aggregatorUrl, blobId),
+		signAndDecrypt: async (ciphertext, sealId) => {
+			onStep("signing");
+			const sessionKey = await sessionKeyFor({
+				client,
+				network: network.id,
+				address,
+				signPersonalMessage,
+			});
+			onStep("decrypting");
+			return sdk.DefaultSealAdapter.fromMorseConfig(
+				config,
+				{},
+				client,
+			).decryptUnderRecipientFile(ciphertext, {
+				sessionKey,
+				sealId,
+				fileId: id,
+			});
+		},
+	});
 }
 
 /**
- * Decrypts a blob's ciphertext through its RecipientFile. The Seal identity
- * travels in the ciphertext as `prefix || tag || nonce`; the prefix must be
- * the one the RecipientFile binds on chain.
- * @throws {WrongPolicyError} When the prefixes differ.
+ * A blob's bytes as the aggregator serves them.
+ * @throws {Error} When the aggregator does not serve them.
  */
-export async function decryptWithRecipientFile({
-	client,
-	network,
-	fileId,
-	ciphertext,
-	sessionKey,
-}: {
-	client: NetworkClient;
-	network: NetworkId;
-	fileId: string;
-	ciphertext: Uint8Array;
-	sessionKey: SessionKey;
-}): Promise<Uint8Array> {
-	const [{ EncryptedObject }, sdk] = await Promise.all([
-		import("@mysten/seal"),
-		loadMorseSdk(),
-	]);
-	const config = sdk.morseConfig({ network });
-	const id = sdk.toRecipientFileId(fileId);
-	const prefix = await sdk.RpcRecipientFilesReader.fromConfig(client, {
-		packageId: config.packageId,
-	}).getRecipientFileSealPrefix(id);
-	if (prefix === null)
-		throw new Error(
-			"This RecipientFile has no Seal prefix: the file it shares is not encrypted.",
-		);
-	const identity = fromHex(EncryptedObject.parse(ciphertext).id);
-	const matches =
-		identity.length > prefix.length &&
-		prefix.every((byte, index) => identity[index] === byte);
-	if (!matches) throw new WrongPolicyError();
-	const seal = sdk.DefaultSealAdapter.fromMorseConfig(config, {}, client);
-	return seal.decryptUnderRecipientFile(ciphertext, {
-		sessionKey,
-		sealId: sdk.buildRecipientFileSealId(
-			prefix,
-			identity.slice(prefix.length + 1),
-		),
-		fileId: id,
-	});
+async function readBlobBytes(
+	aggregatorUrl: string,
+	blobId: string,
+): Promise<Uint8Array> {
+	const response = await fetch(blobUrl(aggregatorUrl, blobId));
+	if (!response.ok)
+		throw new Error(`The aggregator answered ${response.status}.`);
+	return new Uint8Array(await response.arrayBuffer());
 }
 
 /**
