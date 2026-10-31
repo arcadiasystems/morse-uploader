@@ -2,6 +2,20 @@
 
 All notable changes to `@arcadiasystems/morse-uploader` will be documented in this file. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-10-31
+
+Moves to `@arcadiasystems/morse-sdk` 0.11 and the `@mysten/sui` 2.38 line it requires. The public API is unchanged and no code changed. This is a minor bump because the new peer ranges share no version with 0.4.2's: 0.4.2 cannot be installed next to SDK 0.11, and upgrading to 0.5.0 means upgrading the SDK and all three Mysten packages with it. An app that stays on SDK 0.9 or 0.10 stays on 0.4.x.
+
+### Changed
+
+- **Peer dependencies.** `@arcadiasystems/morse-sdk` `>=0.11.0 <0.12.0` (was `>=0.9.0 <0.11.0`), `@mysten/sui` `>=2.38.0 <2.39.0` (was `>=2.36.0 <2.37.0`), `@mysten/walrus` `>=1.2.37 <1.2.38` (was `>=1.2.35 <1.2.36`), `@mysten/seal` `>=1.5.2 <1.5.3` (was `>=1.5.0 <1.5.1`). These are SDK 0.11.0's own ranges, so an app resolves one copy of each. Walrus and seal stay held to one release each for the reason 0.4.2 gave: a later patch of either can require the next sui minor. Installing this package next to `@arcadiasystems/morse-sdk@0.11.0` with no `@mysten` versions named now resolves sui 2.38.0, walrus 1.2.37 and seal 1.5.2. The README peer install is now `npm install react react-dom @arcadiasystems/morse-sdk@0.11.0 @mysten/sui@2.38.0 @mysten/walrus@1.2.37 @mysten/seal@1.5.2`.
+- **The dev dependencies and the example** pin `@arcadiasystems/morse-sdk` 0.11.0, `@mysten/sui` 2.38.0, `@mysten/walrus` 1.2.37 and `@mysten/seal` 1.5.2, so CI tests the versions the ranges admit. The example keeps `@mysten/dapp-kit` 1.1.17, still the last release, whose `@mysten/sui` peer is `^2.26.1`, and `@mysten/walrus-wasm` 0.3.1, which walrus 1.2.37 still depends on.
+- **Nothing upstream changed reaches this package.** Each point below was checked against the published packages:
+  - SDK 0.11.0 changes its peer ranges and the versions `TESTED_SUBSTRATE` records. Its type declarations and the rest of its code are the same as 0.10.0's.
+  - `@mysten/walrus` 1.2.36 and 1.2.37 ship the same code as 1.2.35. The relay tip `maxBlobBytesForTip` inverts, the `/v1/tip-config` shape `fetchRelayTipStrategy` reads and its 30-second timeout are unchanged, and `UploadRelayConfig["sendTip"]` is still `{ max: number }`, so the README's `sendTip: { max: 10_000_000 }` stands.
+  - `@mysten/seal` 1.5.1 and 1.5.2 change only the version Seal sends to key servers. `SessionKey` and `UserError`, the Seal exports this package uses at runtime, are unchanged.
+  - In `@mysten/sui` 2.37 and 2.38, the "Insufficient balance of ..." text `uploadErrorMessage` rewrites is unchanged, and so are the types this package takes from `@mysten/sui/client`, `/transactions` and `/grpc`. The stricter BCS decoding in 2.37 (through `@mysten/bcs` 2.1.3) does not reach code here: the wallet adapter passes simulation return values on as bytes and decodes no BCS itself. The multisig zkLogin verification fix and the ML-DSA-65 and Ed25519 mnemonic derivation changes are in APIs this package does not call.
+
 ## [0.4.2] - 2026-10-31
 
 Narrows the `@mysten/seal` and `@mysten/walrus` peers to the releases that run on `@mysten/sui` 2.36, so the README's peer install resolves again. No code changed.
