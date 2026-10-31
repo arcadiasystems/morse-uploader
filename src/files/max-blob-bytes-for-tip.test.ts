@@ -8,7 +8,7 @@ const MAINNET_TIP: TipStrategy = { linear: { base: 0, perEncodedKib: 40 } };
 const TESTNET_TIP: TipStrategy = { const: 105 };
 const DEFAULT_MAX_TIP = 10_000_000n;
 
-// The forward direction, written out from @mysten/walrus 1.2.35
+// The forward direction, written out from @mysten/walrus 1.2.37
 // (encodedBlobLength for 1000 shards, then calculateUploadRelayTip), as an
 // oracle the inverse is checked against.
 function relayTip(strategy: TipStrategy, size: number): bigint {
