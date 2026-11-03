@@ -25,7 +25,7 @@ const BYTES_PER_KIB = 1024n;
  * cap sets no size limit. `0` when no blob fits, not even an empty one, since
  * Walrus encodes an empty blob as one byte.
  *
- * Inverts the tip `@mysten/walrus` 1.2.35 computes in `calculateUploadRelayTip`:
+ * Inverts the tip `@mysten/walrus` 1.2.37 computes in `calculateUploadRelayTip`:
  *
  *     symbols = floor((max(size, 1) - 1) / 222,778) + 1, rounded up to even
  *     encoded = 64,032,000 + 1,001,000 * symbols
