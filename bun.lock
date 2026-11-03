@@ -5,12 +5,12 @@
     "": {
       "name": "@arcadiasystems/morse-uploader",
       "devDependencies": {
-        "@arcadiasystems/morse-sdk": "0.10.0",
+        "@arcadiasystems/morse-sdk": "0.11.0",
         "@arethetypeswrong/cli": "^0.18.1",
         "@biomejs/biome": "2.4.7",
-        "@mysten/seal": "1.5.0",
-        "@mysten/sui": "2.36.0",
-        "@mysten/walrus": "1.2.35",
+        "@mysten/seal": "1.5.2",
+        "@mysten/sui": "2.38.0",
+        "@mysten/walrus": "1.2.37",
         "@testing-library/jest-dom": "^6.4.0",
         "@testing-library/react": "^16.0.0",
         "@testing-library/user-event": "^14.5.0",
@@ -26,10 +26,10 @@
         "vitest": "^2.1.0",
       },
       "peerDependencies": {
-        "@arcadiasystems/morse-sdk": ">=0.9.0 <0.11.0",
-        "@mysten/seal": ">=1.5.0 <1.5.1",
-        "@mysten/sui": ">=2.36.0 <2.37.0",
-        "@mysten/walrus": ">=1.2.35 <1.2.36",
+        "@arcadiasystems/morse-sdk": ">=0.11.0 <0.12.0",
+        "@mysten/seal": ">=1.5.2 <1.5.3",
+        "@mysten/sui": ">=2.38.0 <2.39.0",
+        "@mysten/walrus": ">=1.2.37 <1.2.38",
         "react": ">=18.0.0",
         "react-dom": ">=18.0.0",
       },
@@ -42,11 +42,11 @@
       "name": "@arcadiasystems/morse-uploader-example-web",
       "version": "0.0.0",
       "dependencies": {
-        "@arcadiasystems/morse-sdk": "0.10.0",
+        "@arcadiasystems/morse-sdk": "0.11.0",
         "@mysten/dapp-kit": "1.1.17",
-        "@mysten/seal": "1.5.0",
-        "@mysten/sui": "2.36.0",
-        "@mysten/walrus": "1.2.35",
+        "@mysten/seal": "1.5.2",
+        "@mysten/sui": "2.38.0",
+        "@mysten/walrus": "1.2.37",
         "@mysten/walrus-wasm": "0.3.1",
         "@tanstack/react-query": "^5.100.0",
         "lucide-react": "^0.460.0",
@@ -76,7 +76,7 @@
 
     "@andrewbranch/untar.js": ["@andrewbranch/untar.js@1.0.3", "", {}, "sha512-Jh15/qVmrLGhkKJBdXlK1+9tY4lZruYjsgkDFj08ZmDiWVBLJcqkok7Z0/R0In+i1rScBpJlSvrTS2Lm41Pbnw=="],
 
-    "@arcadiasystems/morse-sdk": ["@arcadiasystems/morse-sdk@0.10.0", "", { "peerDependencies": { "@mysten/seal": ">=1.5.0 <1.6.0", "@mysten/sui": ">=2.36.0 <2.37.0", "@mysten/walrus": ">=1.2.35 <1.3.0" } }, "sha512-oLiIIwT/m+URZB39EP6wfuckRg9EssdGT54sensagROMhk4+M+T+vixTdOckwh3VSKmOYk5TLad90E80OEBcmQ=="],
+    "@arcadiasystems/morse-sdk": ["@arcadiasystems/morse-sdk@0.11.0", "", { "peerDependencies": { "@mysten/seal": ">=1.5.2 <1.5.3", "@mysten/sui": ">=2.38.0 <2.39.0", "@mysten/walrus": ">=1.2.37 <1.2.38" } }, "sha512-/OXOrRKhDUVol9TLJt3n7ONly7MzZQtBUIOS/BsGyfSoMVOP5KvDpbRD+OkbeDUuBJDQ2jMaYyD7hCbT8QnIgQ=="],
 
     "@arcadiasystems/morse-uploader-example-web": ["@arcadiasystems/morse-uploader-example-web@workspace:examples/web"],
 
@@ -244,25 +244,25 @@
 
     "@loaderkit/resolve": ["@loaderkit/resolve@1.0.6", "", { "dependencies": { "@braidai/lang": "^1.0.0" } }, "sha512-G8FdIoF5CypfwmD9rl8BXod5HDn8JqB0CCNBXDTaRZ+yRYhARrrSToX1zg1zy9jX3zLqigsELwhT4gNtkdQAUg=="],
 
-    "@mysten/bcs": ["@mysten/bcs@2.1.2", "", { "dependencies": { "@mysten/utils": "^0.4.1", "@scure/base": "^2.3.0" } }, "sha512-fv6lyuZMTHN0xRlu4GYiV/UXUrdJDOHbXm1KfZYEU0sy/t+22yTrTVtWnAQv1Km7eyB3qHhwIrAG2aem4JMocw=="],
+    "@mysten/bcs": ["@mysten/bcs@2.1.3", "", { "dependencies": { "@mysten/utils": "^0.4.2", "@scure/base": "^2.3.0" } }, "sha512-sg3hstwDLQQmQTpiX8Vzs13bEEGTqnhp1gUzBLlVQ493xyTTCDwB/jXGzT0g2I/GXd2o1B3s7Bd67Ua3VZo+Jw=="],
 
     "@mysten/dapp-kit": ["@mysten/dapp-kit@1.1.17", "", { "dependencies": { "@mysten/slush-wallet": "^1.1.17", "@mysten/utils": "^0.4.0", "@mysten/wallet-standard": "^0.21.17", "@radix-ui/react-dialog": "^1.1.16", "@radix-ui/react-dropdown-menu": "^2.1.17", "@radix-ui/react-slot": "^1.2.5", "@vanilla-extract/css": "^1.20.1", "@vanilla-extract/dynamic": "^2.1.5", "@vanilla-extract/recipes": "^0.5.7", "clsx": "^2.1.1", "zustand": "^5.0.14" }, "peerDependencies": { "@mysten/sui": "^2.26.1", "@tanstack/react-query": "^5.0.0", "react": "*" } }, "sha512-sCSIFaB+Ttan/K+nMHOWG5iot8fit/Fm1z9wFfar5jtvNrjMCzESx6uf5Ar92XgF1rRhRL7PWzgU5A8MjwrywA=="],
 
-    "@mysten/seal": ["@mysten/seal@1.5.0", "", { "dependencies": { "@mysten/bcs": "^2.1.2", "@noble/curves": "^2.3.0", "@noble/hashes": "^2.3.0" }, "peerDependencies": { "@mysten/sui": "^2.36.0" } }, "sha512-yXKBV2zncPxBqeeAamDMwNMrIbO7oQP4b1L5+hlyJUUKeRALes45UZN2JkqA3CZweAoR7ly5wJnuL2gBMfED6Q=="],
+    "@mysten/seal": ["@mysten/seal@1.5.2", "", { "dependencies": { "@mysten/bcs": "^2.1.3", "@noble/curves": "^2.3.0", "@noble/hashes": "^2.3.0" }, "peerDependencies": { "@mysten/sui": "^2.38.0" } }, "sha512-8pbihzdkAYt8r+G9sewkrfqLZ/aAObJnKUDxcDYVJXAvZrL2GOaM8tQBMdN8zzIQ9Mw3oc3j8LmdccjmPi+Erw=="],
 
-    "@mysten/slush-wallet": ["@mysten/slush-wallet@1.3.4", "", { "dependencies": { "@mysten/utils": "^0.4.1", "@mysten/wallet-standard": "^0.21.34", "@mysten/window-wallet-core": "^0.4.0", "valibot": "^1.4.2" }, "peerDependencies": { "@mysten/sui": "^2.36.0" } }, "sha512-4KhhtbILJ+P0LhBcuhGrSTOFt7ghZGDACQ5+WTqNvpQJAil7p88tQlNarKzqq9jug5+akK2TXte+HX3oA1EbYQ=="],
+    "@mysten/slush-wallet": ["@mysten/slush-wallet@1.3.6", "", { "dependencies": { "@mysten/utils": "^0.4.2", "@mysten/wallet-standard": "^0.21.36", "@mysten/window-wallet-core": "^0.4.1", "valibot": "^1.4.2" }, "peerDependencies": { "@mysten/sui": "^2.38.0" } }, "sha512-qseBI9ZPKiGpPSNCpUL3wjtN48EVcLIqQko4Jkfk5RnQZjeSCfn56+y4SKQffcB2OsxzH/y1tDSbrnIXU0jhWw=="],
 
-    "@mysten/sui": ["@mysten/sui@2.36.0", "", { "dependencies": { "@graphql-typed-document-node/core": "^3.2.0", "@mysten/bcs": "^2.1.2", "@mysten/utils": "^0.4.1", "@noble/curves": "^2.3.0", "@noble/hashes": "^2.3.0", "@noble/post-quantum": "^0.7.1", "@protobuf-ts/grpcweb-transport": "^2.11.1", "@protobuf-ts/runtime": "^2.11.1", "@protobuf-ts/runtime-rpc": "^2.11.1", "@scure/base": "^2.3.0", "@scure/bip32": "^2.3.0", "@scure/bip39": "^2.3.0", "gql.tada": "^1.11.3", "graphql": "^17.0.2", "poseidon-lite": "0.3.0", "valibot": "^1.4.2" } }, "sha512-caOeKw7Cml0ligqLv7977keIq7EZJQuAbHjL5lCeUP71l5hKZT20xKRgXNAQb8mIHsVXq8YscbXvhqJdyo9ebQ=="],
+    "@mysten/sui": ["@mysten/sui@2.38.0", "", { "dependencies": { "@graphql-typed-document-node/core": "^3.2.0", "@mysten/bcs": "^2.1.3", "@mysten/utils": "^0.4.2", "@noble/curves": "^2.3.0", "@noble/hashes": "^2.3.0", "@noble/post-quantum": "^0.7.1", "@protobuf-ts/grpcweb-transport": "^2.11.1", "@protobuf-ts/runtime": "^2.11.1", "@protobuf-ts/runtime-rpc": "^2.11.1", "@scure/base": "^2.3.0", "@scure/bip32": "^2.3.0", "@scure/bip39": "^2.3.0", "gql.tada": "^1.11.3", "graphql": "^17.0.2", "poseidon-lite": "0.3.0", "valibot": "^1.4.2" } }, "sha512-j/uG+waSo62eWH0c3+a/3V8tnsAUTKfe7OIXtIDmhPLQcWnPCchf0R5WjxMx904Vh61qfYmrySFYoAau2+7bwA=="],
 
-    "@mysten/utils": ["@mysten/utils@0.4.1", "", { "dependencies": { "@scure/base": "^2.3.0" } }, "sha512-gffLJ84CbqG/CcOPuVlwXIRu37tFn0BtUx7CQtbLwJzWjUE7FU2Gq8BXWjzxImnvufcyLTaNWtCPG6wq22Zhog=="],
+    "@mysten/utils": ["@mysten/utils@0.4.2", "", {}, "sha512-K/5eBuYKxUFCrYcic1lvYvWE9OVSH581cjVjwsSJGUqPit91nZq2acUwes+B4lo98VE/CILIUeBcyEIvuNxMhA=="],
 
-    "@mysten/wallet-standard": ["@mysten/wallet-standard@0.21.34", "", { "dependencies": { "@wallet-standard/core": "1.1.2" }, "peerDependencies": { "@mysten/sui": "^2.36.0" } }, "sha512-c0RC+bg0Hs9kfbaW4zr1WnKCIreVC2e8s06gK9s++Y5VkNwMcjmhkQoowghe/Sk36ctcbSf0w6gcY2VjcdY3oA=="],
+    "@mysten/wallet-standard": ["@mysten/wallet-standard@0.21.36", "", { "dependencies": { "@wallet-standard/core": "1.1.2" }, "peerDependencies": { "@mysten/sui": "^2.38.0" } }, "sha512-cPD/aIqImc8n39ejvzd5jCskTMHB0PRstVE2p/Tfn+Jh62YQhrPndXVprRsAmJgS+6U0uJWHUec9wxQDXJ85Jg=="],
 
-    "@mysten/walrus": ["@mysten/walrus@1.2.35", "", { "dependencies": { "@mysten/bcs": "^2.1.2", "@mysten/utils": "^0.4.1", "@mysten/walrus-wasm": "^0.3.1", "dataloader": "^2.2.3" }, "peerDependencies": { "@mysten/sui": "^2.36.0" } }, "sha512-NWXob7KpS4aAJKQ8cuMHxLTzKndUOR6ujQyLD/wQ8bGLaUVhzuXmF+UI5tIrDQS4tPIw2HDcc3PYfvWn4W5n4w=="],
+    "@mysten/walrus": ["@mysten/walrus@1.2.37", "", { "dependencies": { "@mysten/bcs": "^2.1.3", "@mysten/utils": "^0.4.2", "@mysten/walrus-wasm": "^0.3.1", "dataloader": "^2.2.3" }, "peerDependencies": { "@mysten/sui": "^2.38.0" } }, "sha512-NS/kmctPqz0DJFmxIh1GHrz32AvhcK/3yPlkTT9Nzuk/TpKwaXSPi2FEI4xiGk93WRVt9HO9Qg+ifIGcoNTmWA=="],
 
     "@mysten/walrus-wasm": ["@mysten/walrus-wasm@0.3.1", "", {}, "sha512-d+6M4xuZnkhOmLCinpe8F21pxpZ9QDZzw/QWXa9R1h0DM2iqfovfhLeT4ZaUj1pbp5mQ5C/3LJtfppjKhvynig=="],
 
-    "@mysten/window-wallet-core": ["@mysten/window-wallet-core@0.4.0", "", { "dependencies": { "@mysten/utils": "^0.4.1", "jose": "^6.2.9", "valibot": "^1.4.2" } }, "sha512-FGHQJaYigUJHw5d2xq4bvLSmjAy/oTsgSDDBTqM1Y2rhVjtIwJgZLZTbocWZrQ1Gj4JFZVnsJJUZVRFwM5PLWg=="],
+    "@mysten/window-wallet-core": ["@mysten/window-wallet-core@0.4.1", "", { "dependencies": { "@mysten/utils": "^0.4.2", "jose": "^6.2.9", "valibot": "^1.4.2" } }, "sha512-0593Dt8q0VWXZBcRziksedxXncuFO7NCRZhxwDAnMGSpghZLeRw3qA2zX5eE8QQ1g+SR87X7Z8tu5TVzzw73Mw=="],
 
     "@noble/ciphers": ["@noble/ciphers@2.4.0", "", {}, "sha512-AnjFn0Jv92laAkvMrghlFZq4qQCIN/4DxFV/eooqtC2YTjB7kBeLMS2T9KJX4Dn+ZVXLOwK0lSgqDtx9gvxtiw=="],
 
