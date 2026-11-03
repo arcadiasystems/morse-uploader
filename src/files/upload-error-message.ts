@@ -2,19 +2,29 @@ import {
 	type FormattedError,
 	formatUserMessage,
 } from "@arcadiasystems/morse-sdk";
+import { FileTooLargeError } from "./file-too-large-error.js";
 
 /**
  * Render an upload failure for the UI. Defers to the SDK's `formatUserMessage`
- * except for an insufficient-balance failure, which the SDK sees only as a
- * transport error carrying `@mysten/sui`'s raw text: a coin type, an address,
- * and two unscaled integers. That reads as a network problem when it is really
- * "top up the wallet", so it is rewritten here with the amounts in whole coins
- * and the network's way of getting more.
+ * except for two cases it cannot title. A {@link FileTooLargeError} is this
+ * package's own, and the SDK would call it "Unexpected error". An
+ * insufficient-balance failure the SDK sees only as a transport error carrying
+ * `@mysten/sui`'s raw text: a coin type, an address, and two unscaled
+ * integers. That reads as a network problem when it is really "top up the
+ * wallet", so it is rewritten here with the amounts in whole coins and the
+ * network's way of getting more.
  */
 export function uploadErrorMessage(
 	error: unknown,
 	network?: "testnet" | "mainnet",
 ): FormattedError {
+	if (error instanceof FileTooLargeError) {
+		return {
+			title: "File too large",
+			description: error.message,
+			cause: error,
+		};
+	}
 	const shortfall = parseInsufficientBalance(errorText(error));
 	if (shortfall === null) {
 		return formatUserMessage(error);

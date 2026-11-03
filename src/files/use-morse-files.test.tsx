@@ -1,4 +1,8 @@
-import type { SealAdapter } from "@arcadiasystems/morse-sdk";
+import type {
+	SealAdapter,
+	WalrusFlowCapable,
+	WalrusWriteAdapter,
+} from "@arcadiasystems/morse-sdk";
 import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { UseMorseFilesOptions } from "./types.js";
@@ -6,10 +10,12 @@ import { useMorseFiles } from "./use-morse-files.js";
 
 // Hoisted so the vi.mock factory (which runs before the module body) can close
 // over them.
-const { fromAccountAsync, sealFromMorseConfig } = vi.hoisted(() => ({
-	fromAccountAsync: vi.fn(),
-	sealFromMorseConfig: vi.fn(),
-}));
+const { fromAccountAsync, sealFromMorseConfig, walrusWriteFromConfig } =
+	vi.hoisted(() => ({
+		fromAccountAsync: vi.fn(),
+		sealFromMorseConfig: vi.fn(),
+		walrusWriteFromConfig: vi.fn(),
+	}));
 
 // morseConfig and the codecs stay real: the point of most of these tests is
 // what the real per-network config implies (testnet pins key servers, mainnet
@@ -20,7 +26,7 @@ vi.mock("@arcadiasystems/morse-sdk", async (importOriginal) => {
 	return {
 		...actual,
 		WalletStandardSigner: { fromAccountAsync },
-		DefaultWalrusWriteAdapter: { fromConfig: () => ({ kind: "walrus-write" }) },
+		DefaultWalrusWriteAdapter: { fromConfig: walrusWriteFromConfig },
 		HttpAggregatorReadAdapter: {
 			fromMorseConfig: () => ({ kind: "walrus-read" }),
 		},
@@ -57,6 +63,7 @@ beforeEach(() => {
 	vi.clearAllMocks();
 	fromAccountAsync.mockResolvedValue({ kind: "signer" });
 	sealFromMorseConfig.mockReturnValue({ kind: "seal" });
+	walrusWriteFromConfig.mockReturnValue({ kind: "walrus-write" });
 });
 
 describe("useMorseFiles", () => {
@@ -129,6 +136,53 @@ describe("useMorseFiles", () => {
 			}),
 		);
 		await waitFor(() => expect(fromAccountAsync).toHaveBeenCalledTimes(2));
+	});
+
+	it("builds the write adapter on the configured relay and exposes the relay", async () => {
+		const uploadRelay = {
+			host: "https://upload-relay.mainnet.walrus.space",
+			sendTip: { max: 10_000_000 },
+		};
+		const { result } = renderHook(() =>
+			useMorseFiles(
+				options({ network: "mainnet", walrusWriteConfig: { uploadRelay } }),
+			),
+		);
+
+		await waitFor(() => expect(result.current.status).toBe("ready"));
+		expect(walrusWriteFromConfig).toHaveBeenCalledWith(
+			expect.objectContaining({ network: "mainnet", uploadRelay }),
+			{ kind: "signer" },
+		);
+		expect(result.current.handles?.uploadRelay).toBe(uploadRelay);
+	});
+
+	it("leaves the relay unset when none is configured", async () => {
+		const { result } = renderHook(() => useMorseFiles(options()));
+
+		await waitFor(() => expect(result.current.status).toBe("ready"));
+		expect(result.current.handles).not.toHaveProperty("uploadRelay");
+	});
+
+	it("leaves the relay unset for a prebuilt write adapter, whose relay it cannot see", async () => {
+		const walrusWrite = {
+			kind: "prebuilt-write",
+		} as unknown as WalrusWriteAdapter & WalrusFlowCapable;
+		const { result } = renderHook(() =>
+			useMorseFiles(
+				options({
+					walrusWrite,
+					walrusWriteConfig: {
+						uploadRelay: { host: "https://ignored", sendTip: { max: 1 } },
+					},
+				}),
+			),
+		);
+
+		await waitFor(() => expect(result.current.status).toBe("ready"));
+		expect(result.current.handles?.walrusWrite).toBe(walrusWrite);
+		expect(result.current.handles).not.toHaveProperty("uploadRelay");
+		expect(walrusWriteFromConfig).not.toHaveBeenCalled();
 	});
 
 	it("reports setup failures instead of throwing", async () => {

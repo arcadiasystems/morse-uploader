@@ -25,6 +25,7 @@ import type { KeyServerConfig, SealCompatibleClient } from "@mysten/seal";
 import type { Signer } from "@mysten/sui/cryptography";
 import type { SuiGrpcClient } from "@mysten/sui/grpc";
 import type { Transaction } from "@mysten/sui/transactions";
+import type { UploadRelayConfig } from "@mysten/walrus";
 
 /** Wallet callbacks the setup hook needs (typically from dapp-kit mutateAsync). */
 export interface MorseFilesWalletCallbacks {
@@ -33,6 +34,21 @@ export interface MorseFilesWalletCallbacks {
 	readonly signAndExecuteTransaction: (input: {
 		transaction: Transaction;
 	}) => Promise<{ digest: string }>;
+}
+
+/** The Walrus upload relay the default write adapter sends blobs through. */
+export interface UploadRelayOptions {
+	/** The relay's base URL, which is per network. */
+	readonly host: string;
+	/**
+	 * How to tip the relay, passed to `@mysten/walrus` as is. With `{ max }`
+	 * the SDK reads the relay's `/v1/tip-config` and refuses a tip above `max`
+	 * MIST. Without it no tip is sent, and the Walrus Mainnet relay requires
+	 * one. Because the Walrus Mainnet tip grows with the blob's encoded size,
+	 * `max` also caps the file size; {@link useFileUpload} refuses a larger
+	 * file with a {@link FileTooLargeError} before reading it.
+	 */
+	readonly sendTip?: UploadRelayConfig["sendTip"];
 }
 
 /** Options for the {@link useMorseFiles} setup hook. */
@@ -53,10 +69,7 @@ export interface UseMorseFilesOptions {
 	/** Options for the default direct write adapter (wasm/relay), if not overridden. */
 	readonly walrusWriteConfig?: {
 		readonly wasmUrl?: string;
-		readonly uploadRelay?: {
-			readonly host: string;
-			readonly sendTip?: unknown;
-		};
+		readonly uploadRelay?: UploadRelayOptions;
 	};
 	/** Prebuilt Walrus read adapter; defaults to the aggregator. */
 	readonly walrusRead?: WalrusReadAdapter;
@@ -94,6 +107,15 @@ export interface MorseFilesHandles {
 	readonly signer: Signer;
 	/** Flow-capable write adapter (required for the single-PTB file ops). */
 	readonly walrusWrite: WalrusWriteAdapter & WalrusFlowCapable;
+	/**
+	 * The upload relay `walrusWrite` sends blobs through. {@link useFileUpload}
+	 * reads its tip cap to refuse a file too large for it before the upload
+	 * starts. {@link useMorseFiles} sets it when it builds `walrusWrite` from
+	 * `walrusWriteConfig`, and leaves it unset for a prebuilt `walrusWrite`,
+	 * whose relay it cannot see. Without it the SDK still refuses an over-cap
+	 * tip before signing, but only after encoding the whole file.
+	 */
+	readonly uploadRelay?: UploadRelayOptions;
 	readonly walrusRead: WalrusReadAdapter;
 	/**
 	 * `null` when no Seal key servers are available, which on mainnet means no
@@ -139,6 +161,29 @@ export interface FileUploadInput {
 	readonly encrypt?: boolean;
 	readonly epochs: number;
 	readonly deletable?: boolean;
+}
+
+/**
+ * The largest upload the relay's tip cap allows, derived from the relay's tip
+ * config and `sendTip.max`. Carried by {@link FileTooLargeError}.
+ */
+export interface UploadSizeLimit {
+	/** Largest blob, in bytes, whose relay tip is at most `maxTipMist`. */
+	readonly maxBytes: number;
+	/** The tip cap the limit comes from (`sendTip.max`), in MIST. */
+	readonly maxTipMist: bigint;
+}
+
+/** Arguments for {@link FileTooLargeError}. */
+export interface FileTooLargeErrorArgs {
+	/** Bytes Walrus would have stored. */
+	readonly sizeBytes: number;
+	/**
+	 * True when `sizeBytes` is the size after Seal encryption: the file fit,
+	 * and the envelope took it over. False when the file itself is over.
+	 */
+	readonly afterEncryption: boolean;
+	readonly limit: UploadSizeLimit;
 }
 
 /** A completed upload plus its share link. */
@@ -212,6 +257,12 @@ export interface UseStorageCostEstimateResult {
 /** Load/work status for {@link useFileDownload}. */
 export type FileDownloadStatus = "idle" | "loading" | "ready" | "error";
 
+/**
+ * Why a share link cannot open the encrypted file it names: it carries no Seal
+ * material (`"missing"`), or its Seal prefix is not the file's (`"mismatch"`).
+ */
+export type ShareLinkSealErrorReason = "missing" | "mismatch";
+
 /** Return value of {@link useFileDownload}. */
 export interface UseFileDownloadResult {
 	/** Status of the on-chain metadata load. */
@@ -221,10 +272,20 @@ export interface UseFileDownloadResult {
 	readonly status: FileDownloadStatus;
 	/** Object URL for the fetched bytes; null until loaded. */
 	readonly objectUrl: string | null;
-	/** True when the share link carries Seal material (the file is encrypted). */
+	/**
+	 * True when the share link carries Seal material, so `load` decrypts. A file
+	 * with an on-chain Seal prefix opened from a link without that material
+	 * reads false here, and `load` fails with a {@link ShareLinkSealError}
+	 * instead of serving it.
+	 */
 	readonly encrypted: boolean;
 	/** True when the content type is a previewable image. */
 	readonly isImage: boolean;
+	/**
+	 * Why the last `load` or `download` failed. A {@link ShareLinkSealError}
+	 * when the file is encrypted on chain and the link cannot open it; render
+	 * any value with {@link downloadErrorMessage}.
+	 */
 	readonly error: unknown;
 	/** Fetch the bytes (public read or Seal decrypt) and build the object URL. */
 	readonly load: () => Promise<void>;

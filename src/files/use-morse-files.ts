@@ -82,6 +82,12 @@ export function useMorseFiles(
 						} as WalrusAdapterConfig,
 						signer,
 					);
+				// The relay the default adapter sends through, so useFileUpload can
+				// check its tip cap. A prebuilt adapter's relay is not visible here.
+				const uploadRelay =
+					current.walrusWrite === undefined
+						? current.walrusWriteConfig?.uploadRelay
+						: undefined;
 				const walrusRead =
 					current.walrusRead ??
 					HttpAggregatorReadAdapter.fromMorseConfig(config, client);
@@ -115,6 +121,7 @@ export function useMorseFiles(
 						adapter,
 						signer,
 						walrusWrite,
+						...(uploadRelay === undefined ? {} : { uploadRelay }),
 						walrusRead,
 						seal,
 						reader,

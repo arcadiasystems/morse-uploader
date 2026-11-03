@@ -1,5 +1,5 @@
-import { formatUserMessage } from "@arcadiasystems/morse-sdk";
 import { type ReactElement, useMemo } from "react";
+import { downloadErrorMessage } from "../files/download-error-message.js";
 import type { MorseFileDownloaderProps, SealMaterial } from "../files/types.js";
 import { useFileDownload } from "../files/use-file-download.js";
 import { formatBytes } from "../utils/format-bytes.js";
@@ -7,9 +7,9 @@ import { formatBytes } from "../utils/format-bytes.js";
 /**
  * Drop-in single-file viewer/downloader for a share link. Loads the on-chain
  * metadata, then downloads (public read) or decrypts (recipient) the bytes with
- * the correct filename and MIME type. A RecipientFile has no on-chain encrypted
- * flag, so encryption is inferred from Seal material in the share link. Logic
- * lives in {@link useFileDownload}.
+ * the correct filename and MIME type. A file with an on-chain Seal prefix
+ * opened without its Seal material shows an error asking for the full link
+ * instead of serving ciphertext. Logic lives in {@link useFileDownload}.
  */
 export function MorseFileDownloader(
 	props: MorseFileDownloaderProps,
@@ -47,7 +47,7 @@ export function MorseFileDownloader(
 		);
 	}
 
-	const bytesError = dl.error === null ? null : formatUserMessage(dl.error);
+	const bytesError = dl.error === null ? null : downloadErrorMessage(dl.error);
 
 	return (
 		<section className={`mu-view ${className ?? ""}`} data-mu="view">

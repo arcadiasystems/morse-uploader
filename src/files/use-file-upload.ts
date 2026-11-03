@@ -4,6 +4,8 @@ import {
 } from "@arcadiasystems/morse-sdk";
 import { useCallback, useState } from "react";
 import { buildShareLink } from "./build-share-link.js";
+import { FileTooLargeError } from "./file-too-large-error.js";
+import { resolveUploadSizeLimit } from "./resolve-upload-size-limit.js";
 import type {
 	CompletedFileUpload,
 	FilePhase,
@@ -12,6 +14,7 @@ import type {
 	UseFileUploadResult,
 } from "./types.js";
 import { useMorseFilesContext } from "./use-morse-files-context.js";
+import { withCiphertextSizeLimit } from "./with-ciphertext-size-limit.js";
 
 /** Shared message for the encrypted paths when no key servers exist. */
 const SEAL_UNAVAILABLE =
@@ -25,9 +28,12 @@ const FALLBACK_CONTENT_TYPE = "application/octet-stream";
  * uploads a public file. Either way the recipient set is set at creation in two
  * wallet popups. Tracks the phase stepper and returns the fileId, the seal
  * material (encrypted only), and a share link.
+ *
+ * With an upload relay whose tip is capped, a file too large for the cap
+ * fails with a {@link FileTooLargeError} naming the limit, before it is read.
  */
 export function useFileUpload(): UseFileUploadResult {
-	const { adapter, config, walrusWrite, seal, network } =
+	const { adapter, config, walrusWrite, uploadRelay, seal, network } =
 		useMorseFilesContext();
 	const [status, setStatus] = useState<FileUploadStatus>("idle");
 	const [phase, setPhase] = useState<FilePhase | null>(null);
@@ -48,6 +54,17 @@ export function useFileUpload(): UseFileUploadResult {
 			setData(null);
 			setError(null);
 			try {
+				// The SDK refuses a tip over the cap too, but only after encoding
+				// the whole file, and as a transport error. Checking against the
+				// relay's tip config first refuses the file before it is read.
+				const sizeLimit = await resolveUploadSizeLimit(uploadRelay);
+				if (sizeLimit !== null && input.file.size > sizeLimit.maxBytes) {
+					throw new FileTooLargeError({
+						sizeBytes: input.file.size,
+						afterEncryption: false,
+						limit: sizeLimit,
+					});
+				}
 				const bytes = new Uint8Array(await input.file.arrayBuffer());
 				const contentType = input.file.type || FALLBACK_CONTENT_TYPE;
 				const recipients = input.recipients ?? [];
@@ -67,7 +84,10 @@ export function useFileUpload(): UseFileUploadResult {
 						adapter,
 						config,
 						{
-							walrus: walrusWrite,
+							walrus:
+								sizeLimit === null
+									? walrusWrite
+									: withCiphertextSizeLimit(walrusWrite, sizeLimit),
 							seal,
 							plaintext: bytes,
 							recipients,
@@ -118,7 +138,7 @@ export function useFileUpload(): UseFileUploadResult {
 				throw err;
 			}
 		},
-		[adapter, config, walrusWrite, seal, network],
+		[adapter, config, walrusWrite, uploadRelay, seal, network],
 	);
 
 	return { status, phase, data, error, upload, reset };

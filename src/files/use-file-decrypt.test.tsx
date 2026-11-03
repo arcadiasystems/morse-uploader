@@ -1,4 +1,6 @@
-import { SessionKey } from "@mysten/seal";
+import { toSuiAddress } from "@arcadiasystems/morse-sdk";
+import { SessionKey, UserError } from "@mysten/seal";
+import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -16,14 +18,17 @@ vi.mock("@mysten/seal", async (importOriginal) => {
 
 const plaintext = new Uint8Array([7, 7]);
 
+const me = Ed25519Keypair.fromSecretKey(new Uint8Array(32).fill(1));
+const other = Ed25519Keypair.fromSecretKey(new Uint8Array(32).fill(2));
+
 function makeHandles(decrypt: ReturnType<typeof vi.fn>): MorseFilesHandles {
 	return {
 		seal: { decryptUnderRecipientFile: decrypt },
 		walrusRead: { readBlob: vi.fn().mockResolvedValue(new Uint8Array([9])) },
-		signer: {},
+		signer: me,
 		client: {},
 		config: { packageId: "0xpkg" },
-		address: "0xme",
+		address: me.toSuiAddress(),
 	} as unknown as MorseFilesHandles;
 }
 function wrap(handles: MorseFilesHandles) {
@@ -113,14 +118,44 @@ describe("useFileDecrypt session cache", () => {
 		});
 		expect(create).toHaveBeenCalledTimes(1);
 
-		handles = { ...handles, address: "0xother" } as MorseFilesHandles;
+		handles = {
+			...handles,
+			signer: other,
+			address: toSuiAddress(other.toSuiAddress()),
+		};
 		rerender();
 		await act(async () => {
 			await result.current.decrypt(input);
 		});
 		expect(create).toHaveBeenCalledTimes(2);
 		expect(create).toHaveBeenLastCalledWith(
-			expect.objectContaining({ address: "0xother" }),
+			expect.objectContaining({ address: other.toSuiAddress() }),
+		);
+	});
+});
+
+describe("useFileDecrypt with a signer for another account", () => {
+	it("rejects before creating a session, so nothing is signed or cached", async () => {
+		// @mysten/seal 1.5 no longer makes this check itself; without it the
+		// wallet would sign, the key servers would refuse, and the mismatched
+		// session would stay cached for the address.
+		const create = vi.mocked(SessionKey.create);
+		const decrypt = vi.fn().mockResolvedValue(plaintext);
+		const handles: MorseFilesHandles = {
+			...makeHandles(decrypt),
+			signer: other,
+		};
+		const { result } = renderHook(() => useFileDecrypt(), {
+			wrapper: wrap(handles),
+		});
+		await act(async () => {
+			await expect(result.current.decrypt(input)).rejects.toThrow(UserError);
+		});
+		expect(create).not.toHaveBeenCalled();
+		expect(decrypt).not.toHaveBeenCalled();
+		expect(result.current.status).toBe("error");
+		expect((result.current.error as Error).message).toMatch(
+			/^Signer address does not match session key address/,
 		);
 	});
 });

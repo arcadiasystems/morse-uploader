@@ -1,6 +1,7 @@
 import { buildRecipientFileSealId, SealError } from "@arcadiasystems/morse-sdk";
 import { SessionKey } from "@mysten/seal";
 import { useCallback, useRef, useState } from "react";
+import { assertSignerMatchesAddress } from "./assert-signer-matches-address.js";
 import type {
 	FileDecryptInput,
 	FileDecryptStatus,
@@ -68,6 +69,7 @@ export function useFileDecrypt(): UseFileDecryptResult {
 				) {
 					return cached.key;
 				}
+				assertSignerMatchesAddress(signer, address);
 				const key = await SessionKey.create({
 					address,
 					packageId,

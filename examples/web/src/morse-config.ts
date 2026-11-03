@@ -17,7 +17,7 @@ export const SUI_JSONRPC_URL: string | undefined =
 export const SUI_GRPC_URL: string | undefined =
 	import.meta.env.VITE_SUI_GRPC_URL || undefined;
 
-// dapp-kit 1.0.6 speaks JSON-RPC only, and Mysten's public fullnodes have
+// dapp-kit 1.1.17 speaks JSON-RPC only, and Mysten's public fullnodes have
 // retired it: their preflight answers without an access-control-allow-origin
 // header, so the browser blocks the request and dapp-kit fails with "Failed to
 // fetch" while serializing the transaction, before the wallet ever opens.

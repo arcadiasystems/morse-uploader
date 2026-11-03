@@ -1,5 +1,6 @@
 import { TransportError } from "@arcadiasystems/morse-sdk";
 import { describe, expect, it } from "vitest";
+import { FileTooLargeError } from "./file-too-large-error.js";
 import { uploadErrorMessage } from "./upload-error-message.js";
 
 const WAL =
@@ -55,6 +56,18 @@ describe("uploadErrorMessage", () => {
 		);
 		expect(message.title).toBe("Not enough USDC");
 		expect(message.description).toContain("needs 42 USDC");
+	});
+
+	it("titles a file too large for the relay's tip cap", () => {
+		const error = new FileTooLargeError({
+			sizeBytes: 52_428_800,
+			afterEncryption: false,
+			limit: { maxBytes: 42_327_820, maxTipMist: 10_000_000n },
+		});
+		const message = uploadErrorMessage(error, "mainnet");
+		expect(message.title).toBe("File too large");
+		expect(message.description).toBe(error.message);
+		expect(message.cause).toBe(error);
 	});
 
 	it("falls back to the SDK message for anything else", () => {
