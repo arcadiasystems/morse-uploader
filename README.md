@@ -1,6 +1,6 @@
 # @arcadiasystems/morse-uploader
 
-Headless-first React components and hooks for encrypted file sharing on Sui and Walrus, built on [`@arcadiasystems/morse-sdk`](https://github.com/arcadiasystems/morse-dcms) 0.11. Upload a file to Walrus, optionally encrypt it for a set of recipient wallets so only they can decrypt, and share a link. The connected wallet pays for and signs everything.
+Headless-first React components and hooks for encrypted file sharing on Sui and Walrus, built on [`@arcadiasystems/morse-sdk`](https://github.com/arcadiasystems/morse-dcms) 0.12. Upload a file to Walrus, optionally encrypt it for a set of recipient wallets so only they can decrypt, and share a link. The connected wallet pays for and signs everything.
 
 - **Headless-first**: composable hooks for every step (`useMorseFiles`, `useFileUpload`, `useFileDownload`, `useFileDecrypt`, `useRecipientFile`), plus an optional styled component set.
 - **Recipient-scoped encryption**: each file carries its own recipient set; an encrypted upload to N recipients is **2 wallet popups**, regardless of N. The connected wallet is always a recipient, so the owner can always decrypt. Public (unencrypted) uploads need no recipients.
@@ -16,10 +16,10 @@ npm install @arcadiasystems/morse-uploader
 Peer dependencies (install in your app, at versions `@arcadiasystems/morse-sdk` also accepts, so you do not end up with duplicate Sui/Walrus/Seal instances):
 
 ```sh
-npm install react react-dom @arcadiasystems/morse-sdk@0.11.0 @mysten/sui@2.38.0 @mysten/walrus@1.2.37 @mysten/seal@1.5.2
+npm install react react-dom @arcadiasystems/morse-sdk@0.12.0 @mysten/sui@2.39.1 @mysten/walrus@1.2.39 @mysten/seal@1.5.4
 ```
 
-The `@mysten` versions are the set `@arcadiasystems/morse-sdk` 0.11.0 is tested against. The peer ranges here and in the SDK hold `@mysten/walrus` and `@mysten/seal` to one release each, because a later patch of either can require the next `@mysten/sui` minor, so an install that names no `@mysten` versions resolves the same set. The `@arcadiasystems/morse-sdk` peer range is `>=0.11.0 <0.12.0`. An app still on SDK 0.9 or 0.10 stays on morse-uploader 0.4.x until it moves the SDK and the three `@mysten` packages together.
+The `@mysten` versions are the set `@arcadiasystems/morse-sdk` 0.12.0 is tested against. The peer ranges here and in the SDK hold `@mysten/walrus` and `@mysten/seal` to one release each, because a later patch of either can require the next `@mysten/sui` minor, so an install that names no `@mysten` versions resolves the same set. The `@arcadiasystems/morse-sdk` peer range is `>=0.12.0 <0.13.0`. An app still on SDK 0.11 stays on morse-uploader 0.5.x, and one on SDK 0.9 or 0.10 on 0.4.x, until it moves the SDK and the three `@mysten` packages together.
 
 ## Quick start
 

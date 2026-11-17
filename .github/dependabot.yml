@@ -6,8 +6,8 @@
 # of its own.
 #
 # The first group in each entry exists because @arcadiasystems/morse-sdk
-# peers on one exact, mutually compatible set of Mysten packages (0.11.0:
-# @mysten/sui >=2.38.0 <2.39.0, @mysten/walrus 1.2.37, @mysten/seal 1.5.2),
+# peers on one exact, mutually compatible set of Mysten packages (0.12.0:
+# @mysten/sui >=2.39.1 <2.40.0, @mysten/walrus 1.2.39, @mysten/seal 1.5.4),
 # and every Mysten package peers on a minimum @mysten/sui that rises with
 # almost every release. Bumped one at a time they contradict each other, so
 # they only ever move in one pull request. That includes dapp-kit: a newer
