@@ -1,0 +1,65 @@
+# Dependabot version updates. `bun` is the ecosystem that reads bun.lock:
+# https://docs.github.com/en/code-security/dependabot/ecosystems-supported-by-dependabot/supported-ecosystems-and-repositories
+#
+# Each directory with its own package.json and bun.lock gets an entry. The
+# root lockfile also locks the examples/web workspace, which has no lockfile
+# of its own.
+#
+# The first group in each entry exists because @arcadiasystems/morse-sdk
+# peers on one exact, mutually compatible set of Mysten packages (0.11.0:
+# @mysten/sui >=2.38.0 <2.39.0, @mysten/walrus 1.2.37, @mysten/seal 1.5.2),
+# and every Mysten package peers on a minimum @mysten/sui that rises with
+# almost every release. Bumped one at a time they contradict each other, so
+# they only ever move in one pull request. That includes dapp-kit: a newer
+# @mysten/dapp-kit-core alone would ask for a @mysten/sui minor the SDK
+# rejects. A dependency goes to the first group it matches, so the second
+# group takes everything else.
+version: 2
+
+updates:
+  - package-ecosystem: bun
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 2
+    commit-message:
+      prefix: chore(deps)
+    groups:
+      morse-sdk-and-mysten:
+        patterns:
+          - "@arcadiasystems/morse-sdk"
+          - "@mysten/*"
+      other-dependencies:
+        patterns:
+          - "*"
+
+  - package-ecosystem: bun
+    directory: /apps/uploader
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 2
+    commit-message:
+      prefix: chore(deps)
+    groups:
+      morse-sdk-and-mysten:
+        patterns:
+          - "@arcadiasystems/morse-sdk"
+          - "@mysten/*"
+      other-dependencies:
+        patterns:
+          - "*"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 2
+    commit-message:
+      prefix: ci(deps)
+    groups:
+      actions:
+        patterns:
+          - "*"
