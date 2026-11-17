@@ -1,0 +1,162 @@
+name: release
+
+# Publishes @arcadiasystems/morse-uploader to npm when a tag `v<version>` is
+# pushed, then creates the GitHub Release. RELEASING.md has the steps and the
+# one-time setup on npmjs.com.
+#
+# npm Trusted Publishing (OIDC) authenticates the publish, so there is no
+# NPM_TOKEN. npm matches this file's name and the `npm-publish` environment
+# against the trusted publisher saved for the package: renaming either one
+# breaks the publish until npmjs.com is updated.
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: read
+
+# Two runs for one tag would race for the same version.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PACKAGE_NAME: "@arcadiasystems/morse-uploader"
+
+jobs:
+  verify:
+    name: verify and pack
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The whole history, to tell whether the tagged commit is on main.
+          fetch-depth: 0
+      - name: Require the tagged commit to be on main
+        run: |
+          git fetch --no-tags origin "+refs/heads/main:refs/remotes/origin/main"
+          commit="$(git rev-parse "HEAD^{commit}")"
+          if ! git merge-base --is-ancestor "$commit" origin/main; then
+            echo "::error::$GITHUB_REF_NAME points at $commit, which is not on main. Release only what was merged."
+            exit 1
+          fi
+      - name: Require the tag to match the version in package.json
+        id: version
+        run: |
+          version="$(jq --raw-output .version package.json)"
+          name="$(jq --raw-output .name package.json)"
+          if [ "$name" != "$PACKAGE_NAME" ]; then
+            echo "::error::package.json names $name, and this workflow releases $PACKAGE_NAME."
+            exit 1
+          fi
+          if [ "$GITHUB_REF_NAME" != "v$version" ]; then
+            echo "::error::The tag is $GITHUB_REF_NAME and package.json is at $version. The tag must be v$version."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      # The registry answers 200 for a version it has and 404 for one it does
+      # not. Anything else is not an answer, and the release stops on it.
+      - name: Require the version to be new on the registry
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          status="$(curl --silent --show-error --output /dev/null --write-out "%{http_code}" \
+            "https://registry.npmjs.org/${PACKAGE_NAME/\//%2F}/$VERSION")"
+          if [ "$status" = "200" ]; then
+            echo "::error::$PACKAGE_NAME@$VERSION is already on npm. A published version cannot be replaced."
+            exit 1
+          fi
+          if [ "$status" != "404" ]; then
+            echo "::error::The registry answered $status for $PACKAGE_NAME@$VERSION, so it is not known whether the version exists."
+            exit 1
+          fi
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      # The GitHub Release is written from this section after the publish, so
+      # a missing one has to stop the release before it.
+      - name: Require a CHANGELOG section for the version
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: bun scripts/changelog-section.ts "$VERSION" > /dev/null
+      - name: Install
+        run: bun install --frozen-lockfile
+      # The same gate `npm publish` would run from the package folder: lint,
+      # typecheck, docs gate, tests, build and the exports check. It runs here,
+      # in a job that cannot publish, and leaves dist/ built for the pack.
+      - name: Run the prepublishOnly gate
+        run: bun run prepublishOnly
+      - name: Pack
+        run: npm pack
+      - uses: actions/upload-artifact@v4
+        with:
+          name: package
+          path: arcadiasystems-morse-uploader-${{ steps.version.outputs.version }}.tgz
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: publish to npm
+    needs: verify
+    runs-on: ubuntu-latest
+    # A required reviewer on this environment approves every publish.
+    environment: npm-publish
+    permissions:
+      # Lets the job ask GitHub for the OIDC token that npm exchanges for a
+      # short-lived publish credential.
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: package
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      # Trusted Publishing needs npm 11.5.1 or later on Node 22.14.0 or later.
+      # An older npm would fall back to looking for a token and fail with a
+      # less clear error.
+      - name: Require an npm that supports Trusted Publishing
+        run: |
+          npm_version="$(npm --version)"
+          if ! printf '%s\n' "11.5.1" "$npm_version" | sort --version-sort --check=quiet; then
+            echo "::error::npm $npm_version is older than 11.5.1, the first version with Trusted Publishing."
+            exit 1
+          fi
+      # Publishing the tarball the verify job built: nothing is installed or
+      # built in the job that holds the OIDC permission. Provenance is attached
+      # automatically for a public package published from a public repository.
+      - name: Publish
+        env:
+          VERSION: ${{ needs.verify.outputs.version }}
+        run: npm publish "./arcadiasystems-morse-uploader-$VERSION.tgz" --access public
+
+  github-release:
+    name: create the GitHub Release
+    needs: [verify, publish]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Create the release from the CHANGELOG section
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.verify.outputs.version }}
+        run: |
+          bun scripts/changelog-section.ts "$VERSION" > "$RUNNER_TEMP/release-notes.md"
+          if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
+            # A release drafted by hand, or one left by an earlier attempt:
+            # give it the CHANGELOG's notes and publish it.
+            gh release edit "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" \
+              --notes-file "$RUNNER_TEMP/release-notes.md" --draft=false --verify-tag
+          else
+            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" \
+              --notes-file "$RUNNER_TEMP/release-notes.md" --verify-tag
+          fi
