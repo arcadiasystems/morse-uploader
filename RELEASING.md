@@ -8,15 +8,15 @@ This covers the library only. The Uploader app in `apps/uploader` is deployed by
 
 1. **Bump the version and the CHANGELOG in a pull request.** Set `version` in `package.json` and add a `## [<version>] - <date>` section at the top of `CHANGELOG.md`. `bun run docs-gate` fails when the CHANGELOG's newest entry is not that version, or when the README names a different morse-sdk minor than the peer range. Only `major.minor.patch` versions are released by the workflow; a prerelease tag does not start it.
 2. **Merge the pull request into `main`.**
-3. **Tag the merge commit and push the tag.** The tag is `v` followed by the version exactly as `package.json` has it.
+3. **Tag the merge commit and push the tag.** The tag is `v` followed by the version exactly as `package.json` has it. Only an organization admin can do this: the tag ruleset described under One-time setup refuses a `v*` tag from anyone else. Pushing the tag is the decision to publish. Nothing asks for confirmation after it, so check the commit and the version first.
 
    ```sh
    git switch main && git pull --ff-only
-   git tag v0.5.0
-   git push origin v0.5.0
+   git tag v0.6.0
+   git push origin v0.6.0
    ```
 
-4. **Wait for `verify and pack` to pass, then approve the `npm-publish` environment.** The run stops at the `publish to npm` job until a required reviewer approves it under Actions, in the run's "Review deployments" prompt. The tarball that will be published is attached to the run as the `package` artifact, so it can be downloaded and inspected before approving.
+4. **Wait for the run to finish.** `publish to npm` starts as soon as `verify and pack` passes, with no approval step in between. The tarball that is published is attached to the run as the `package` artifact. To inspect a tarball before it is published, build it from the merge commit with `bun install --frozen-lockfile && bun run prepublishOnly && npm pack` before pushing the tag.
 5. **Check the result.** `npm view @arcadiasystems/morse-uploader version` shows the new version, the package page on npmjs.com shows a provenance badge, and the repository has a GitHub Release for the tag with the CHANGELOG section as its notes.
 
 ## What the workflow checks
@@ -35,7 +35,7 @@ The last job creates the GitHub Release from the version's CHANGELOG section. If
 
 ## If a run fails
 
-- **Before the publish:** fix the cause on `main` by pull request. If the fix changes the commit to release, the tag has to move, which means deleting and pushing it again by hand. If the commit is right and the failure was transient, re-run the failed jobs.
+- **Before the publish:** fix the cause on `main` by pull request. If the fix changes the commit to release, the tag has to move, which means an organization admin deleting it and pushing it again by hand. If the commit is right and the failure was transient, re-run the failed jobs. A re-run that passes `verify and pack` publishes straight away.
 - **At the publish:** an `ENEEDAUTH` error means npm did not accept the workflow's identity. Check the trusted publisher on npmjs.com against the values below; every field is case sensitive, and npm does not validate them when they are saved.
 - **After the publish:** the version is on npm and cannot be replaced. Re-run only the `create the GitHub Release` job. Re-running the whole workflow stops at the registry check, as it should.
 
@@ -65,8 +65,10 @@ Once a release has gone through, npm recommends setting the package's Publishing
 
 ### GitHub
 
-The `npm-publish` environment exists with a required reviewer and no restriction on which branches or tags may deploy. If one is added, tags matching `v*` have to be allowed, or the publish job is rejected before it can ask for approval.
+What decides who can publish is the tag ruleset "Release tags: org admin only". It covers `refs/tags/v*` and restricts creating, updating and deleting those tags, with organization admins as the only bypass. Since a pushed tag publishes without further approval, loosening this ruleset is the same as letting more people publish.
+
+The `npm-publish` environment exists because the npm trusted publisher names it. It has no required reviewer (the one it had was removed on 2026-11-17) and no restriction on which branches or tags may deploy. If a restriction is added, tags matching `v*` have to be allowed, or the publish job is rejected.
 
 ## The first release with this workflow
 
-0.5.0 is merged on `main` and is not on npm: the newest published version is 0.4.2. The first use of this workflow is therefore the tag `v0.5.0`, after the trusted publisher above has been created. GitHub runs the workflow file as it is at the tagged commit, so the tag has to be on a commit of `main` that already contains `release.yml`, not on the older commit that first set the version to 0.5.0.
+0.5.0 was the first version this workflow published, on 2026-11-17, from the tag `v0.5.0`. GitHub runs the workflow file as it is at the tagged commit, so that tag is on a commit of `main` that already contains `release.yml`, not on the older commit that first set the version to 0.5.0. Every tag has to be on a commit that contains the workflow for the same reason.
