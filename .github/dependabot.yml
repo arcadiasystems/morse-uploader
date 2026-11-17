@@ -5,15 +5,28 @@
 # root lockfile also locks the examples/web workspace, which has no lockfile
 # of its own.
 #
-# The first group in each entry exists because @arcadiasystems/morse-sdk
-# peers on one exact, mutually compatible set of Mysten packages (0.12.0:
+# @arcadiasystems/morse-sdk and every @mysten package are left out of version
+# updates and move by hand, in one pull request, with each SDK release. The
+# SDK peers on one exact, mutually compatible set of Mysten packages (0.12.0:
 # @mysten/sui >=2.39.1 <2.40.0, @mysten/walrus 1.2.39, @mysten/seal 1.5.4),
 # and every Mysten package peers on a minimum @mysten/sui that rises with
-# almost every release. Bumped one at a time they contradict each other, so
-# they only ever move in one pull request. That includes dapp-kit: a newer
-# @mysten/dapp-kit-core alone would ask for a @mysten/sui minor the SDK
-# rejects. A dependency goes to the first group it matches, so the second
-# group takes everything else.
+# almost every release. That includes dapp-kit: a newer @mysten/dapp-kit-core
+# asks for a @mysten/sui minor the SDK rejects. Dependabot bumps each package
+# to its latest release whatever the SDK's peer ranges say, and bun does not
+# enforce peer ranges, so a grouped pull request for them installs, passes CI
+# and is still a set the SDK does not support. The library's own peer ranges,
+# the README and the CHANGELOG have to change in the same pull request too,
+# which Dependabot cannot write. The rule names the three update types rather
+# than ignoring the packages outright, so it limits version updates only and
+# a security update for one of them still opens.
+#
+# Everything else: minor and patch releases arrive together in one pull
+# request per directory, and each major arrives in a pull request of its own,
+# because a dependency that matches no group is updated on its own. One major
+# that needs code changes then cannot hold back the rest. Biome stays out of
+# the group at every level: it is pinned to an exact version, and a new minor
+# can reformat files or add lint rules, so it fails Lint until
+# `bun run lint:fix` is run and should not take other updates down with it.
 version: 2
 
 updates:
@@ -22,34 +35,58 @@ updates:
     schedule:
       interval: weekly
       day: monday
-    open-pull-requests-limit: 2
+    open-pull-requests-limit: 5
     commit-message:
       prefix: chore(deps)
+    ignore:
+      - dependency-name: "@arcadiasystems/morse-sdk"
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+          - version-update:semver-patch
+      - dependency-name: "@mysten/*"
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+          - version-update:semver-patch
     groups:
-      morse-sdk-and-mysten:
-        patterns:
-          - "@arcadiasystems/morse-sdk"
-          - "@mysten/*"
-      other-dependencies:
+      minor-and-patch:
         patterns:
           - "*"
+        exclude-patterns:
+          - "@biomejs/biome"
+        update-types:
+          - minor
+          - patch
 
   - package-ecosystem: bun
     directory: /apps/uploader
     schedule:
       interval: weekly
       day: monday
-    open-pull-requests-limit: 2
+    open-pull-requests-limit: 5
     commit-message:
       prefix: chore(deps)
+    ignore:
+      - dependency-name: "@arcadiasystems/morse-sdk"
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+          - version-update:semver-patch
+      - dependency-name: "@mysten/*"
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+          - version-update:semver-patch
     groups:
-      morse-sdk-and-mysten:
-        patterns:
-          - "@arcadiasystems/morse-sdk"
-          - "@mysten/*"
-      other-dependencies:
+      minor-and-patch:
         patterns:
           - "*"
+        exclude-patterns:
+          - "@biomejs/biome"
+        update-types:
+          - minor
+          - patch
 
   - package-ecosystem: github-actions
     directory: /
