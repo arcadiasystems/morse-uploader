@@ -5,7 +5,7 @@ import type { SealSettings } from "@/upload/upload-plan";
 import { loadMorseSdk } from "./load-morse-sdk";
 
 /** The recipient-file policy tag between the prefix and the nonce (morse-sdk `SealPolicyTag`). */
-const POLICY_TAG_BYTES = 1;
+export const POLICY_TAG_BYTES = 1;
 
 /**
  * How Morse Uploader seals a file on a network: under Morse's RecipientFile
