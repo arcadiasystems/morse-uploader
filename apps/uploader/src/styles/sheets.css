@@ -232,7 +232,7 @@
 	outline: 2px solid var(--accent-lift);
 	outline-offset: 2px;
 }
-.toggle .sw-input:disabled + .sw {
+.toggle .sw-input[aria-disabled="true"] + .sw {
 	opacity: 0.45;
 }
 @media (prefers-reduced-motion: no-preference) {

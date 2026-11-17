@@ -4,6 +4,7 @@ import { formatShortDate } from "@/lib/format-date";
 import type { ChainRead } from "@/lib/use-chain-read";
 import type { PublishTarget } from "@/morse/read-publish-targets";
 import type { NetworkConfig } from "@/network/networks";
+import type { EncryptionAvailability } from "@/staging/encryption-availability";
 import type { TrayQuote } from "@/staging/tray-quote";
 import type { TraySettings } from "@/staging/tray-settings";
 import { storageEndMs } from "@/upload/periods";
@@ -23,8 +24,8 @@ interface TraySettingsProps {
 	clock: EpochClock | null;
 	/** When the prices were read; dates are estimated from then. */
 	pricedAtMs: number | null;
-	/** Whether this network's Seal settings are read and encryption can run. */
-	sealAvailable: boolean;
+	/** Whether the tray can encrypt, and why not when it cannot. */
+	encryption: EncryptionAvailability;
 	publishTargets: ChainRead<PublishTarget[]>;
 	onRetryPublishTargets: () => void;
 	onChange: (change: Partial<TraySettings>) => void;
@@ -244,19 +245,19 @@ function KeepEditor({
 function EncryptionEditor({
 	network,
 	settings,
-	sealAvailable,
+	encryption,
 	onChange,
 }: TraySettingsProps) {
 	return (
 		<SwitchRow
 			title="Encrypt with Seal"
 			// The setting itself, held until this network's Seal settings are read.
-			checked={settings.encrypt && network.seal.kind === "available"}
-			disabled={!sealAvailable}
+			checked={settings.encrypt && encryption.kind !== "unavailable"}
+			disabled={encryption.kind !== "available"}
 			onChange={(encrypt) => onChange({ encrypt })}
 		>
-			{network.seal.kind === "unavailable"
-				? `Off on ${network.label}. ${network.seal.reason}`
+			{encryption.kind === "unavailable"
+				? `Off on ${network.label}. ${encryption.reason}`
 				: "Client-side. Only wallets you allow can decrypt. The blob id, file name and size stay public."}
 		</SwitchRow>
 	);
