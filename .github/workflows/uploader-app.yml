@@ -1,12 +1,13 @@
 name: uploader-app
 
 # The Uploader app in apps/uploader has its own toolchain and lockfile, so it
-# gets its own workflow; the library's ci.yml does not build it.
+# gets its own workflow; the library's job in ci.yml does not build it.
+#
+# On a pull request ci.yml calls this workflow when the app's paths changed,
+# so that its ci-ok gate can report either way. A `pull_request` trigger here
+# as well would run the suite twice.
 on:
-  pull_request:
-    paths:
-      - "apps/uploader/**"
-      - ".github/workflows/uploader-app.yml"
+  workflow_call:
   push:
     branches: [main, uploader-v2]
     paths:
