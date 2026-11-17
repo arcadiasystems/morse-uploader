@@ -5,6 +5,9 @@
 	"description": "Morse Uploader v2: a non-custodial transfer client for Walrus, in the browser.",
 	"license": "MIT",
 	"type": "module",
+	"engines": {
+		"node": "24.x"
+	},
 	"scripts": {
 		"dev": "next dev",
 		"build": "next build",

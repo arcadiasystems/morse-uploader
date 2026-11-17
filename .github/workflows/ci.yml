@@ -54,6 +54,13 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
+      # bun runs the package scripts, and the tools they start (tsc, vitest,
+      # tsup, vite) run on the Node found on the PATH. Without this step that
+      # is whichever Node the runner image ships. 24 and not 26: on Node 26 an
+      # aborted fetch can end the process (https://github.com/nodejs/undici/issues/6143).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
       # Switch to `bun install --frozen-lockfile` once bun.lock is committed.
       - name: Install
         run: bun install

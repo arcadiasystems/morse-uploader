@@ -10,6 +10,8 @@ For security-related reports, see [SECURITY.md](./SECURITY.md). Do not open publ
 
 ## Development setup
 
+Use Node 24: CI and the release workflow run on it. The published package supports Node 22 and later, so do not use anything newer than Node 22 offers in code that ships in `dist/`. Do not develop on Node 26 yet: an aborted `fetch` can end the process there ([nodejs/undici#6143](https://github.com/nodejs/undici/issues/6143)), which the Walrus and Seal clients trigger on reads. `bun` runs the scripts.
+
 ```sh
 bun install
 bun run typecheck      # tsc --noEmit

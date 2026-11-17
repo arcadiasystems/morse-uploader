@@ -21,6 +21,8 @@ npm install react react-dom @arcadiasystems/morse-sdk@0.12.0 @mysten/sui@2.39.1 
 
 The `@mysten` versions are the set `@arcadiasystems/morse-sdk` 0.12.0 is tested against. The peer ranges here and in the SDK hold `@mysten/walrus` and `@mysten/seal` to one release each, because a later patch of either can require the next `@mysten/sui` minor, so an install that names no `@mysten` versions resolves the same set. The `@arcadiasystems/morse-sdk` peer range is `>=0.12.0 <0.13.0`. An app still on SDK 0.11 stays on morse-uploader 0.5.x, and one on SDK 0.9 or 0.10 on 0.4.x, until it moves the SDK and the three `@mysten` packages together.
 
+Node 22 or later is required (`engines.node` is `>=22`, the minimum `@mysten/sui` itself sets). The package is developed and tested on Node 24, and its end-to-end check also runs on Node 22. Code that reads from Walrus or decrypts with Seal under Node itself (a script, a server, a test) should stay on Node 22 or 24 for now: on Node 26, `@mysten/walrus` aborting a request it no longer needs can end the process with an uncaught `InformationalError: socket idle timeout` ([nodejs/undici#6143](https://github.com/nodejs/undici/issues/6143)). Browsers are not affected.
+
 ## Quick start
 
 ### 1. Build the handles from your wallet

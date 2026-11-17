@@ -32,6 +32,13 @@ jobs:
           # Same bun as Vercel's build image, so CI installs the lockfile the
           # way the preview does. bun 1.4 also reads this lockfile format.
           bun-version: 1.3.14
+      # next, tsc, vitest and Playwright run on the Node found on the PATH.
+      # The e2e helpers read Walrus and Seal from this process, and on Node 26
+      # an aborted fetch can end it (https://github.com/nodejs/undici/issues/6143),
+      # so this is 24.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
       - name: Install
         run: bun install --frozen-lockfile
       - name: Lint

@@ -2,6 +2,14 @@
 
 All notable changes to `@arcadiasystems/morse-uploader` will be documented in this file. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **`engines.node` is `>=22`** (was `>=18.0.0`). The old value was not true: `@mysten/sui` 2.x, a required peer, declares `node >=22` itself, so no supported install ran on Node 18 or 20. Nothing in `dist/` changed. An app on Node 22 or later is unaffected, and npm only warns about `engines` unless `engine-strict` is set.
+- **CI and the release workflow run on Node 24.** `ci.yml` and the verify job of `release.yml` now install it with `actions/setup-node` instead of using whichever Node the runner image ships; the publish job was already on 24.
+- **Node 26 is not recommended yet for code that runs this package under Node.** On Node 26.13.1, reading a blob from Walrus storage nodes ends the process a few seconds later with an uncaught `InformationalError: socket idle timeout`: `@mysten/walrus` aborts the requests it no longer needs, and the `fetch` in Node 26 (HTTP/2) fails on that ([nodejs/undici#6143](https://github.com/nodejs/undici/issues/6143), open). The same read is fine on Node 22.20.0 and 24.22.3. The README says so. Browsers are not affected.
+
 ## [0.6.0] - 2026-11-17
 
 Moves to `@arcadiasystems/morse-sdk` 0.12 and the `@mysten/sui` 2.39 line it requires. The public API is unchanged and no code changed. This is a minor bump because the new peer ranges share no version with 0.5.0's: 0.5.0 cannot be installed next to SDK 0.12, and upgrading to 0.6.0 means upgrading the SDK and all three Mysten packages with it. An app that stays on SDK 0.11 stays on 0.5.x.

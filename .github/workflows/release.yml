@@ -76,6 +76,12 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
+      # The gate's tools and `npm pack` run on this Node, the same major as
+      # ci.yml and the publish job, so the tarball is built the way the pull
+      # request was tested.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
       # The GitHub Release is written from this section after the publish, so
       # a missing one has to stop the release before it.
       - name: Require a CHANGELOG section for the version
