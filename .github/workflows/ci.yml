@@ -1,11 +1,51 @@
 name: ci
 
+# Every pull request runs this workflow, so its last job, ci-ok, always
+# reports. ci-ok is the one check to mark required in the ruleset on main: the
+# app's suite only runs when the app changed, and a required check that never
+# reports would leave a pull request waiting for ever.
 on:
   pull_request:
   push:
     branches: [master, main]
 
+permissions:
+  contents: read
+
 jobs:
+  changes:
+    name: changes
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      app: ${{ steps.diff.outputs.app }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The whole history, so the merge base of the pull request is there.
+          fetch-depth: 0
+      # The same comparison GitHub's own `paths` filter makes for a pull
+      # request: what the head changed since it left the base. This workflow
+      # file is listed because it decides how the app's suite is called.
+      - name: Detect changes to the Uploader app
+        id: diff
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          changed="$(git diff --name-only "$BASE_SHA...$HEAD_SHA" -- \
+            apps/uploader \
+            .github/workflows/uploader-app.yml \
+            .github/workflows/ci.yml)"
+          if [ -n "$changed" ]; then
+            echo "The app's suite runs because these paths changed:"
+            echo "$changed"
+            echo "app=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Nothing under the app's paths changed, so its suite is skipped."
+            echo "app=false" >> "$GITHUB_OUTPUT"
+          fi
+
   ci:
     name: lint, typecheck, test, build
     runs-on: ubuntu-latest
@@ -29,3 +69,41 @@ jobs:
         run: bun run check:exports
       - name: Build example (ensures the demo stays buildable)
         run: bun run build:example
+
+  # On a push, uploader-app.yml runs from its own trigger and path filter.
+  app:
+    name: uploader-app
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
+    uses: ./.github/workflows/uploader-app.yml
+
+  ci-ok:
+    name: ci-ok
+    needs: [changes, ci, app]
+    if: always() && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      # A skipped app suite passes only when the path filter skipped it. If it
+      # was skipped because an earlier job failed, or it ran and failed or was
+      # cancelled, the gate fails.
+      - name: Require every job to have passed or been skipped by the path filter
+        env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          LIBRARY_RESULT: ${{ needs.ci.result }}
+          APP_RESULT: ${{ needs.app.result }}
+          APP_CHANGED: ${{ needs.changes.outputs.app }}
+        run: |
+          echo "changes: $CHANGES_RESULT (app changed: $APP_CHANGED)"
+          echo "lint, typecheck, test, build: $LIBRARY_RESULT"
+          echo "uploader-app: $APP_RESULT"
+          if [ "$APP_CHANGED" = "true" ]; then
+            expected_app_result=success
+          else
+            expected_app_result=skipped
+          fi
+          if [ "$CHANGES_RESULT" != "success" ] ||
+            [ "$LIBRARY_RESULT" != "success" ] ||
+            [ "$APP_RESULT" != "$expected_app_result" ]; then
+            echo "::error::A job failed, was cancelled, or did not run when it should have."
+            exit 1
+          fi

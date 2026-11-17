@@ -1,3 +1,8 @@
-# Default owners for everything in this repo. Update the team/handle as the
-# maintainer set grows.
-* @arcadiasystems/morse-uploader-maintainers
+# Default owner for everything in this repo. The ruleset on main requires a
+# code-owner review, so every owner here must be a user or a team that exists
+# and has write access. Add handles as the maintainer set grows.
+* @MandaWeb3
+
+# Workflows, this file and the templates decide what CI runs and who reviews.
+# The explicit line keeps them owned if the default above is ever narrowed.
+/.github/ @MandaWeb3
