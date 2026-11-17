@@ -9,6 +9,7 @@ import type { ChainRead } from "@/lib/use-chain-read";
 import { useNow } from "@/lib/use-now";
 import { usePublishTargets } from "@/morse/use-publish-targets";
 import type { NetworkConfig } from "@/network/networks";
+import { encryptionAvailability } from "@/staging/encryption-availability";
 import {
 	hasBytes,
 	type StagedRoot,
@@ -262,9 +263,7 @@ export function StagingTrayPanel({
 							tray={quote}
 							clock={priced?.data.clock ?? null}
 							pricedAtMs={priced?.readAt.getTime() ?? null}
-							sealAvailable={
-								network.seal.kind === "available" && priced?.data.seal != null
-							}
+							encryption={encryptionAvailability(network, priced?.data.seal)}
 							publishTargets={targets.read}
 							onRetryPublishTargets={targets.refresh}
 							onChange={(change) => {

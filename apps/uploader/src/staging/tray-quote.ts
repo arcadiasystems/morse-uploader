@@ -14,6 +14,7 @@ import {
 import { buildUploadPlan, type UploadPlan } from "@/upload/upload-plan";
 import { buildQuote, itemEstimates, type Quote } from "@/upload/upload-quote";
 import type { QuoteInputs } from "@/upload/use-upload-quote";
+import { encryptionAvailability } from "./encryption-availability";
 import type { KeepChoice, TraySettings } from "./tray-settings";
 
 /** Everything the tray shows and sends, derived from what is staged and the prices. */
@@ -65,15 +66,17 @@ export function quoteTray({
 	pricedAtMs,
 	publishTargets,
 }: TrayQuoteInput): TrayQuote {
-	const sealing =
-		settings.encrypt &&
-		network.seal.kind === "available" &&
-		inputs.seal !== null;
+	const encryption = encryptionAvailability(network, inputs.seal);
+	const seal =
+		settings.encrypt && encryption.kind === "available"
+			? encryption.seal
+			: null;
+	const sealing = seal !== null;
 	const plan = buildUploadPlan({
 		library,
 		selected: new Set(allFiles(library).map((file) => file.id)),
 		mode: settings.mode,
-		seal: sealing ? inputs.seal : null,
+		seal,
 		nShards: inputs.pricing.nShards,
 	});
 	const periods = periodOptions(

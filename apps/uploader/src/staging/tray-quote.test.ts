@@ -72,6 +72,63 @@ function quote(
 	});
 }
 
+describe("encryption where Seal cannot run", () => {
+	const encryptedOn = (
+		network: (typeof NETWORKS)[keyof typeof NETWORKS],
+		inputs: QuoteInputs,
+	) => {
+		const tray = quoteTray({
+			library: library(["a.txt", "site/b.txt"]),
+			settings: { ...DEFAULT_TRAY_SETTINGS, encrypt: true },
+			inputs,
+			network,
+			pricedAtMs: NOW,
+			publishTargets: null,
+		});
+		const batch = trayBatch({
+			tray,
+			network,
+			owner: OWNER,
+			deletable: true,
+			registerMist: null,
+		});
+		return { tray, batch };
+	};
+	const sealed = (batch: ReturnType<typeof trayBatch>) =>
+		batch?.jobs.filter(
+			(job) => job.plan.kind === "blob" && job.plan.seal !== null,
+		).length;
+
+	it("queues encrypted jobs on Testnet, where key servers are read", () => {
+		const { tray, batch } = encryptedOn(NETWORKS.testnet, INPUTS);
+		expect(tray.sealing).toBe(true);
+		expect(sealed(batch)).toBe(2);
+	});
+
+	it("never marks an upload as encrypted on Walrus Mainnet, even with the setting saved on", () => {
+		for (const seal of [null, INPUTS.seal]) {
+			const { tray, batch } = encryptedOn(NETWORKS.mainnet, {
+				...INPUTS,
+				seal,
+			});
+			expect(tray.sealing).toBe(false);
+			expect(batch?.jobs).toHaveLength(2);
+			expect(sealed(batch)).toBe(0);
+		}
+	});
+
+	it("never marks an upload as encrypted when no key server is configured", () => {
+		const seal = INPUTS.seal;
+		if (seal === null) throw new Error("The fixture has Seal settings.");
+		const { tray, batch } = encryptedOn(NETWORKS.testnet, {
+			...INPUTS,
+			seal: { ...seal, envelope: { ...seal.envelope, keyServers: 0 } },
+		});
+		expect(tray.sealing).toBe(false);
+		expect(sealed(batch)).toBe(0);
+	});
+});
+
 describe("the tray's signature count", () => {
 	const signatures = (
 		paths: readonly string[],
