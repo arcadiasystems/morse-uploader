@@ -21,7 +21,7 @@
 		"@mysten/seal": "1.5.4",
 		"@mysten/sui": "2.39.1",
 		"@mysten/walrus": "1.2.39",
-		"next": "16.4.2",
+		"next": "16.4.6",
 		"react": "19.3.1",
 		"react-dom": "19.3.1"
 	},
