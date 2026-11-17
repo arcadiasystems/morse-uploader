@@ -1,4 +1,4 @@
-import { expect, type Page, test } from "@playwright/test";
+import { expect, type Locator, type Page, test } from "@playwright/test";
 import { connect } from "./app-actions";
 import { installTestWallet, KEY_ENV, keypairFromEnv } from "./test-wallet";
 
@@ -47,6 +47,18 @@ async function expectNoOverflow(page: Page, where: string): Promise<void> {
 	expect(report, where).toEqual({ page: 0, view: 0, past: [] });
 }
 
+/**
+ * The rail once the app has replaced the static frame /app ships as HTML
+ * (src/shell/shell-fallback.tsx). That frame has a "Views" navigation of
+ * its own, with no links, which React removes when the app loads: measured
+ * too early, it is that one, and its box is null once it is gone.
+ */
+async function hydratedRail(page: Page): Promise<Locator> {
+	const bar = page.getByRole("navigation", { name: "Views" });
+	await expect(bar.getByRole("link", { name: "Overview" })).toBeVisible();
+	return bar;
+}
+
 test.describe("phones, without a wallet", () => {
 	test.use({ viewport: PHONE });
 
@@ -54,13 +66,14 @@ test.describe("phones, without a wallet", () => {
 		test(`${route} fits 390`, async ({ page }) => {
 			await page.goto(route);
 			await expect(page.locator("body")).toBeVisible();
+			if (route.startsWith("/app")) await hydratedRail(page);
 			await expectNoOverflow(page, route);
 		});
 	}
 
 	test("the rail is a tab bar along the bottom", async ({ page }) => {
 		await page.goto("/app");
-		const bar = page.getByRole("navigation", { name: "Views" });
+		const bar = await hydratedRail(page);
 		const box = await bar.boundingBox();
 		expect(box?.width).toBe(PHONE.width);
 		expect((box?.y ?? 0) + (box?.height ?? 0)).toBe(PHONE.height);

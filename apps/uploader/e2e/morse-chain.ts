@@ -3,8 +3,9 @@ import type { ChainBlob, Network } from "./chain";
 /**
  * Morse and transaction state for assertions, read over Sui GraphQL: a
  * different transport from the app's gRPC client and morse-sdk, and no
- * Morse code of its own. Package ids are Testnet's, from morse-sdk 0.9.0's
- * config and design/PROTOCOL-NOTES.md section 12.
+ * Morse code of its own. Package ids are Testnet's, from morse-sdk 0.12.0's
+ * config (`originalPackageId` and `recipientFileEventOriginPackageId`) and
+ * design/PROTOCOL-NOTES.md section 12.
  */
 
 /** The original Morse package: type origin of Publication, OwnerCap, PublisherCap and Entry. */
