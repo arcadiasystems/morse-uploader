@@ -102,7 +102,10 @@ jobs:
     name: publish to npm
     needs: verify
     runs-on: ubuntu-latest
-    # A required reviewer on this environment approves every publish.
+    # The environment is here because npm's trusted publisher names it. It has
+    # no required reviewer, so nothing asks for approval: this job starts as
+    # soon as verify passes. What limits who can publish is the tag ruleset in
+    # RELEASING.md, which lets only an organization admin create a `v*` tag.
     environment: npm-publish
     permissions:
       # Lets the job ask GitHub for the OIDC token that npm exchanges for a

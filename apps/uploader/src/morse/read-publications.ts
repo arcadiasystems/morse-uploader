@@ -6,7 +6,7 @@ import { loadMorseSdk, type MorseSdk } from "./load-morse-sdk";
 /**
  * The Morse publications the wallet owns (through an OwnerCap) or writes to
  * (through a PublisherCap), with their entries, read through morse-sdk
- * 0.9.0 (PROTOCOL-NOTES section 12). Morse has no index from a blob to the
+ * 0.12.0 (PROTOCOL-NOTES section 12). Morse has no index from a blob to the
  * entries that use it, so every entry of every collection is read; the
  * blobs the entries' public revisions point at are what "Published" counts.
  */
