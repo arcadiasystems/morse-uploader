@@ -22,19 +22,19 @@
 		"@mysten/seal": "1.5.0",
 		"@mysten/sui": "2.36.0",
 		"@mysten/walrus": "1.2.35",
-		"next": "16.4.2",
+		"next": "16.4.6",
 		"react": "19.3.1",
 		"react-dom": "19.3.1"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.4.7",
+		"@biomejs/biome": "2.6.8",
 		"@mysten/wallet-standard": "0.21.34",
-		"@playwright/test": "1.64.1",
-		"@types/node": "24.19.2",
+		"@playwright/test": "1.65.1",
+		"@types/node": "26.6.6",
 		"@types/react": "19.3.0",
 		"@types/react-dom": "19.3.0",
-		"fake-indexeddb": "6.2.5",
-		"typescript": "6.0.3",
-		"vitest": "4.1.12"
+		"fake-indexeddb": "6.2.8",
+		"typescript": "7.0.2",
+		"vitest": "5.1.0"
 	}
 }
