@@ -10,9 +10,13 @@ import "@/styles/inspector.css";
 import "@/styles/bulk.css";
 import "@/styles/palette.css";
 import "@/styles/staging.css";
+import { SITE_NAME, sharePreview } from "../site-metadata";
+
+const TITLE = "Overview and files";
 
 export const metadata: Metadata = {
-	title: "Overview and files",
+	title: TITLE,
+	...sharePreview({ title: `${TITLE} · ${SITE_NAME}`, path: "/app" }),
 };
 
 export default function AppPage() {
