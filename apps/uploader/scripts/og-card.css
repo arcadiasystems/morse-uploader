@@ -1,0 +1,100 @@
+/* The share image: the landing itself, reframed to 1200×630 on the grid of
+   the Morse landing card. scripts/brand-assets.ts loads this over the built
+   landing, so the lockup, the eyebrow, the headline, the tiles, the glows and
+   the footer line are the page's own; only the domain is written here. */
+html,
+body {
+	width: 1200px;
+	height: 630px;
+	overflow: hidden;
+}
+.land {
+	height: 630px;
+	min-height: 0;
+	padding: 60px 72px;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+/* What a preview has no room for. */
+.land .nav-link,
+.land .nav-actions,
+.land .hero .lead,
+.land .hero .cta,
+.land main > :not(.hero),
+.land .foot .sig {
+	display: none;
+}
+
+/* Top row: the lockup on the left, the eyebrow on the right. */
+.land .nav {
+	padding: 0;
+}
+.land .brand.lockup {
+	gap: 16px;
+}
+.land .brand.lockup svg {
+	width: 58px;
+	height: 58px;
+}
+.land .brand .wm {
+	font-size: 31px;
+}
+.land .hero .eyebrow {
+	position: absolute;
+	top: 60px;
+	right: 72px;
+	font-size: 16px;
+	letter-spacing: 0.14em;
+	/* The lockup's height, so the two share a centre line. */
+	line-height: 58px;
+}
+
+/* The headline, centred both ways so a square crop of the middle keeps it. */
+.land main {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+.land .hero {
+	max-width: none;
+	margin: 0;
+	padding: 0;
+}
+.land .hero h1 {
+	font-size: 72px;
+	margin: 0;
+}
+.land .tile.left {
+	left: 104px;
+	top: 330px;
+}
+.land .tile.right {
+	right: 124px;
+	top: 172px;
+}
+
+/* Bottom row: the footer's line on the left, the domain on the right. */
+.land .foot {
+	border: 0;
+	padding: 0;
+	flex-wrap: nowrap;
+	align-items: baseline;
+	font-size: 27px;
+	line-height: 1.2;
+	color: var(--fg-2);
+}
+.land .foot a {
+	color: inherit;
+	text-decoration: none;
+}
+.land .foot::after {
+	content: "uploader.morsecms.xyz";
+	font-family: var(--mono);
+	font-size: 20px;
+	font-weight: 500;
+	letter-spacing: 0.04em;
+	color: var(--fg-3);
+}

@@ -6,6 +6,12 @@ import {
 } from "next/font/google";
 import type { ReactNode } from "react";
 import "@/styles/base.css";
+import {
+	SITE_DESCRIPTION,
+	SITE_NAME,
+	SITE_URL,
+	THEME_COLOR,
+} from "./site-metadata";
 
 const display = Bricolage_Grotesque({
 	subsets: ["latin"],
@@ -26,19 +32,27 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
+	metadataBase: new URL(SITE_URL),
 	title: {
-		default: "Morse Uploader",
-		template: "%s · Morse Uploader",
+		default: SITE_NAME,
+		template: `%s · ${SITE_NAME}`,
 	},
-	description:
-		"A non-custodial transfer client for Walrus. Your wallet is the login and signs every transaction.",
-	applicationName: "Morse Uploader",
+	description: SITE_DESCRIPTION,
+	applicationName: SITE_NAME,
+	// The files in public/, written by scripts/brand-assets.ts.
+	icons: {
+		icon: [
+			{ url: "/favicon.ico", sizes: "16x16 32x32 48x48" },
+			{ url: "/icon.svg", type: "image/svg+xml" },
+		],
+		apple: { url: "/apple-touch-icon.png", sizes: "180x180" },
+	},
 };
 
 export const viewport: Viewport = {
 	width: "device-width",
 	initialScale: 1,
-	themeColor: "#07080B",
+	themeColor: THEME_COLOR,
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

@@ -7,11 +7,16 @@ import { LandingNav } from "@/landing/landing-nav";
 import { TraceTile } from "@/landing/trace-tile";
 import { WalrusClientsSection } from "@/landing/walrus-clients-section";
 import "@/styles/landing.css";
+import { sharePreview } from "./site-metadata";
+
+const TITLE = "Morse Uploader, a transfer client for Walrus";
+const DESCRIPTION =
+	"Move data to Walrus and keep every key. A non-custodial transfer client in the browser: your wallet is the login and signs every transaction.";
 
 export const metadata: Metadata = {
-	title: { absolute: "Morse Uploader, a transfer client for Walrus" },
-	description:
-		"Move data to Walrus and keep every key. A non-custodial transfer client in the browser: your wallet is the login and signs every transaction.",
+	title: { absolute: TITLE },
+	description: DESCRIPTION,
+	...sharePreview({ title: TITLE, description: DESCRIPTION, path: "/" }),
 };
 
 /** The landing (design/v2/index.html): static, no client code of its own. */
