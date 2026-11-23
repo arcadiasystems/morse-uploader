@@ -20,7 +20,7 @@ jobs:
     outputs:
       app: ${{ steps.diff.outputs.app }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # The whole history, so the merge base of the pull request is there.
           fetch-depth: 0
@@ -50,7 +50,7 @@ jobs:
     name: lint, typecheck, test, build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest

@@ -26,7 +26,7 @@ jobs:
     name: lint, typecheck, unit, build, e2e
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
         with:
           # Same bun as Vercel's build image, so CI installs the lockfile the
