@@ -11,7 +11,12 @@ interface SwitchRowProps {
 	tone?: "paper" | "bone";
 }
 
-/** The design's toggle row: a title and a line of description, with a switch on the right. */
+/**
+ * The design's toggle row: a title and a line of description, with a switch
+ * on the right. A disabled switch is `aria-disabled`, not `disabled`: it
+ * stays in the tab order, so a keyboard or screen reader user lands on it
+ * and hears the description, which is where the row says why it is off.
+ */
 export function SwitchRow({
 	title,
 	children,
@@ -38,8 +43,10 @@ export function SwitchRow({
 						aria-describedby={`${ids}-help`}
 						className="sw-input"
 						checked={checked}
-						disabled={disabled}
-						onChange={(event) => onChange(event.currentTarget.checked)}
+						aria-disabled={disabled}
+						onChange={(event) => {
+							if (!disabled) onChange(event.currentTarget.checked);
+						}}
 					/>
 					<span className={checked ? "sw on" : "sw"} aria-hidden="true" />
 				</span>
